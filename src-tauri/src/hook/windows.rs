@@ -4,6 +4,7 @@
 use std::cell::RefCell;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::mpsc::Sender;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::OnceLock;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -31,6 +32,9 @@ const VK_CONTROL: u16 = 0x11;
 const VK_MENU: u16 = 0x12;
 const VK_LWIN: u16 = 0x5B;
 const VK_RWIN: u16 = 0x5C;
+
+/// True once a `PasswordFocus` was sent for the current password-field visit.
+static PASSWORD_NOTIFIED: AtomicBool = AtomicBool::new(false);
 
 static SENDER: OnceLock<Sender<Msg>> = OnceLock::new();
 
@@ -87,6 +91,16 @@ unsafe fn handle(wparam: WPARAM, lparam: LPARAM) {
     if kb.flags.0 & LLKHF_INJECTED.0 != 0 {
         return;
     }
+    // Password field focused: drop everything here, before any classification.
+    if crate::password::in_password_field() {
+        if !PASSWORD_NOTIFIED.swap(true, Ordering::Relaxed) {
+            if let Some(tx) = SENDER.get() {
+                let _ = tx.send(Msg::PasswordFocus);
+            }
+        }
+        return;
+    }
+    PASSWORD_NOTIFIED.store(false, Ordering::Relaxed);
     let vk = kb.vkCode;
     if vk > 255 {
         return;

@@ -1,6 +1,6 @@
 {
   "name": "tapomo",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "Passive typing speed tracker for Windows",
   "license": "GPL-3.0-or-later",

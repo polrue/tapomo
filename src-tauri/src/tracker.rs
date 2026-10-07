@@ -26,6 +26,8 @@ pub enum Msg {
     Key(RawKey),
     /// Settings or exclusions changed in the database: re-read them.
     Reload,
+    /// A key was dropped because a password field has focus: close the open burst.
+    PasswordFocus,
     /// Flush the open burst, save and stop. The sender is acknowledged when done.
     Shutdown(SyncSender<()>),
 }
@@ -99,6 +101,10 @@ impl Tracker {
             match rx.recv_timeout(next_tick.saturating_duration_since(Instant::now())) {
                 Ok(Msg::Key(key)) => self.on_key(key),
                 Ok(Msg::Reload) => self.reload(),
+                Ok(Msg::PasswordFocus) => {
+                    let burst = self.engine.flush();
+                    self.finish_burst(burst);
+                }
                 Ok(Msg::Shutdown(ack)) => {
                     let burst = self.engine.flush();
                     self.finish_burst(burst);

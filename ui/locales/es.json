@@ -63,6 +63,7 @@
   "about.title": "Acerca de",
   "about.version": "Versión {v}",
   "about.privacy": "Tapomo nunca guarda lo que escribes: solo cuenta pulsaciones y tiempos.",
+  "about.privacy_passwords": "Los campos de contraseña se ignoran por completo: ni se cuentan ni se cronometran.",
   "about.source": "Código fuente en GitHub",
   "about.coffee": "Invita a Tapomo a un café ☕",
   "paused.banner": "Medición en pausa"
