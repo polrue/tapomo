@@ -1,0 +1,113 @@
+/* The window is transparent: nothing but the pet itself may paint a background. */
+:root {
+  --ink: #23202b;
+  --font: "Nunito", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Trebuchet MS", sans-serif;
+}
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: var(--font);
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+* { box-sizing: border-box; }
+
+.pet { position: relative; width: 100%; height: 100%; }
+
+.stage { position: absolute; left: 15px; top: 46px; width: 120px; height: 120px; }
+.stage .mascot { width: 120px; height: 120px; display: block; }
+
+/* ----------------------------------------------------------- squish / hop */
+.mascot-body.squish { animation: pet-squish 120ms ease-out; }
+.pet.hop .mascot-body { animation: pet-hop 650ms cubic-bezier(.3, .7, .4, 1); }
+@keyframes pet-squish { 0% { transform: scaleY(.92); } 100% { transform: scaleY(1); } }
+@keyframes pet-hop {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  15% { transform: translateY(0) scaleY(.88); }
+  45% { transform: translateY(-16px) scaleY(1.06); }
+  75% { transform: translateY(0) scaleY(.94); }
+}
+
+/* ------------------------------------------------------- zones: extras */
+.pet[data-zone="fire"] .m-lines, .pet[data-zone="beating"] .m-lines { display: inline; }
+.m-lines path { animation: pet-lines 380ms linear infinite; }
+.pet[data-zone="beating"] .m-lines path { stroke: #ffc93c; }
+.pet[data-zone="fire"] .m-lines path { stroke: #f0553a; }
+@keyframes pet-lines {
+  0% { transform: translateX(10px); opacity: 0; }
+  40% { opacity: .9; }
+  100% { transform: translateX(-12px); opacity: 0; }
+}
+.pet[data-zone="beating"] .m-shades { display: inline; }
+.pet[data-zone="beating"] .stage { filter: drop-shadow(0 0 7px rgba(255, 201, 60, .85)); animation: pet-glow 1.6s ease-in-out infinite; }
+@keyframes pet-glow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(255, 201, 60, .5)); }
+  50% { filter: drop-shadow(0 0 10px rgba(255, 201, 60, .95)); }
+}
+
+/* ------------------------------------------------------------- sleeping */
+.pet.sleeping .m-zzz { display: inline; }
+.pet.sleeping .m-shades, .pet.sleeping .m-lines { display: none; }
+.m-zzz .z { animation: pet-z 2.4s ease-in-out infinite; opacity: 0; }
+.m-zzz .z2 { animation-delay: .6s; }
+.m-zzz .z3 { animation-delay: 1.2s; }
+@keyframes pet-z {
+  0% { transform: translate(-6px, 8px); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translate(4px, -8px); opacity: 0; }
+}
+
+/* ---------------------------------------------------------------- stars */
+.spark { position: absolute; left: 50%; top: 55%; font-size: 15px; line-height: 1; color: #ffc93c; pointer-events: none;
+  text-shadow: 0 0 4px rgba(255, 255, 255, .9); animation: pet-spark 900ms ease-out forwards; }
+@keyframes pet-spark {
+  0% { transform: translate(-50%, -50%) scale(.3); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.1) rotate(160deg); opacity: 0; }
+}
+
+/* --------------------------------------------------------------- bubble */
+.bubble {
+  position: absolute; top: 4px; left: 50%; max-width: 140px; min-width: 44px;
+  transform: translateX(-50%);
+  padding: 6px 12px; border-radius: 14px;
+  background: #fff; color: var(--ink);
+  font-weight: 800; font-size: 14px; line-height: 1.2; text-align: center;
+  box-shadow: 0 2px 8px rgba(35, 32, 43, .28);
+  animation: pet-pop 160ms ease-out;
+}
+.bubble.big { font-size: 18px; padding: 7px 14px; }
+.bubble::after {
+  content: ""; position: absolute; left: 50%; bottom: -7px; margin-left: -7px;
+  border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 8px solid #fff;
+}
+@keyframes pet-pop { 0% { transform: translateX(-50%) scale(.7); opacity: 0; } 100% { transform: translateX(-50%) scale(1); opacity: 1; } }
+
+/* ------------------------------------------------------------- live bar */
+.livebar { position: absolute; left: 25px; right: 25px; top: 172px; height: 6px; border-radius: 999px;
+  background: rgba(255, 255, 255, .55); box-shadow: 0 0 0 1px rgba(35, 32, 43, .28); overflow: hidden; }
+.livebar i { display: block; height: 100%; width: 0; border-radius: 999px; background: #b7b0c4; transition: width 200ms ease-out, background-color 200ms ease-out; }
+.pet[data-zone="good"] .livebar i { background: #ff9e7a; }
+.pet[data-zone="fire"] .livebar i { background: #f0553a; }
+.pet[data-zone="beating"] .livebar i { background: #ffc93c; }
+
+/* ------------------------------------------------------------ move mode */
+.move { position: absolute; inset: 0; border: 2px dashed #ff9e7a; border-radius: 18px; background: rgba(255, 248, 243, .35); cursor: move; }
+.move-hint { position: absolute; left: 8px; right: 34px; top: 8px; font-size: 12px; font-weight: 800; color: var(--ink);
+  background: rgba(255, 255, 255, .92); border-radius: 8px; padding: 2px 6px; pointer-events: none; text-align: center; }
+.move-done { position: absolute; right: 6px; top: 6px; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%;
+  background: #ff9e7a; color: var(--ink); font: 800 14px/24px var(--font); cursor: pointer; }
+.move-done:hover { background: #f0764a; }
+[hidden] { display: none !important; }
+
+/* Less motion: faces still change, nothing bounces. */
+@media (prefers-reduced-motion: reduce) {
+  .mascot-body.squish, .pet.hop .mascot-body, .m-lines path, .m-zzz .z, .bubble,
+  .pet[data-zone="beating"] .stage { animation: none; }
+  .m-zzz .z { opacity: 1; }
+  .spark { display: none; }
+  .livebar i { transition: none; }
+}

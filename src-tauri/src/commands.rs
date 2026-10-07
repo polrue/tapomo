@@ -11,12 +11,14 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 
 use crate::db::{self, AppStat, HeatCell, Settings, Summary};
-use crate::i18n;
+use crate::{i18n, pet};
 use crate::tracker::{Msg, Shared};
 
 /// Tray menu entries, kept so their labels can follow the language setting.
 pub struct TrayItems {
     pub open: MenuItem<tauri::Wry>,
+    pub show_pet: CheckMenuItem<tauri::Wry>,
+    pub move_pet: CheckMenuItem<tauri::Wry>,
     pub pause: CheckMenuItem<tauri::Wry>,
     pub quit: MenuItem<tauri::Wry>,
 }
@@ -104,6 +106,8 @@ pub fn apply_settings(app: &AppHandle, settings: Settings) -> CmdResult<()> {
         }
     }
 
+    state.shared.show_pet.store(settings.show_pet, Ordering::Relaxed);
+    pet::sync(app, &state.shared);
     refresh_tray(app, &settings);
     let _ = app.emit("tapomo://settings", ());
     Ok(())
@@ -114,6 +118,10 @@ pub fn refresh_tray(app: &AppHandle, settings: &Settings) {
     let Some(items) = app.try_state::<TrayItems>() else { return };
     let lang = i18n::resolve(&settings.language);
     let _ = items.open.set_text(i18n::tr(lang, "tray.open"));
+    let _ = items.show_pet.set_text(i18n::tr(lang, "tray.show_pet"));
+    let _ = items.show_pet.set_checked(settings.show_pet);
+    let _ = items.move_pet.set_text(i18n::tr(lang, "tray.move_pet"));
+    let _ = items.move_pet.set_enabled(settings.show_pet);
     let _ = items.pause.set_text(i18n::tr(lang, "tray.pause"));
     let _ = items.pause.set_checked(settings.paused);
     let _ = items.quit.set_text(i18n::tr(lang, "tray.quit"));
@@ -127,6 +135,22 @@ pub fn toggle_pause(app: &AppHandle) {
     if let Err(e) = apply_settings(app, settings) {
         log::error!("could not toggle pause: {e}");
     }
+}
+
+/// Tray "show Tapomo" toggle.
+pub fn toggle_show_pet(app: &AppHandle) {
+    let state = app.state::<AppState>();
+    let Ok(mut settings) = state.with_db(db::get_settings) else { return };
+    settings.show_pet = !settings.show_pet;
+    if let Err(e) = apply_settings(app, settings) {
+        log::error!("could not toggle the pet: {e}");
+    }
+}
+
+/// The pet's own ✓ button: ends "move" mode.
+#[tauri::command]
+pub fn pet_move_done(app: AppHandle) {
+    pet::set_move_mode(&app, false);
 }
 
 /// Flushes the open burst, then exits.

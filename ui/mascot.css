@@ -1,0 +1,16 @@
+/* Mascot parts: only the chosen variant of each part is drawn. */
+.mascot { overflow: visible; }
+.mascot-body { transform-box: fill-box; transform-origin: 50% 100%; }
+.mascot [data-part="eyes"] > g, .mascot [data-part="mouth"] > *, .mascot .m-extras { display: none; }
+.mascot[data-eyes="round"] .eyes-round,
+.mascot[data-eyes="sparkle"] .eyes-sparkle,
+.mascot[data-eyes="dots"] .eyes-dots,
+.mascot[data-eyes="closed"] .eyes-closed,
+.mascot[data-mouth="smile"] .mouth-smile,
+.mascot[data-mouth="small"] .mouth-small,
+.mascot[data-mouth="big"] .mouth-big,
+.mascot[data-mouth="open"] .mouth-open,
+.mascot[data-mouth="wavy"] .mouth-wavy { display: inline; }
+
+.cheek { opacity: .45; transition: opacity 300ms ease; }
+.mascot.blush .cheek { opacity: .95; }

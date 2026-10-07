@@ -147,6 +147,7 @@ function renderSettings() {
   $('s-autostart').checked = settings.autostart;
   $('s-fullscreen').checked = settings.ignore_fullscreen;
   $('s-paused').checked = settings.paused;
+  $('s-pet').checked = settings.show_pet;
   $('paused-banner').hidden = !settings.paused;
 }
 
@@ -194,6 +195,7 @@ async function onLanguageChange() {
   applyI18n();
   renderLanguageSelect();
   renderSettings();
+  renderLive(null);
   renderExclusions().catch(showError);
   refreshAll();
 }
@@ -214,6 +216,7 @@ function bindControls() {
   $('s-language').addEventListener('change', onLanguageChange);
   $('s-autostart').addEventListener('change', () => saveSettings({ autostart: $('s-autostart').checked }));
   $('s-fullscreen').addEventListener('change', () => saveSettings({ ignore_fullscreen: $('s-fullscreen').checked }));
+  $('s-pet').addEventListener('change', () => saveSettings({ show_pet: $('s-pet').checked }));
   $('s-paused').addEventListener('change', async () => {
     await saveSettings({ paused: $('s-paused').checked });
     renderSettings();
@@ -227,6 +230,54 @@ function bindControls() {
     $('exclusion-input').value = '';
     renderExclusions().catch(showError);
   });
+}
+
+// ---------------------------------------------------------------- live bar
+
+const BAR_MAX = 130; // the bar spans 0-130 % of the personal reference
+const LIVE_STALE_MS = 1500;
+let liveStale = null;
+
+let lastLive = null;
+
+function renderLive(p) {
+  // `null` means idle: keep what we know about the reference and the record.
+  if (p) lastLive = p;
+  else p = { ...(lastLive || {}), wpm: null, percent: null, zone: null };
+  const card = $('live');
+  const wpm = p.wpm != null ? p.wpm : null;
+  const calibrating = !!p.calibrating;
+  const pct = p.percent != null ? Math.max(0, Math.min(BAR_MAX, p.percent)) : 0;
+
+  card.dataset.zone = p.zone && wpm != null ? p.zone : 'idle';
+  card.toggleAttribute('data-calibrating', calibrating);
+  card.style.setProperty('--pct', `${(pct / BAR_MAX) * 100}%`);
+  $('live-bar').setAttribute('aria-valuenow', String(Math.round(pct)));
+  $('live-wpm').textContent = wpm != null ? fmt(wpm) : '–';
+  $('live-zone').textContent = wpm != null && p.zone ? t(`zone.${p.zone}`) : '';
+
+  if (calibrating && wpm != null) {
+    $('live-text').textContent = t('live.calibrating', { have: p.calibrating.have, need: p.calibrating.need });
+  } else {
+    $('live-text').textContent = wpm == null ? t('live.idle') : '';
+  }
+
+  // Record marker: only once there is a reference to compare against.
+  const rec = $('live-record');
+  const recLabel = $('live-record-label');
+  const showRec = !calibrating && p.record_percent != null;
+  rec.hidden = recLabel.hidden = !showRec;
+  if (showRec) {
+    const pinned = p.record_percent > BAR_MAX;
+    const left = `${(Math.min(p.record_percent, BAR_MAX) / BAR_MAX) * 100}%`;
+    rec.style.left = recLabel.style.left = left;
+    rec.toggleAttribute('data-pinned', pinned);
+    recLabel.toggleAttribute('data-pinned', pinned);
+    recLabel.textContent = pinned ? `${t('live.record')} →` : t('live.record');
+  }
+
+  clearTimeout(liveStale);
+  if (wpm != null) liveStale = setTimeout(() => renderLive(null), LIVE_STALE_MS);
 }
 
 // ------------------------------------------------------------------ mascot
@@ -254,6 +305,7 @@ async function bindEvents() {
       renderSummary().catch(showError);
     }
   });
+  await listen('tapomo://live', (e) => renderLive(e.payload));
   await listen('tapomo://burst', scheduleRefresh);
   await listen('tapomo://record', blush);
   await listen('tapomo://settings', async () => {
@@ -266,11 +318,13 @@ async function bindEvents() {
 
 async function init() {
   await loadAll();
+  Mascot.mount($('mascot'));
   settings = await invoke('get_settings');
   setLanguage(resolveLanguage(settings.language));
   applyI18n();
   renderLanguageSelect();
   renderSettings();
+  renderLive(null);
   bindControls();
   await bindEvents();
   try {
