@@ -60,6 +60,8 @@ pub struct Settings {
     pub autostart: bool,
     pub ignore_fullscreen: bool,
     pub paused: bool,
+    /// Floating Tapomo on the desktop.
+    pub show_pet: bool,
 }
 
 pub fn get_raw(conn: &Connection, key: &str) -> rusqlite::Result<Option<String>> {
@@ -86,6 +88,7 @@ pub fn get_settings(conn: &Connection) -> rusqlite::Result<Settings> {
         autostart: flag("autostart", true)?,
         ignore_fullscreen: flag("ignore_fullscreen", true)?,
         paused: flag("paused", false)?,
+        show_pet: flag("show_pet", true)?,
     })
 }
 
@@ -95,7 +98,20 @@ pub fn set_settings(conn: &Connection, s: &Settings) -> rusqlite::Result<()> {
     set_raw(conn, "language", &s.language)?;
     set_raw(conn, "autostart", b(s.autostart))?;
     set_raw(conn, "ignore_fullscreen", b(s.ignore_fullscreen))?;
-    set_raw(conn, "paused", b(s.paused))
+    set_raw(conn, "paused", b(s.paused))?;
+    set_raw(conn, "show_pet", b(s.show_pet))
+}
+
+/// Saved position of the floating Tapomo (physical px). Kept out of [`Settings`]
+/// so the settings form can never overwrite it with a stale value.
+pub fn get_pet_pos(conn: &Connection) -> rusqlite::Result<Option<(i32, i32)>> {
+    let read = |key: &str| -> rusqlite::Result<Option<i32>> { Ok(get_raw(conn, key)?.and_then(|v| v.parse().ok())) };
+    Ok(read("pet_x")?.zip(read("pet_y")?))
+}
+
+pub fn set_pet_pos(conn: &Connection, x: i32, y: i32) -> rusqlite::Result<()> {
+    set_raw(conn, "pet_x", &x.to_string())?;
+    set_raw(conn, "pet_y", &y.to_string())
 }
 
 // ------------------------------------------------------------- apps, bursts
@@ -124,6 +140,16 @@ pub fn best_streak(conn: &Connection) -> rusqlite::Result<u32> {
 
 pub fn save_best_streak(conn: &Connection, best: u32) -> rusqlite::Result<()> {
     set_raw(conn, "best_streak", &best.to_string())
+}
+
+/// Inputs of the live bar: every stored 10 s peak of the last 30 days, and the
+/// all-time maximum peak.
+pub fn peak_data(conn: &Connection) -> rusqlite::Result<(Vec<f64>, Option<f64>)> {
+    let since = range_start_ms(conn, "30d")?;
+    let mut stmt = conn.prepare("SELECT peak_wpm FROM bursts WHERE peak_wpm IS NOT NULL AND start_ms >= ?1")?;
+    let peaks = stmt.query_map([since], |r| r.get::<_, f64>(0))?.collect::<rusqlite::Result<Vec<_>>>()?;
+    let max: Option<f64> = conn.query_row("SELECT MAX(peak_wpm) FROM bursts WHERE peak_wpm IS NOT NULL", [], |r| r.get(0))?;
+    Ok((peaks, max))
 }
 
 pub fn set_alias(conn: &Connection, exe: &str, alias: &str) -> rusqlite::Result<()> {

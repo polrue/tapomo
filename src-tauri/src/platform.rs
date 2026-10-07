@@ -54,3 +54,47 @@ pub fn exe_name(_hwnd: isize) -> Option<String> {
 pub fn fullscreen_busy() -> bool {
     false
 }
+
+/// Work area (screen minus taskbar) of the primary monitor, physical px: `(left, top, right, bottom)`.
+#[cfg(windows)]
+pub fn primary_work_area() -> Option<(i32, i32, i32, i32)> {
+    use ::windows::Win32::Foundation::RECT;
+    use ::windows::Win32::UI::WindowsAndMessaging::{
+        SystemParametersInfoW, SPI_GETWORKAREA, SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS,
+    };
+    let mut rect = RECT::default();
+    // SAFETY: SPI_GETWORKAREA writes one RECT through the pointer, which outlives the call.
+    unsafe {
+        SystemParametersInfoW(
+            SPI_GETWORKAREA,
+            0,
+            Some(&mut rect as *mut RECT as *mut std::ffi::c_void),
+            SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS(0),
+        )
+        .ok()?;
+    }
+    Some((rect.left, rect.top, rect.right, rect.bottom))
+}
+
+#[cfg(not(windows))]
+pub fn primary_work_area() -> Option<(i32, i32, i32, i32)> {
+    None
+}
+
+/// Makes the window never take focus and keeps it out of Alt+Tab (`WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW`).
+#[cfg(windows)]
+pub fn make_noactivate(hwnd: isize) {
+    use ::windows::Win32::Foundation::HWND;
+    use ::windows::Win32::UI::WindowsAndMessaging::{
+        GetWindowLongPtrW, SetWindowLongPtrW, GWL_EXSTYLE, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
+    };
+    let hwnd = HWND(hwnd as _);
+    // SAFETY: plain read-modify-write of the extended style of a window we own.
+    unsafe {
+        let style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
+        SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style | (WS_EX_NOACTIVATE.0 | WS_EX_TOOLWINDOW.0) as isize);
+    }
+}
+
+#[cfg(not(windows))]
+pub fn make_noactivate(_hwnd: isize) {}

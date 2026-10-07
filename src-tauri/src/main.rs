@@ -5,6 +5,7 @@ mod db;
 mod hook;
 mod i18n;
 mod password;
+mod pet;
 mod platform;
 mod tracker;
 
@@ -44,11 +45,15 @@ fn main() {
             commands::list_exclusions,
             commands::add_exclusion,
             commands::remove_exclusion,
+            commands::pet_move_done,
         ])
         .on_window_event(|window, event| {
             // Closing only hides: the app keeps measuring from the tray.
             if let WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
+                if window.label() != "main" {
+                    return;
+                }
                 let _ = window.hide();
                 if let Some(state) = window.app_handle().try_state::<AppState>() {
                     state.shared.window_visible.store(false, Ordering::Relaxed);
@@ -74,14 +79,21 @@ fn main() {
             tracker::spawn(app.handle().clone(), db_path, rx, shared.clone());
             hook::start(tx.clone());
             password::start();
-            app.manage(AppState { db: Mutex::new(conn), tx, shared });
+            shared.show_pet.store(settings.show_pet, Ordering::Relaxed);
+            let pet_pos = db::get_pet_pos(&conn).ok().flatten();
+            app.manage(AppState { db: Mutex::new(conn), tx, shared: shared.clone() });
+            // After `manage`: the pet page asks for the settings as soon as it loads.
+            pet::create(app.handle(), pet_pos)?;
+            pet::sync(app.handle(), &shared);
 
             let lang = i18n::resolve(&settings.language);
             let open = MenuItem::with_id(app, "open", i18n::tr(lang, "tray.open"), true, None::<&str>)?;
+            let show_pet = CheckMenuItem::with_id(app, "show_pet", i18n::tr(lang, "tray.show_pet"), true, settings.show_pet, None::<&str>)?;
+            let move_pet = CheckMenuItem::with_id(app, "move_pet", i18n::tr(lang, "tray.move_pet"), settings.show_pet, false, None::<&str>)?;
             let pause = CheckMenuItem::with_id(app, "pause", i18n::tr(lang, "tray.pause"), true, settings.paused, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", i18n::tr(lang, "tray.quit"), true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&open, &pause, &quit])?;
-            app.manage(TrayItems { open, pause, quit });
+            let menu = Menu::with_items(app, &[&open, &show_pet, &move_pet, &pause, &quit])?;
+            app.manage(TrayItems { open, show_pet, move_pet, pause, quit });
 
             let mut tray = TrayIconBuilder::with_id("main")
                 .tooltip("Tapomo")
@@ -90,6 +102,11 @@ fn main() {
                 .on_menu_event(|app, event| match event.id().as_ref() {
                     "open" => show_main(app),
                     "pause" => commands::toggle_pause(app),
+                    "show_pet" => commands::toggle_show_pet(app),
+                    "move_pet" => {
+                        let on = app.try_state::<TrayItems>().and_then(|i| i.move_pet.is_checked().ok()).unwrap_or(false);
+                        pet::set_move_mode(app, on);
+                    }
                     "quit" => commands::quit(app),
                     _ => {}
                 })

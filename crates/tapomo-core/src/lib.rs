@@ -160,6 +160,27 @@ impl Engine {
         self.best_streak_ever = self.best_streak_ever.max(best);
     }
 
+    /// Speed right now, for the live bar: characters typed in the last
+    /// [`Config::peak_window_ms`] of the open burst. The time base runs up to `now_ms`,
+    /// so the value eases down while you pause instead of freezing. `None` when no
+    /// burst is open or it is younger than [`LIVE_MIN_MS`] (too noisy to show).
+    pub fn live_wpm(&self, now_ms: u64) -> Option<f64> {
+        let open = self.current.as_ref()?;
+        let first = *open.typed_times.first()?;
+        if now_ms.saturating_sub(open.last_ms) > self.config.pause_ms {
+            return None;
+        }
+        let elapsed = now_ms.saturating_sub(first);
+        if elapsed < LIVE_MIN_MS {
+            return None;
+        }
+        let window = elapsed.min(self.config.peak_window_ms);
+        let since = now_ms - window;
+        let keys = open.typed_times.iter().rev().take_while(|&&t| t >= since).count();
+        let minutes = window as f64 / 60_000.0;
+        Some((keys as f64 / 5.0) / minutes)
+    }
+
     /// Processes one keystroke. Returns a burst if this keystroke closed one.
     pub fn push(&mut self, ev: KeyEvent) -> Option<Burst> {
         if ev.class == KeyClass::Ignored {
@@ -236,6 +257,51 @@ impl Engine {
             peak_wpm: peak_wpm(&open.typed_times, self.config.peak_window_ms),
             best_streak: open.best_streak,
         })
+    }
+}
+
+/// Minimum age of a burst before [`Engine::live_wpm`] reports anything.
+pub const LIVE_MIN_MS: u64 = 2_000;
+
+/// Peaks needed before the personal reference is trusted ("calibrating" until then).
+pub const REFERENCE_MIN_PEAKS: usize = 20;
+
+/// The user's own 100 % for the live bar: the 90th percentile of their 10 s peaks
+/// (the caller passes the last 30 days). A good habitual pace, not the all-time
+/// record, so typing well lands high on the bar while beating it stays possible.
+/// `None` while calibrating.
+pub fn personal_reference(peaks: &[f64]) -> Option<f64> {
+    if peaks.len() < REFERENCE_MIN_PEAKS {
+        return None;
+    }
+    let mut sorted: Vec<f64> = peaks.iter().copied().filter(|p| p.is_finite()).collect();
+    sorted.sort_by(f64::total_cmp);
+    // Nearest-rank percentile.
+    let rank = ((0.9 * sorted.len() as f64).ceil() as usize).clamp(1, sorted.len());
+    Some(sorted[rank - 1])
+}
+
+/// Bar zones, by percentage of the personal reference.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Zone {
+    /// Below 60 %.
+    WarmingUp,
+    /// 60–85 %.
+    Good,
+    /// 85–100 %.
+    OnFire,
+    /// Above 100 %: beating your own pace.
+    BeatingYourself,
+}
+
+impl Zone {
+    pub fn of(percent: f64) -> Self {
+        match percent {
+            p if p > 100.0 => Zone::BeatingYourself,
+            p if p >= 85.0 => Zone::OnFire,
+            p if p >= 60.0 => Zone::Good,
+            _ => Zone::WarmingUp,
+        }
     }
 }
 
@@ -399,6 +465,46 @@ mod tests {
         let peak = out[0].peak_wpm.unwrap();
         assert!((peak - 120.0).abs() < 1.0, "peak was {peak}");
         assert!(out[0].gross_wpm() < peak);
+    }
+
+    #[test]
+    fn live_wpm_tracks_current_pace_and_eases_down() {
+        let mut e = Engine::new(Config::default());
+        let mut out = Vec::new();
+        assert_eq!(e.live_wpm(0), None);
+        // 150 keys at 100 ms = 120 WPM over 15 s.
+        let t = type_chars(&mut e, &mut out, 0, 150, 100);
+        let now = t - 100;
+        let live = e.live_wpm(now).unwrap();
+        assert!((live - 120.0).abs() < 2.0, "live was {live}");
+        // One second of silence lowers it, past the pause it disappears.
+        assert!(e.live_wpm(now + 1_000).unwrap() < live);
+        assert_eq!(e.live_wpm(now + 2_001), None);
+    }
+
+    #[test]
+    fn live_wpm_waits_for_a_few_seconds_of_typing() {
+        let mut e = Engine::new(Config::default());
+        let mut out = Vec::new();
+        type_chars(&mut e, &mut out, 0, 10, 100);
+        assert_eq!(e.live_wpm(900), None);
+    }
+
+    #[test]
+    fn reference_is_p90_after_calibration() {
+        assert_eq!(personal_reference(&[60.0; 19]), None);
+        let peaks: Vec<f64> = (1..=20).map(|i| i as f64 * 5.0).collect();
+        // 90th percentile of 5..=100 by nearest rank is the 18th value.
+        assert_eq!(personal_reference(&peaks), Some(90.0));
+    }
+
+    #[test]
+    fn zones_follow_percent() {
+        assert_eq!(Zone::of(30.0), Zone::WarmingUp);
+        assert_eq!(Zone::of(60.0), Zone::Good);
+        assert_eq!(Zone::of(90.0), Zone::OnFire);
+        assert_eq!(Zone::of(100.0), Zone::OnFire);
+        assert_eq!(Zone::of(100.1), Zone::BeatingYourself);
     }
 
     #[test]

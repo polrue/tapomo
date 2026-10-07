@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tapomo</title>
+  <link rel="stylesheet" href="mascot.css">
+  <link rel="stylesheet" href="pet.css">
+</head>
+<body>
+  <div id="pet" class="pet" data-zone="idle">
+    <div id="bubble" class="bubble" role="status" hidden></div>
+    <div class="stage" id="stage">
+      <svg id="mascot" viewBox="0 0 160 160" role="img" aria-label="Tapomo"></svg>
+    </div>
+    <div id="livebar" class="livebar" hidden><i id="livefill"></i></div>
+    <div id="move" class="move" data-tauri-drag-region hidden>
+      <span class="move-hint" id="move-hint" data-tauri-drag-region></span>
+      <button id="move-done" type="button" class="move-done">✓</button>
+    </div>
+  </div>
+  <script src="i18n.js"></script>
+  <script src="mascot.js"></script>
+  <script src="pet.js"></script>
+</body>
+</html>

@@ -11,13 +11,15 @@ use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use rusqlite::Connection;
-use tapomo_core::{Burst, Config, Engine, KeyClass, KeyEvent};
+use serde::Serialize;
+use tapomo_core::{personal_reference, Burst, Config, Engine, KeyClass, KeyEvent, Zone, REFERENCE_MIN_PEAKS};
 use tauri::{AppHandle, Emitter};
 
 use crate::hook::RawKey;
-use crate::{db, platform};
+use crate::{db, pet, platform};
 
-const TICK: Duration = Duration::from_millis(500);
+/// Worker tick: closes finished bursts and drives the live bar.
+const TICK: Duration = Duration::from_millis(250);
 const FULLSCREEN_CHECK: Duration = Duration::from_secs(2);
 const EXE_CACHE_TTL: Duration = Duration::from_secs(30);
 
@@ -36,8 +38,47 @@ pub enum Msg {
 #[derive(Default)]
 pub struct Shared {
     pub streak: AtomicU32,
-    /// Key animation events are only emitted while the window is on screen.
+    /// Key and live events are only emitted while the main window or the pet is on screen.
     pub window_visible: AtomicBool,
+    /// The floating Tapomo is currently on screen.
+    pub pet_visible: AtomicBool,
+    /// Setting `show_pet`.
+    pub show_pet: AtomicBool,
+    /// A fullscreen game or presentation hides the pet.
+    pub fullscreen: AtomicBool,
+    /// "Move Tapomo" mode is on (click-through off).
+    pub pet_move: AtomicBool,
+}
+
+impl Shared {
+    fn ui_visible(&self) -> bool {
+        self.window_visible.load(Ordering::Relaxed) || self.pet_visible.load(Ordering::Relaxed)
+    }
+}
+
+/// Payload of `tapomo://live`. `wpm` is `null` when no burst is open (or it is too young).
+#[derive(Serialize, Clone)]
+struct Live {
+    wpm: Option<f64>,
+    reference: Option<f64>,
+    percent: Option<f64>,
+    zone: Option<&'static str>,
+    /// All-time best 10 s peak as a percentage of the reference.
+    record_percent: Option<f64>,
+    calibrating: Option<Calibrating>,
+    streak: Streak,
+}
+
+#[derive(Serialize, Clone)]
+struct Calibrating {
+    have: usize,
+    need: usize,
+}
+
+#[derive(Serialize, Clone)]
+struct Streak {
+    current: u32,
+    best: u32,
 }
 
 pub fn spawn(app: AppHandle, db_path: PathBuf, rx: Receiver<Msg>, shared: Arc<Shared>) {
@@ -70,6 +111,13 @@ struct Tracker {
     saved_best: u32,
     /// All-time record when the current streak began; crossing it fires `tapomo://record`.
     record_baseline: u32,
+    /// Personal 100 % of the live bar, and how many peaks it was built from.
+    reference: Option<f64>,
+    peak_count: usize,
+    max_peak: Option<f64>,
+    /// Time of the last accepted key of the open burst; `None` once it is closed.
+    last_key_ms: Option<u64>,
+    live_active: bool,
 }
 
 impl Tracker {
@@ -90,7 +138,13 @@ impl Tracker {
             fullscreen: (Instant::now() - FULLSCREEN_CHECK, false),
             saved_best,
             record_baseline: saved_best,
+            reference: None,
+            peak_count: 0,
+            max_peak: None,
+            last_key_ms: None,
+            live_active: false,
         };
+        t.refresh_reference();
         t.reload();
         t
     }
@@ -102,10 +156,12 @@ impl Tracker {
                 Ok(Msg::Key(key)) => self.on_key(key),
                 Ok(Msg::Reload) => self.reload(),
                 Ok(Msg::PasswordFocus) => {
+                    self.last_key_ms = None;
                     let burst = self.engine.flush();
                     self.finish_burst(burst);
                 }
                 Ok(Msg::Shutdown(ack)) => {
+                    self.last_key_ms = None;
                     let burst = self.engine.flush();
                     self.finish_burst(burst);
                     self.persist_best();
@@ -117,9 +173,15 @@ impl Tracker {
             }
             if Instant::now() >= next_tick {
                 next_tick = Instant::now() + TICK;
-                let burst = self.engine.tick(now_ms());
+                let now = now_ms();
+                let burst = self.engine.tick(now);
+                if burst.is_some() {
+                    self.last_key_ms = None;
+                }
                 self.finish_burst(burst);
                 self.shared.streak.store(self.engine.current_streak(), Ordering::Relaxed);
+                self.emit_live(now);
+                self.watch_fullscreen();
             }
         }
     }
@@ -130,7 +192,7 @@ impl Tracker {
                 let was_paused = self.paused;
                 self.paused = s.paused;
                 self.ignore_fullscreen = s.ignore_fullscreen;
-                let flushed = if self.paused && !was_paused { self.engine.flush() } else { None };
+                let flushed = if self.paused && !was_paused { self.last_key_ms = None; self.engine.flush() } else { None };
                 self.engine.set_config(Config::default().with_pause_ms(s.pause_ms));
                 self.finish_burst(flushed);
             }
@@ -155,9 +217,10 @@ impl Tracker {
         }
         let Some(app_id) = self.app_id(&exe) else { return };
 
-        if self.shared.window_visible.load(Ordering::Relaxed) {
+        if self.shared.ui_visible() {
             let _ = self.app.emit("tapomo://key", class_name(key.class));
         }
+        self.last_key_ms = Some(key.t_ms);
 
         if self.engine.current_streak() == 0 {
             self.record_baseline = self.engine.best_streak_ever();
@@ -178,7 +241,61 @@ impl Tracker {
             return;
         }
         self.persist_best();
+        self.refresh_reference();
         let _ = self.app.emit("tapomo://burst", ());
+    }
+
+    /// Rebuilds the personal 100 % from the stored peaks (cheap: a few thousand rows at most).
+    fn refresh_reference(&mut self) {
+        match db::peak_data(&self.conn) {
+            Ok((peaks, max)) => {
+                self.peak_count = peaks.len();
+                self.reference = personal_reference(&peaks);
+                self.max_peak = max;
+            }
+            Err(e) => log::error!("could not read peaks: {e}"),
+        }
+    }
+
+    /// `tapomo://live` every tick while a burst is open, plus one empty payload when it closes.
+    fn emit_live(&mut self, now: u64) {
+        let pause_ms = self.engine.config().pause_ms;
+        let active = self.last_key_ms.is_some_and(|t| now.saturating_sub(t) <= pause_ms);
+        let was_active = std::mem::replace(&mut self.live_active, active);
+        if (!active && !was_active) || !self.shared.ui_visible() {
+            return;
+        }
+        let wpm = if active { self.engine.live_wpm(now) } else { None };
+        let percent = wpm.zip(self.reference).map(|(w, r)| w / r * 100.0);
+        let payload = Live {
+            wpm,
+            reference: self.reference,
+            percent,
+            zone: percent.map(|p| match Zone::of(p) {
+                Zone::WarmingUp => "warming",
+                Zone::Good => "good",
+                Zone::OnFire => "fire",
+                Zone::BeatingYourself => "beating",
+            }),
+            record_percent: self.max_peak.zip(self.reference).map(|(m, r)| m / r * 100.0),
+            calibrating: self
+                .reference
+                .is_none()
+                .then_some(Calibrating { have: self.peak_count, need: REFERENCE_MIN_PEAKS }),
+            streak: Streak { current: self.engine.current_streak(), best: self.engine.best_streak_ever() },
+        };
+        let _ = self.app.emit("tapomo://live", payload);
+    }
+
+    /// Hides the floating Tapomo while a fullscreen game or presentation runs.
+    fn watch_fullscreen(&mut self) {
+        if !self.shared.show_pet.load(Ordering::Relaxed) {
+            return;
+        }
+        let busy = self.fullscreen_busy();
+        if busy != self.shared.fullscreen.swap(busy, Ordering::Relaxed) {
+            pet::sync(&self.app, &self.shared);
+        }
     }
 
     fn persist_best(&mut self) {
@@ -237,7 +354,8 @@ fn class_name(class: KeyClass) -> &'static str {
         KeyClass::Char => "char",
         KeyClass::Space => "space",
         KeyClass::Enter => "enter",
-        KeyClass::Backspace | KeyClass::WordDelete => "delete",
+        KeyClass::Backspace => "delete",
+        KeyClass::WordDelete => "word_delete",
         KeyClass::Ignored => "ignored",
     }
 }
