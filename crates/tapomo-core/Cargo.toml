@@ -1,0 +1,9 @@
+[package]
+name = "tapomo-core"
+version = "0.1.0"
+description = "Burst-based typing speed metrics for Tapomo. Never sees text, only key classes and timestamps."
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]

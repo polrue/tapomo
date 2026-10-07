@@ -1,0 +1,14 @@
+{
+  "name": "tapomo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Passive typing speed tracker for Windows",
+  "license": "GPL-3.0-or-later",
+  "scripts": {
+    "tauri": "tauri",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

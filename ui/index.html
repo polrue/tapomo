@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tapomo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <svg id="mascot" class="mascot" viewBox="0 0 160 160" role="img" aria-label="Tapomo">
+      <ellipse cx="80" cy="142" rx="44" ry="6" fill="#cfc8dd"/>
+      <g id="mascot-body" class="mascot-body">
+        <rect x="30" y="40" width="100" height="98" rx="30" fill="#ff9e7a"/>
+        <rect x="40" y="46" width="80" height="72" rx="22" fill="#ffffff" opacity=".28"/>
+        <circle cx="62" cy="84" r="7" fill="#23202b"/><circle cx="98" cy="84" r="7" fill="#23202b"/>
+        <circle cx="64" cy="82" r="2.4" fill="#fff"/><circle cx="100" cy="82" r="2.4" fill="#fff"/>
+        <circle class="cheek" cx="50" cy="98" r="7" fill="#ff6f61" opacity=".45"/><circle class="cheek" cx="110" cy="98" r="7" fill="#ff6f61" opacity=".45"/>
+        <path d="M72 100 Q80 108 88 100" stroke="#23202b" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      </g>
+    </svg>
+    <div class="brand">
+      <h1>Tapomo</h1>
+      <p class="tagline" id="paused-banner" hidden data-i18n="paused.banner"></p>
+    </div>
+    <nav class="tabs" id="range-tabs" role="tablist">
+      <button role="tab" data-range="today" data-i18n="range.today"></button>
+      <button role="tab" data-range="7d" data-i18n="range.7d"></button>
+      <button role="tab" data-range="30d" data-i18n="range.30d"></button>
+      <button role="tab" data-range="all" data-i18n="range.all"></button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="empty" class="empty" hidden>
+      <h2 data-i18n="empty.title"></h2>
+      <p data-i18n="empty.text"></p>
+    </section>
+
+    <div id="data">
+      <section class="tiles" id="tiles">
+        <article class="tile big" data-i18n-title="tile.avg.hint">
+          <span class="label" data-i18n="tile.avg"></span>
+          <strong id="t-avg">–</strong>
+          <small id="t-net"></small>
+        </article>
+        <article class="tile" data-i18n-title="tile.peak.hint">
+          <span class="label" data-i18n="tile.peak"></span>
+          <strong id="t-peak">–</strong>
+        </article>
+        <article class="tile" data-i18n-title="tile.best.hint">
+          <span class="label" data-i18n="tile.best"></span>
+          <strong id="t-best">–</strong>
+        </article>
+        <article class="tile">
+          <span class="label" data-i18n="tile.current"></span>
+          <strong id="t-current">–</strong>
+        </article>
+        <article class="tile">
+          <span class="label" data-i18n="tile.time"></span>
+          <strong id="t-time">–</strong>
+        </article>
+        <article class="tile">
+          <span class="label" data-i18n="tile.chars"></span>
+          <strong id="t-chars">–</strong>
+        </article>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="heatmap.title"></h2>
+        <div id="heatmap" class="heatmap" role="img"></div>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="apps.title"></h2>
+        <table class="apps">
+          <thead>
+            <tr><th data-i18n="apps.app"></th><th class="num" data-i18n="apps.wpm"></th><th class="num" data-i18n="apps.chars"></th></tr>
+          </thead>
+          <tbody id="apps-body"></tbody>
+        </table>
+        <p id="apps-empty" class="muted" data-i18n="apps.empty" hidden></p>
+      </section>
+    </div>
+
+    <section class="card" id="settings">
+      <h2 data-i18n="settings.title"></h2>
+
+      <div class="row">
+        <label for="s-pause" data-i18n="settings.pause"></label>
+        <div class="slider"><input id="s-pause" type="range" min="1" max="5" step="0.5"><output id="s-pause-out"></output></div>
+      </div>
+      <p class="hint" data-i18n="settings.pause.hint"></p>
+
+      <div class="row">
+        <label for="s-language" data-i18n="settings.language"></label>
+        <select id="s-language"></select>
+      </div>
+
+      <label class="check"><input id="s-autostart" type="checkbox"><span data-i18n="settings.autostart"></span></label>
+      <label class="check"><input id="s-fullscreen" type="checkbox"><span data-i18n="settings.fullscreen"></span></label>
+      <p class="hint" data-i18n="settings.fullscreen.hint"></p>
+      <label class="check"><input id="s-paused" type="checkbox"><span data-i18n="settings.paused"></span></label>
+
+      <h3 data-i18n="settings.exclusions"></h3>
+      <p class="hint" data-i18n="settings.exclusions.hint"></p>
+      <ul id="exclusions" class="chips"></ul>
+      <form id="exclusion-form" class="inline-form">
+        <input id="exclusion-input" type="text" autocomplete="off" spellcheck="false" data-i18n-placeholder="settings.exclusions.placeholder">
+        <button type="submit" data-i18n="settings.exclusions.add"></button>
+      </form>
+    </section>
+
+    <section class="card about">
+      <h2 data-i18n="about.title"></h2>
+      <p id="about-version" class="muted"></p>
+      <p class="privacy" data-i18n="about.privacy"></p>
+      <p class="links">
+        <a href="https://github.com/polrue/tapomo" target="_blank" rel="noopener" data-i18n="about.source"></a>
+        <a class="coffee" href="https://github.com/sponsors/polrue" target="_blank" rel="noopener" data-i18n="about.coffee"></a>
+      </p>
+    </section>
+  </main>
+
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
