@@ -100,6 +100,12 @@ fn main() {
                 tray = tray.icon(icon.clone());
             }
             tray.build(app)?;
+
+            // Autostart launches with --minimized and stays in the tray; opening
+            // Tapomo by hand (Start menu, installer) shows the window.
+            if !std::env::args().any(|a| a == "--minimized") {
+                show_main(app.handle());
+            }
             Ok(())
         })
         .run(tauri::generate_context!())
