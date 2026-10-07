@@ -1,7 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Tapomo",
-  "version": "0.1.0",
   "identifier": "app.tapomo.tracker",
   "build": {
     "frontendDist": "../ui"
