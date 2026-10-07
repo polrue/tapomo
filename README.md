@@ -19,6 +19,8 @@ Qué **no** se guarda nunca: el texto, las teclas concretas, los títulos de ven
 
 Además: las pulsaciones inyectadas por macros o autotypers se ignoran, los atajos (Ctrl/Alt/Win + tecla) no cuentan, hay una lista de aplicaciones excluidas (gestores de contraseñas por defecto: KeePass, KeePassXC, 1Password, Bitwarden), los juegos y presentaciones a pantalla completa se ignoran (se puede desactivar) y puedes pausar la medición en cualquier momento desde la bandeja.
 
+Los campos de contraseña se ignoran por completo: ni se cuentan ni se cronometran (se detectan con UI Automation). Los prompts de terminal (ssh/sudo) no se pueden detectar, pero tampoco se registran nunca, porque Tapomo no sabe qué tecla pulsaste.
+
 ## Cómo se mide
 
 - **Ráfaga**: una tanda de escritura sin pausas largas. Si dejas de escribir más de **2 s** (ajustable de 1 a 5 s) la ráfaga termina; el tiempo de pausa no cuenta, así que pensar no te penaliza. Cambiar de aplicación también cierra la ráfaga.
@@ -66,6 +68,8 @@ What is stored, in a local SQLite database on your machine:
 What is **never** stored: text, individual keys, window titles, screenshots, or anything that leaves your computer. Tapomo has no networking and no telemetry.
 
 Also: keystrokes injected by macros or auto-typers are ignored, shortcuts (Ctrl/Alt/Win + key) don't count, there is an excluded-apps list (password managers by default: KeePass, KeePassXC, 1Password, Bitwarden), fullscreen games and presentations are ignored (can be turned off), and you can pause measuring at any time from the tray.
+
+Password fields are ignored entirely: not counted, not timed (detected via UI Automation). Terminal prompts (ssh/sudo) can't be detected, but they are still never recorded, because Tapomo never knows which key was pressed.
 
 ### How it is measured
 

@@ -4,6 +4,7 @@ mod commands;
 mod db;
 mod hook;
 mod i18n;
+mod password;
 mod platform;
 mod tracker;
 
@@ -72,6 +73,7 @@ fn main() {
             let shared = Arc::new(Shared::default());
             tracker::spawn(app.handle().clone(), db_path, rx, shared.clone());
             hook::start(tx.clone());
+            password::start();
             app.manage(AppState { db: Mutex::new(conn), tx, shared });
 
             let lang = i18n::resolve(&settings.language);
