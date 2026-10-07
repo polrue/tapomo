@@ -18,7 +18,6 @@ use crate::tracker::{Msg, Shared};
 pub struct TrayItems {
     pub open: MenuItem<tauri::Wry>,
     pub show_pet: CheckMenuItem<tauri::Wry>,
-    pub move_pet: CheckMenuItem<tauri::Wry>,
     pub pause: CheckMenuItem<tauri::Wry>,
     pub quit: MenuItem<tauri::Wry>,
 }
@@ -80,6 +79,7 @@ pub fn list_exclusions(state: State<AppState>) -> CmdResult<Vec<String>> {
 #[tauri::command]
 pub fn add_exclusion(state: State<AppState>, exe: String) -> CmdResult<()> {
     state.with_db(|c| db::add_exclusion(c, &exe))?;
+    log::info!("exclusion added");
     let _ = state.tx.send(Msg::Reload);
     Ok(())
 }
@@ -87,6 +87,7 @@ pub fn add_exclusion(state: State<AppState>, exe: String) -> CmdResult<()> {
 #[tauri::command]
 pub fn remove_exclusion(state: State<AppState>, exe: String) -> CmdResult<()> {
     state.with_db(|c| db::remove_exclusion(c, &exe))?;
+    log::info!("exclusion removed");
     let _ = state.tx.send(Msg::Reload);
     Ok(())
 }
@@ -94,8 +95,15 @@ pub fn remove_exclusion(state: State<AppState>, exe: String) -> CmdResult<()> {
 /// Saves settings and propagates them: tracker, tray, autostart and the UI.
 pub fn apply_settings(app: &AppHandle, settings: Settings) -> CmdResult<()> {
     let state = app.state::<AppState>();
+    let old = state.with_db(db::get_settings).ok();
     state.with_db(|c| db::set_settings(c, &settings))?;
     let _ = state.tx.send(Msg::Reload);
+    if let Some(old) = &old {
+        let changed = changed_settings(old, &settings);
+        if !changed.is_empty() {
+            log::info!("settings changed: {}", changed.join(", "));
+        }
+    }
 
     let autolaunch = app.autolaunch();
     let enabled = autolaunch.is_enabled().unwrap_or(false);
@@ -106,11 +114,29 @@ pub fn apply_settings(app: &AppHandle, settings: Settings) -> CmdResult<()> {
         }
     }
 
+    if settings.show_pet && old.as_ref().is_some_and(|o| !o.show_pet) {
+        pet::cancel_snooze(&state.shared);
+    }
     state.shared.show_pet.store(settings.show_pet, Ordering::Relaxed);
     pet::sync(app, &state.shared);
     refresh_tray(app, &settings);
     let _ = app.emit("tapomo://settings", ());
     Ok(())
+}
+
+/// Names (never values) of the settings that differ.
+fn changed_settings(old: &Settings, new: &Settings) -> Vec<&'static str> {
+    [
+        ("pause_ms", old.pause_ms != new.pause_ms),
+        ("language", old.language != new.language),
+        ("autostart", old.autostart != new.autostart),
+        ("ignore_fullscreen", old.ignore_fullscreen != new.ignore_fullscreen),
+        ("paused", old.paused != new.paused),
+        ("show_pet", old.show_pet != new.show_pet),
+    ]
+    .into_iter()
+    .filter_map(|(name, changed)| changed.then_some(name))
+    .collect()
 }
 
 /// Updates the tray labels and the pause checkmark.
@@ -120,8 +146,6 @@ pub fn refresh_tray(app: &AppHandle, settings: &Settings) {
     let _ = items.open.set_text(i18n::tr(lang, "tray.open"));
     let _ = items.show_pet.set_text(i18n::tr(lang, "tray.show_pet"));
     let _ = items.show_pet.set_checked(settings.show_pet);
-    let _ = items.move_pet.set_text(i18n::tr(lang, "tray.move_pet"));
-    let _ = items.move_pet.set_enabled(settings.show_pet);
     let _ = items.pause.set_text(i18n::tr(lang, "tray.pause"));
     let _ = items.pause.set_checked(settings.paused);
     let _ = items.quit.set_text(i18n::tr(lang, "tray.quit"));
@@ -140,17 +164,36 @@ pub fn toggle_pause(app: &AppHandle) {
 /// Tray "show Tapomo" toggle.
 pub fn toggle_show_pet(app: &AppHandle) {
     let state = app.state::<AppState>();
+    let Ok(settings) = state.with_db(db::get_settings) else { return };
+    set_show_pet(app, !settings.show_pet);
+}
+
+/// Turns the floating Tapomo on or off (same as the setting).
+pub fn set_show_pet(app: &AppHandle, on: bool) {
+    let state = app.state::<AppState>();
     let Ok(mut settings) = state.with_db(db::get_settings) else { return };
-    settings.show_pet = !settings.show_pet;
+    settings.show_pet = on;
     if let Err(e) = apply_settings(app, settings) {
-        log::error!("could not toggle the pet: {e}");
+        log::error!("could not change the pet setting: {e}");
     }
 }
 
-/// The pet's own ✓ button: ends "move" mode.
+/// Motivational line for the click bubble: a template key plus its variables.
 #[tauri::command]
-pub fn pet_move_done(app: AppHandle) {
-    pet::set_move_mode(&app, false);
+pub fn get_pet_tip(state: State<AppState>, lang: String) -> CmdResult<Option<crate::pet_tip::PetTip>> {
+    let lang = i18n::resolve(&lang);
+    state.with_db(|c| crate::pet_tip::next_tip(c, lang))
+}
+
+/// Opens the folder holding the log files in the file manager.
+#[tauri::command]
+pub fn open_logs_dir(app: AppHandle) -> CmdResult<()> {
+    let dir = app.path().app_log_dir().map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    tauri_plugin_opener::open_path(dir, None::<&str>).map_err(|e| {
+        log::error!("could not open the logs folder: {e}");
+        e.to_string()
+    })
 }
 
 /// Flushes the open burst, then exits.

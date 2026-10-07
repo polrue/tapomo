@@ -1,0 +1,74 @@
+<!doctype html>
+<!-- Animation lab: a developer page, not linked from the app. It runs the real mascot.js, mascot.css,
+     pet.css and pet.js against a mocked window.__TAURI__ (see lab.js), so what you see here is what
+     the floating Tapomo does. Open it from disk or through any static server. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tapomo animation lab</title>
+  <link rel="stylesheet" href="mascot.css">
+  <link rel="stylesheet" href="pet.css">
+  <style>
+    html, body { height: auto; min-height: 100%; overflow: auto; background: #f4efe9; color: #23202b; }
+    body { margin: 0; font: 14px/1.4 var(--font); }
+    .lab { display: flex; flex-wrap: wrap; gap: 20px; padding: 20px; align-items: flex-start; }
+    .stage-box { position: relative; width: 630px; height: 630px; flex: none; border-radius: 18px; background: #fff8f3; overflow: hidden; box-shadow: 0 0 0 1px rgba(0,0,0,.08); }
+    .stage-box.dark { background: #1b1822; }
+    .scaler { position: absolute; left: 0; top: 0; width: 210px; height: 210px; transform: scale(3); transform-origin: 0 0; }
+    .panel { flex: 1; min-width: 300px; max-width: 640px; display: grid; gap: 14px; }
+    fieldset { margin: 0; border: 1px solid rgba(0,0,0,.14); border-radius: 12px; padding: 8px 12px 12px; background: #fff; }
+    legend { font-weight: 800; padding: 0 6px; }
+    .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+    button { font: inherit; font-weight: 700; color: #23202b; background: #ff9e7a; border: 0; border-radius: 9px; padding: 5px 11px; cursor: pointer; }
+    button:hover { background: #f0764a; }
+    button.on { outline: 3px solid #23202b; }
+    label { display: inline-flex; align-items: center; gap: 8px; margin-right: 12px; }
+    output { min-width: 3.2em; font-variant-numeric: tabular-nums; font-weight: 700; }
+    h1 { margin: 0; font-size: 1.2rem; }
+    .menu-mock { list-style: none; margin: 8px 0 0; padding: 4px; width: 220px; background: #fff; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.25); }
+    .menu-mock li { padding: 5px 12px; border-radius: 5px; }
+    .menu-mock li:hover { background: #ffe3d8; }
+    .note { margin: 0; color: #6b6577; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="lab">
+    <div class="stage-box" id="stage-box">
+      <div class="scaler">
+        <div id="pet" class="pet" data-zone="idle">
+          <div id="bubble" class="bubble" role="status" hidden></div>
+          <div class="stage" id="stage">
+            <svg id="mascot" viewBox="0 0 160 160" role="img" aria-label="Tapomo"></svg>
+          </div>
+          <div id="livebar" class="livebar" hidden><i id="livefill"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel">
+      <h1>Tapomo animation lab</h1>
+      <p class="note">Real pet.js / mascot.js with a mocked Tauri. The eyes follow your mouse; moving over the body counts as hover.</p>
+      <fieldset><legend>Playback</legend>
+        <label>Animation speed <input id="speed" type="range" min="0.25" max="2" step="0.05" value="1"><output id="speed-out">1.00×</output></label>
+        <label><input id="loop" type="checkbox"> Loop this reaction</label>
+        <label><input id="bg-dark" type="checkbox"> Dark background</label>
+        <label>Language <select id="lang"><option value="es">es</option><option value="en">en</option></select></label>
+      </fieldset>
+      <fieldset><legend>Keys</legend><div class="btns" id="g-keys"></div>
+        <p><label>Typing speed <input id="wpm" type="range" min="20" max="150" step="5" value="70"><output id="wpm-out"></output></label>
+        <button type="button" id="burst">Start typing</button> <button type="button" id="stopburst">Stop typing (bar eases down)</button></p>
+      </fieldset>
+      <fieldset><legend>Streak mood (current / best)</legend><div class="btns" id="g-streak"></div></fieldset>
+      <fieldset><legend>Live zone</legend><div class="btns" id="g-zone"></div></fieldset>
+      <fieldset><legend>Mouse actions on Tapomo</legend><div class="btns" id="g-mouse"></div>
+        <ul id="menu-mock" class="menu-mock" hidden></ul><p class="note" id="mouse-log"></p></fieldset>
+      <fieldset><legend>Reactions and states</legend><div class="btns" id="g-react"></div></fieldset>
+    </div>
+  </div>
+  <script src="mascot.js"></script>
+  <script src="i18n.js"></script>
+  <script src="lab.js"></script>
+  <script src="pet.js"></script>
+</body>
+</html>

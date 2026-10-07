@@ -70,6 +70,7 @@ fn run() {
             log::error!("SetWindowsHookExW failed: {e}");
             return;
         }
+        log::info!("keyboard hook installed");
         // The hook only fires while this thread pumps messages.
         let mut msg = MSG::default();
         while GetMessageW(&mut msg, None, 0, 0).as_bool() {}

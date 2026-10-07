@@ -99,6 +99,7 @@ mod imp {
                     log::error!("AddFocusChangedEventHandler failed: {e}");
                     return;
                 }
+                log::info!("password-field detection (UI Automation) started");
                 // Events arrive on UIA's own threads; keep this one (and the objects) alive.
                 loop {
                     std::thread::park();

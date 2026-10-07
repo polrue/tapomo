@@ -40,6 +40,8 @@ async function renderSummary() {
   $('data').hidden = s.bursts === 0;
   if (s.bursts === 0) return s;
 
+  speeds.avg = s.avg_wpm;
+  speeds.peak = s.peak_wpm;
   $('t-avg').innerHTML = withUnit(fmt(s.avg_wpm), 'unit.wpm');
   $('t-net').textContent = t('tile.net', { n: fmt(s.avg_net_wpm) });
   $('t-peak').innerHTML = s.peak_wpm > 0 ? withUnit(fmt(s.peak_wpm), 'unit.wpm') : '–';
@@ -195,7 +197,8 @@ async function onLanguageChange() {
   applyI18n();
   renderLanguageSelect();
   renderSettings();
-  renderLive(null);
+  renderGlossary();
+  paintLive(lastLive || {});
   renderExclusions().catch(showError);
   refreshAll();
 }
@@ -222,6 +225,8 @@ function bindControls() {
     renderSettings();
   });
 
+  $('open-logs').addEventListener('click', () => invoke('open_logs_dir').catch(showError));
+
   $('exclusion-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const exe = $('exclusion-input').value.trim();
@@ -236,36 +241,107 @@ function bindControls() {
 
 const BAR_MAX = 130; // the bar spans 0-130 % of the personal reference
 const LIVE_STALE_MS = 1500;
+const DECAY_TAU = 2.5; // s: when typing stops the bar eases to 0 in about 8 s
+const BLEND_TAU = 0.15; // s: blending to a new live value
 let liveStale = null;
-
 let lastLive = null;
+// What the live card shows right now, and how it is moving.
+const disp = { pct: 0, wpm: 0, tpct: 0, twpm: 0, mode: 'idle', raf: 0, last: 0 };
+const speeds = { avg: 0, peak: 0, live: 0 }; // for the keystroke equivalents in the tooltips
 
+const zoneOfPct = (p) => (p > 100 ? 'beating' : p >= 85 ? 'fire' : p >= 60 ? 'good' : 'warming');
+
+/** A `tapomo://live` payload, or `null` when the burst ended (and as a watchdog). */
 function renderLive(p) {
-  // `null` means idle: keep what we know about the reference and the record.
   if (p) lastLive = p;
-  else p = { ...(lastLive || {}), wpm: null, percent: null, zone: null };
-  const card = $('live');
-  const wpm = p.wpm != null ? p.wpm : null;
-  const calibrating = !!p.calibrating;
-  const pct = p.percent != null ? Math.max(0, Math.min(BAR_MAX, p.percent)) : 0;
-
-  card.dataset.zone = p.zone && wpm != null ? p.zone : 'idle';
-  card.toggleAttribute('data-calibrating', calibrating);
-  card.style.setProperty('--pct', `${(pct / BAR_MAX) * 100}%`);
-  $('live-bar').setAttribute('aria-valuenow', String(Math.round(pct)));
-  $('live-wpm').textContent = wpm != null ? fmt(wpm) : '–';
-  $('live-zone').textContent = wpm != null && p.zone ? t(`zone.${p.zone}`) : '';
-
-  if (calibrating && wpm != null) {
-    $('live-text').textContent = t('live.calibrating', { have: p.calibrating.have, need: p.calibrating.need });
-  } else {
-    $('live-text').textContent = wpm == null ? t('live.idle') : '';
+  const cur = p || lastLive || {};
+  if (p && p.wpm != null) {
+    disp.twpm = p.wpm;
+    disp.tpct = p.percent != null ? Math.max(0, p.percent) : 0;
+    disp.mode = 'live';
+    speeds.live = p.wpm;
+  } else if (disp.mode === 'live') {
+    disp.mode = 'decay'; // keep the last value and let it fall
   }
+  paintLive(cur);
+  ensureLiveFrames();
+  clearTimeout(liveStale);
+  if (p && p.wpm != null) liveStale = setTimeout(() => renderLive(null), LIVE_STALE_MS);
+}
+
+function ensureLiveFrames() {
+  if (!disp.raf && disp.mode !== 'idle') {
+    disp.last = performance.now();
+    disp.raf = requestAnimationFrame(liveFrame);
+  }
+}
+
+function liveFrame(now) {
+  disp.raf = 0;
+  const dt = Math.min(0.1, Math.max(0.001, (now - disp.last) / 1000));
+  disp.last = now;
+  if (disp.mode === 'live') {
+    const k = 1 - Math.exp(-dt / BLEND_TAU);
+    disp.pct += (disp.tpct - disp.pct) * k;
+    disp.wpm += (disp.twpm - disp.wpm) * k;
+    if (Math.abs(disp.tpct - disp.pct) < 0.05 && Math.abs(disp.twpm - disp.wpm) < 0.05) {
+      disp.pct = disp.tpct;
+      disp.wpm = disp.twpm;
+      paintLive(lastLive || {});
+      return; // settled; the next live event restarts the loop
+    }
+  } else if (disp.mode === 'decay') {
+    const f = Math.exp(-dt / (matchMedia('(prefers-reduced-motion: reduce)').matches ? 0.5 : DECAY_TAU));
+    disp.pct *= f;
+    disp.wpm *= f;
+    if (disp.wpm < 2 && disp.pct < 4) {
+      disp.pct = disp.wpm = 0;
+      disp.mode = 'idle';
+    }
+  }
+  paintLive(lastLive || {});
+  if (disp.mode !== 'idle') disp.raf = requestAnimationFrame(liveFrame);
+}
+
+/** Draws the live card from the displayed (possibly decaying) value plus the static payload parts. */
+function paintLive(p) {
+  const card = $('live');
+  const bar = $('live-bar');
+  const cal = p.calibrating || null;
+  const active = disp.wpm >= 2;
+  const pct = Math.max(0, Math.min(BAR_MAX, disp.pct));
+  const zone = active && !cal ? zoneOfPct(disp.pct) : null;
+
+  card.dataset.zone = zone || 'idle';
+  card.toggleAttribute('data-calibrating', !!cal);
+  $('live-wpm').textContent = active ? fmt(disp.wpm) : '–';
+
+  if (cal) {
+    // The bar shows calibration progress (long bursts so far), not speed.
+    const have = Math.min(cal.have, cal.need);
+    card.style.setProperty('--pct', `${Math.max(3, (have / Math.max(1, cal.need)) * 100)}%`);
+    const label = t('live.calibrating.bar', { have: cal.have, need: cal.need });
+    bar.setAttribute('aria-valuemax', String(cal.need));
+    bar.setAttribute('aria-valuenow', String(have));
+    bar.setAttribute('aria-valuetext', label);
+    bar.setAttribute('aria-label', label);
+    $('live-zone').textContent = '';
+    $('live-text').textContent = t('live.calibrating', { have: cal.have, need: cal.need });
+  } else {
+    card.style.setProperty('--pct', `${((pct / BAR_MAX) * 100).toFixed(2)}%`);
+    bar.setAttribute('aria-valuemax', String(BAR_MAX));
+    bar.setAttribute('aria-valuenow', String(Math.round(pct)));
+    bar.removeAttribute('aria-valuetext');
+    bar.setAttribute('aria-label', t('live.bar'));
+    $('live-zone').textContent = zone ? t(`zone.${zone}`) : '';
+    $('live-text').textContent = active ? '' : t('live.idle');
+  }
+  $('live-burst-info').hidden = !cal;
 
   // Record marker: only once there is a reference to compare against.
   const rec = $('live-record');
   const recLabel = $('live-record-label');
-  const showRec = !calibrating && p.record_percent != null;
+  const showRec = !cal && p.record_percent != null;
   rec.hidden = recLabel.hidden = !showRec;
   if (showRec) {
     const pinned = p.record_percent > BAR_MAX;
@@ -275,23 +351,18 @@ function renderLive(p) {
     recLabel.toggleAttribute('data-pinned', pinned);
     recLabel.textContent = pinned ? `${t('live.record')} →` : t('live.record');
   }
-
-  clearTimeout(liveStale);
-  if (wpm != null) liveStale = setTimeout(() => renderLive(null), LIVE_STALE_MS);
 }
 
 // ------------------------------------------------------------------ mascot
 
 function squish() {
-  const body = $('mascot-body');
-  body.classList.remove('squish');
-  void body.getBoundingClientRect(); // restart the animation
-  body.classList.add('squish');
+  Mascot.keyTick($('mascot'));
 }
 
 function blush() {
   const m = $('mascot');
   m.classList.add('blush');
+  Mascot.jump(m, { big: true });
   setTimeout(() => m.classList.remove('blush'), 2500);
 }
 
@@ -314,6 +385,30 @@ async function bindEvents() {
   });
 }
 
+// ----------------------------------------------------------------- glossary
+
+const GLOSSARY = ['pet', 'wpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net'];
+
+function renderGlossary() {
+  const dl = $('glossary-list');
+  dl.replaceChildren();
+  const vars = { pause: fmt((settings ? settings.pause_ms : 2000) / 1000, 1), need: 20 };
+  for (const id of GLOSSARY) {
+    const dt = document.createElement('dt');
+    dt.textContent = t(`gloss.${id}.t`);
+    const dd = document.createElement('dd');
+    dd.textContent = t(`gloss.${id}.d`, vars);
+    dl.append(dt, dd);
+  }
+}
+
+function openGlossary() {
+  const g = $('glossary');
+  g.open = true;
+  g.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  g.querySelector('summary').focus({ preventScroll: true });
+}
+
 // -------------------------------------------------------------------- init
 
 async function init() {
@@ -324,8 +419,30 @@ async function init() {
   applyI18n();
   renderLanguageSelect();
   renderSettings();
-  renderLive(null);
+  renderGlossary();
+  paintLive({});
   bindControls();
+  Tips.init({
+    vars: () => ({
+      pause: fmt((settings ? settings.pause_ms : 2000) / 1000, 1),
+      need: (lastLive && lastLive.calibrating && lastLive.calibrating.need) || 20,
+    }),
+    // Spanish speakers often know typing speed in keystrokes per minute: show it, subtly.
+    extra: (btn) => {
+      const v = speeds[btn.dataset.tipSpeed];
+      return document.documentElement.lang === 'es' && v > 0 ? t('tip.keystrokes', { k: fmt(Math.round(v * 5)) }) : '';
+    },
+    onClick: openGlossary,
+  });
+  // The header mascot's eyes follow the pointer while it is over the window.
+  let lookFrame = 0;
+  document.addEventListener('pointermove', (e) => {
+    if (lookFrame) return;
+    lookFrame = requestAnimationFrame(() => {
+      lookFrame = 0;
+      Mascot.lookAtPoint($('mascot'), e.clientX, e.clientY);
+    });
+  });
   await bindEvents();
   try {
     $('about-version').textContent = t('about.version', { v: await window.__TAURI__.app.getVersion() });

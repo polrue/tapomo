@@ -1,7 +1,12 @@
-/* Mascot parts: only the chosen variant of each part is drawn. */
+/* Mascot parts: only the chosen variant of each part is drawn. All motion is transform/opacity. */
+:root { --speed: 1; } /* global animation speed; the lab changes it */
+
 .mascot { overflow: visible; }
-.mascot-body { transform-box: fill-box; transform-origin: 50% 100%; }
-.mascot [data-part="eyes"] > g, .mascot [data-part="mouth"] > *, .mascot .m-extras { display: none; }
+.mascot-body, .m-hop, .m-bob, .m-lift, .m-breath { transform-box: fill-box; transform-origin: 50% 100%; }
+.m-shadow, .m-shadow-g, .m-glow ellipse, .m-zzz .z { transform-box: fill-box; transform-origin: 50% 50%; }
+.mascot .eyes-blink { transform-origin: 80px 84px; }
+
+.mascot .eyes-blink > g, .mascot [data-part="mouth"] > *, .mascot .m-extras { display: none; }
 .mascot[data-eyes="round"] .eyes-round,
 .mascot[data-eyes="sparkle"] .eyes-sparkle,
 .mascot[data-eyes="dots"] .eyes-dots,
@@ -13,4 +18,59 @@
 .mascot[data-mouth="wavy"] .mouth-wavy { display: inline; }
 
 .cheek { opacity: .45; transition: opacity 300ms ease; }
-.mascot.blush .cheek { opacity: .95; }
+.mascot.blush .cheek, .mascot.hover .cheek { opacity: .95; }
+
+/* Where the eyes look (set by Mascot.look): short ease so they glide. */
+.eyes-look, [data-part="mouth"], .m-cheeks { transition: transform calc(110ms / var(--speed)) ease-out; }
+
+/* Hover lift / held in the hand. */
+.m-lift { transition: transform calc(170ms / var(--speed)) cubic-bezier(.34, 1.56, .64, 1); }
+.mascot.hover .m-lift { transform: translateY(-3.5px); }
+.mascot.held .m-lift { transform: translateY(-7px) rotate(-2deg); }
+.m-shadow { transition: transform calc(170ms / var(--speed)) ease-out, opacity calc(170ms / var(--speed)) ease-out; }
+.mascot.hover .m-shadow { transform: scale(.94); }
+.mascot.held .m-shadow { transform: scale(.78); opacity: .7; }
+
+/* Idle breathing: a slow, tiny scaleY anchored at the bottom. */
+.m-breath { animation: m-breathe calc(3.2s / var(--speed)) ease-in-out infinite; }
+.mascot.sleeping .m-breath { animation-duration: calc(5.4s / var(--speed)); animation-name: m-breathe-deep; }
+@keyframes m-breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.015); } }
+@keyframes m-breathe-deep { 0%, 100% { transform: scaleY(.99); } 50% { transform: scaleY(1.03); } }
+
+/* Zones: speed lines on fire / beating, gold glow when beating. They fade in and out (opacity),
+   never pop; sunglasses are animated from JS. */
+.mascot .m-lines, .mascot .m-glow { display: inline; opacity: 0; transition: opacity calc(320ms / var(--speed)) ease; }
+.mascot[data-zone="fire"] .m-lines, .mascot[data-zone="beating"] .m-lines { opacity: 1; }
+.mascot[data-zone="beating"] .m-glow { opacity: 1; }
+.mascot[data-shades="on"] .m-shades { display: inline; }
+.m-lines .ln { stroke: #ff9e7a; animation: m-streak calc(var(--d, .45s) / var(--speed)) linear infinite; animation-delay: calc(var(--dl, 0s) / var(--speed)); transform-box: fill-box; transform-origin: 0 50%; }
+.mascot[data-zone="fire"] .m-lines .ln { stroke: #f0553a; }
+.mascot[data-zone="beating"] .m-lines .ln { stroke: #ffc93c; }
+@keyframes m-streak {
+  0% { transform: translateX(14px) scaleX(.4); opacity: 0; }
+  30% { opacity: .95; }
+  100% { transform: translateX(-22px) scaleX(1.15); opacity: 0; }
+}
+.m-glow ellipse { animation: m-glow calc(1.6s / var(--speed)) ease-in-out infinite; }
+@keyframes m-glow { 0%, 100% { transform: scale(.96); opacity: .55; } 50% { transform: scale(1.05); opacity: 1; } }
+
+/* Sleeping: z's float up with a drift, staggered, and fade. */
+.mascot.sleeping .m-zzz { display: inline; }
+.mascot.sleeping .m-lines, .mascot.sleeping .m-glow { opacity: 0 !important; }
+.m-zzz .z { opacity: 0; animation: m-z calc(3.4s / var(--speed)) ease-in-out infinite; animation-delay: calc(var(--dl, 0s) / var(--speed)); }
+@keyframes m-z {
+  0% { transform: translate(-5px, 10px) scale(.6) rotate(-10deg); opacity: 0; }
+  25% { opacity: 1; }
+  60% { transform: translate(3px, -3px) scale(1) rotate(5deg); opacity: 1; }
+  100% { transform: translate(-3px, -17px) scale(1.15) rotate(-7deg); opacity: 0; }
+}
+
+/* Offscreen or minimised: every loop stops. */
+.is-hidden .mascot * { animation-play-state: paused !important; }
+
+/* Less motion: faces still change, nothing moves. */
+@media (prefers-reduced-motion: reduce) {
+  .mascot *, .mascot { animation: none !important; transition: none !important; }
+  .mascot.sleeping .m-zzz .z { opacity: 1; }
+  .m-fx { display: none; }
+}
