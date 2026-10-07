@@ -25,7 +25,7 @@
   <main>
     <section class="card live" id="live" data-zone="idle" aria-live="off">
       <div class="live-head">
-        <h2 data-i18n="live.title"></h2>
+        <h2><span data-i18n="live.title"></span><button type="button" class="info" data-tip="tip.live" data-tip-speed="live" data-i18n-aria="tip.more">i</button></h2>
         <span class="live-zone" id="live-zone"></span>
       </div>
       <div class="live-body">
@@ -40,50 +40,50 @@
           <span class="live-label live-label-record" id="live-record-label" hidden></span>
         </div>
       </div>
-      <p class="live-text" id="live-text"></p>
+      <div class="live-note"><p class="live-text" id="live-text"></p><button type="button" class="info" id="live-burst-info" data-tip="tip.longburst" data-i18n-aria="tip.more" hidden>i</button></div>
     </section>
 
     <section id="empty" class="empty" hidden>
       <h2 data-i18n="empty.title"></h2>
-      <p data-i18n="empty.text"></p>
+      <p><span data-i18n="empty.text"></span><button type="button" class="info" data-tip="tip.burst" data-i18n-aria="tip.more">i</button></p>
     </section>
 
     <div id="data">
       <section class="tiles" id="tiles">
-        <article class="tile big" data-i18n-title="tile.avg.hint">
-          <span class="label" data-i18n="tile.avg"></span>
+        <article class="tile big">
+          <span class="label"><span data-i18n="tile.avg"></span><button type="button" class="info" data-tip="tip.avg" data-tip-speed="avg" data-i18n-aria="tip.more">i</button></span>
           <strong id="t-avg">–</strong>
           <small id="t-net"></small>
         </article>
-        <article class="tile" data-i18n-title="tile.peak.hint">
-          <span class="label" data-i18n="tile.peak"></span>
+        <article class="tile">
+          <span class="label"><span data-i18n="tile.peak"></span><button type="button" class="info" data-tip="tip.peak" data-tip-speed="peak" data-i18n-aria="tip.more">i</button></span>
           <strong id="t-peak">–</strong>
         </article>
-        <article class="tile" data-i18n-title="tile.best.hint">
-          <span class="label" data-i18n="tile.best"></span>
+        <article class="tile">
+          <span class="label"><span data-i18n="tile.best"></span><button type="button" class="info" data-tip="tip.best" data-i18n-aria="tip.more">i</button></span>
           <strong id="t-best">–</strong>
         </article>
         <article class="tile">
-          <span class="label" data-i18n="tile.current"></span>
+          <span class="label"><span data-i18n="tile.current"></span><button type="button" class="info" data-tip="tip.current" data-i18n-aria="tip.more">i</button></span>
           <strong id="t-current">–</strong>
         </article>
         <article class="tile">
-          <span class="label" data-i18n="tile.time"></span>
+          <span class="label"><span data-i18n="tile.time"></span><button type="button" class="info" data-tip="tip.time" data-i18n-aria="tip.more">i</button></span>
           <strong id="t-time">–</strong>
         </article>
         <article class="tile">
-          <span class="label" data-i18n="tile.chars"></span>
+          <span class="label"><span data-i18n="tile.chars"></span><button type="button" class="info" data-tip="tip.chars" data-i18n-aria="tip.more">i</button></span>
           <strong id="t-chars">–</strong>
         </article>
       </section>
 
       <section class="card">
-        <h2 data-i18n="heatmap.title"></h2>
+        <h2><span data-i18n="heatmap.title"></span><button type="button" class="info" data-tip="tip.heatmap" data-i18n-aria="tip.more">i</button></h2>
         <div id="heatmap" class="heatmap" role="img"></div>
       </section>
 
       <section class="card">
-        <h2 data-i18n="apps.title"></h2>
+        <h2><span data-i18n="apps.title"></span><button type="button" class="info" data-tip="tip.apps" data-i18n-aria="tip.more">i</button></h2>
         <table class="apps">
           <thead>
             <tr><th data-i18n="apps.app"></th><th class="num" data-i18n="apps.wpm"></th><th class="num" data-i18n="apps.chars"></th></tr>
@@ -98,7 +98,7 @@
       <h2 data-i18n="settings.title"></h2>
 
       <div class="row">
-        <label for="s-pause" data-i18n="settings.pause"></label>
+        <span class="lbl"><label for="s-pause" data-i18n="settings.pause"></label><button type="button" class="info" data-tip="tip.burst" data-i18n-aria="tip.more">i</button></span>
         <div class="slider"><input id="s-pause" type="range" min="1" max="5" step="0.5"><output id="s-pause-out"></output></div>
       </div>
       <p class="hint" data-i18n="settings.pause.hint"></p>
@@ -115,6 +115,10 @@
       <label class="check"><input id="s-pet" type="checkbox"><span data-i18n="settings.show_pet"></span></label>
       <p class="hint" data-i18n="settings.show_pet.hint"></p>
 
+      <h3 data-i18n="settings.logs"></h3>
+      <p class="hint" data-i18n="settings.logs.hint"></p>
+      <button type="button" id="open-logs" data-i18n="settings.logs.open"></button>
+
       <h3 data-i18n="settings.exclusions"></h3>
       <p class="hint" data-i18n="settings.exclusions.hint"></p>
       <ul id="exclusions" class="chips"></ul>
@@ -123,6 +127,11 @@
         <button type="submit" data-i18n="settings.exclusions.add"></button>
       </form>
     </section>
+
+    <details class="card glossary" id="glossary">
+      <summary><h2 data-i18n="gloss.title"></h2></summary>
+      <dl id="glossary-list"></dl>
+    </details>
 
     <section class="card about">
       <h2 data-i18n="about.title"></h2>
@@ -138,6 +147,7 @@
 
   <script src="i18n.js"></script>
   <script src="mascot.js"></script>
+  <script src="tips.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

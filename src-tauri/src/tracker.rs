@@ -20,7 +20,7 @@ use crate::{db, pet, platform};
 
 /// Worker tick: closes finished bursts and drives the live bar.
 const TICK: Duration = Duration::from_millis(250);
-const FULLSCREEN_CHECK: Duration = Duration::from_secs(2);
+const FULLSCREEN_CHECK: Duration = Duration::from_millis(500);
 const EXE_CACHE_TTL: Duration = Duration::from_secs(30);
 
 /// Messages for the worker thread.
@@ -46,8 +46,10 @@ pub struct Shared {
     pub show_pet: AtomicBool,
     /// A fullscreen game or presentation hides the pet.
     pub fullscreen: AtomicBool,
-    /// "Move Tapomo" mode is on (click-through off).
-    pub pet_move: AtomicBool,
+    /// "Hide for 1 hour" from the pet's menu is active (not persisted).
+    pub pet_snoozed: AtomicBool,
+    /// Bumped whenever a snooze starts or is cancelled, so an old timer can tell it is stale.
+    pub snooze_gen: AtomicU32,
 }
 
 impl Shared {

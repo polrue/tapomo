@@ -184,7 +184,7 @@ pub fn remove_exclusion(conn: &Connection, exe: &str) -> rusqlite::Result<()> {
 // -------------------------------------------------------------------- stats
 
 /// Start of `range` in Unix ms; the day boundary uses the local time zone.
-fn range_start_ms(conn: &Connection, range: &str) -> rusqlite::Result<i64> {
+pub(crate) fn range_start_ms(conn: &Connection, range: &str) -> rusqlite::Result<i64> {
     let days_back = match range {
         "today" => 0,
         "7d" => 6,

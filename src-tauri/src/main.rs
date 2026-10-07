@@ -6,6 +6,7 @@ mod hook;
 mod i18n;
 mod password;
 mod pet;
+mod pet_tip;
 mod platform;
 mod tracker;
 
@@ -21,7 +22,7 @@ use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 use commands::{AppState, TrayItems};
 use tracker::Shared;
 
-fn show_main(app: &AppHandle) {
+pub(crate) fn show_main(app: &AppHandle) {
     let Some(window) = app.get_webview_window("main") else { return };
     if let Some(state) = app.try_state::<AppState>() {
         state.shared.window_visible.store(true, Ordering::Relaxed);
@@ -31,9 +32,28 @@ fn show_main(app: &AppHandle) {
     let _ = window.set_focus();
 }
 
+/// Rotating log file in the app log dir (about 1 MB each, the current one plus one older).
+/// Nothing that identifies a key is ever logged; see the `log::` calls.
+fn log_plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
+    use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
+    let level = if cfg!(debug_assertions) { log::LevelFilter::Debug } else { log::LevelFilter::Info };
+    let mut targets = vec![Target::new(TargetKind::LogDir { file_name: Some("tapomo".into()) })];
+    if cfg!(debug_assertions) {
+        targets.push(Target::new(TargetKind::Stdout));
+    }
+    tauri_plugin_log::Builder::new()
+        .targets(targets)
+        .level(level)
+        .max_file_size(1_000_000)
+        .rotation_strategy(RotationStrategy::KeepSome(2))
+        .build()
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| show_main(app)))
+        .plugin(log_plugin())
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, Some(vec!["--minimized"])))
         .invoke_handler(tauri::generate_handler![
             commands::get_summary,
@@ -45,8 +65,21 @@ fn main() {
             commands::list_exclusions,
             commands::add_exclusion,
             commands::remove_exclusion,
-            commands::pet_move_done,
+            commands::open_logs_dir,
+            commands::get_pet_tip,
+            pet::pet_set_hit,
+            pet::pet_drag_start,
+            pet::pet_drag_move,
+            pet::pet_drag_end,
+            pet::pet_open_main,
+            pet::pet_hint,
+            pet::pet_menu,
         ])
+        .on_menu_event(|app, event| {
+            if let Some(id) = event.id().as_ref().strip_prefix("pet_") {
+                pet::on_menu_event(app, &format!("pet_{id}"));
+            }
+        })
         .on_window_event(|window, event| {
             // Closing only hides: the app keeps measuring from the tray.
             if let WindowEvent::CloseRequested { api, .. } = event {
@@ -61,9 +94,11 @@ fn main() {
             }
         })
         .setup(|app| {
+            log::info!("Tapomo {} starting", app.package_info().version);
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
             let db_path = data_dir.join("tapomo.db");
+            log::info!("database: {}", db_path.display());
             let conn = db::open(&db_path)?;
             let settings = db::get_settings(&conn)?;
 
@@ -89,11 +124,10 @@ fn main() {
             let lang = i18n::resolve(&settings.language);
             let open = MenuItem::with_id(app, "open", i18n::tr(lang, "tray.open"), true, None::<&str>)?;
             let show_pet = CheckMenuItem::with_id(app, "show_pet", i18n::tr(lang, "tray.show_pet"), true, settings.show_pet, None::<&str>)?;
-            let move_pet = CheckMenuItem::with_id(app, "move_pet", i18n::tr(lang, "tray.move_pet"), settings.show_pet, false, None::<&str>)?;
             let pause = CheckMenuItem::with_id(app, "pause", i18n::tr(lang, "tray.pause"), true, settings.paused, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", i18n::tr(lang, "tray.quit"), true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&open, &show_pet, &move_pet, &pause, &quit])?;
-            app.manage(TrayItems { open, show_pet, move_pet, pause, quit });
+            let menu = Menu::with_items(app, &[&open, &show_pet, &pause, &quit])?;
+            app.manage(TrayItems { open, show_pet, pause, quit });
 
             let mut tray = TrayIconBuilder::with_id("main")
                 .tooltip("Tapomo")
@@ -103,10 +137,6 @@ fn main() {
                     "open" => show_main(app),
                     "pause" => commands::toggle_pause(app),
                     "show_pet" => commands::toggle_show_pet(app),
-                    "move_pet" => {
-                        let on = app.try_state::<TrayItems>().and_then(|i| i.move_pet.is_checked().ok()).unwrap_or(false);
-                        pet::set_move_mode(app, on);
-                    }
                     "quit" => commands::quit(app),
                     _ => {}
                 })
