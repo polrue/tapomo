@@ -348,6 +348,20 @@ function bindDrag() {
   });
 }
 
+// Coming back after being hidden (setting, one hour, fullscreen): a hop and a greeting.
+let wasVisible = false;
+function onPetState(p) {
+  const visible = !!(p && p.visible);
+  const appeared = visible && !wasVisible;
+  wasVisible = visible;
+  if (!appeared) return;
+  // The window has only just been shown; give the webview a beat to paint before the greeting.
+  setTimeout(() => {
+    say('pet.here', 2500);
+    Mascot.jump(svg, { big: false });
+  }, 200);
+}
+
 // ------------------------------------------------------------------ init
 
 async function init() {
@@ -363,10 +377,13 @@ async function init() {
     listen('tapomo://record', onRecord),
     listen('tapomo://settings', () => loadSettings().catch(console.error)),
     listen('tapomo://pet-say', () => onClick()),
+    listen('tapomo://pet-state', (e) => onPetState(e.payload)),
     listen('tapomo://pet-hover', (e) => setHover(!!e.payload)),
     listen('tapomo://cursor', (e) => Mascot.lookAtPoint(svg, e.payload.x, e.payload.y)),
   ]);
   await loadSettings();
+  // Know whether we are already on screen, so only a real reappearance gets the greeting.
+  wasVisible = !!(await invoke('get_pet_state').catch(() => ({ visible: true }))).visible;
   setInterval(() => {
     if (Date.now() - state.lastKeyAt > SLEEP_AFTER_MS) goToSleep();
     if ((window.devicePixelRatio || 1) !== lastDpr) reportHit(); // moved to another monitor
@@ -374,6 +391,6 @@ async function init() {
 }
 
 // Used by the animation lab (lab.html) to force sleep without waiting three minutes.
-window.TapomoPet = { sleep: goToSleep, click: onClick, get asleep() { return state.asleep; }, get display() { return state.display; }, get mode() { return state.mode; } };
+window.TapomoPet = { sleep: goToSleep, click: onClick, appear: () => onPetState({ visible: false }) || onPetState({ visible: true }), get asleep() { return state.asleep; }, get display() { return state.display; }, get mode() { return state.mode; } };
 
 init().catch(console.error);

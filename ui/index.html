@@ -9,9 +9,10 @@
 </head>
 <body>
   <header class="top">
-    <svg id="mascot" viewBox="0 0 160 160" role="img" aria-label="Tapomo"></svg>
+    <div class="mascot-wrap" id="mascot-wrap"><svg id="mascot" viewBox="0 0 160 160" role="img" aria-label="Tapomo"></svg></div>
     <div class="brand">
       <h1>Tapomo</h1>
+      <p class="hide-note" id="hide-note" aria-live="polite" hidden><span id="hide-text"></span><button type="button" class="pill" id="hide-btn" hidden></button></p>
       <p class="tagline" id="paused-banner" hidden data-i18n="paused.banner"></p>
     </div>
     <nav class="tabs" id="range-tabs" role="tablist">

@@ -65,6 +65,31 @@
   100% { transform: translate(-3px, -17px) scale(1.15) rotate(-7deg); opacity: 0; }
 }
 
+.mascot-wrap { position: relative; width: 76px; height: 76px; flex: none; }
+.mascot-wrap .mascot { width: 76px; height: 76px; }
+
+.mascot { width: 76px; height: 76px; flex: none; }
+
+/* Hiding: Tapomo peeks over the bottom edge of its box; only the top of the head and the eyes show.
+   The clip only cuts the bottom, so jumps and stars can still leave the box upwards and sideways. */
+.mascot-wrap .mascot { transition: transform 520ms cubic-bezier(.34, 1.56, .64, 1); }
+.mascot-wrap.hiding { clip-path: inset(-60px -60px 0 -60px); }
+.mascot-wrap.hiding .mascot { transform: translateY(31px); transition-duration: 380ms; transition-timing-function: ease-in-out; }
+.mascot-wrap::after {
+  content: ""; position: absolute; left: 8px; right: 8px; bottom: 0; height: 3px; border-radius: 3px;
+  background: var(--line); opacity: 0; transition: opacity 300ms ease;
+}
+.mascot-wrap.hiding::after { opacity: 1; }
+
+.hide-note { margin: 2px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; color: var(--muted); font-weight: 700; font-size: 0.9rem; }
+.pill {
+  border: 0; border-radius: 999px; padding: 4px 14px; font: inherit; font-weight: 800;
+  background: var(--accent); color: #23202b; cursor: pointer;
+}
+.pill:hover { background: var(--accent-strong); }
+.pill:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+
 /* Offscreen or minimised: every loop stops. */
 .is-hidden .mascot * { animation-play-state: paused !important; }
 

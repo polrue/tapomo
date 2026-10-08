@@ -138,6 +138,8 @@ pub fn sync(app: &AppHandle, shared: &Shared) {
     let fullscreen = shared.fullscreen.load(Ordering::Relaxed);
     let snoozed = shared.pet_snoozed.load(Ordering::Relaxed);
     let visible = show && !fullscreen && !snoozed;
+    // The reason can change while the pet stays hidden (e.g. setting turned off during a snooze).
+    let _ = app.emit("tapomo://pet-state", pet_state_of(shared));
     if shared.pet_visible.swap(visible, Ordering::Relaxed) == visible {
         return;
     }
@@ -161,6 +163,46 @@ pub fn sync(app: &AppHandle, shared: &Shared) {
             rt.hover.store(false, Ordering::Relaxed);
         }
     }
+}
+
+/// Whether the floating Tapomo is on screen and, if not, why (for the main window's header).
+#[derive(Serialize, Clone, Copy, PartialEq, Eq, Debug)]
+pub struct PetState {
+    pub visible: bool,
+    /// `None` when visible, else `"setting"`, `"hour"` or `"fullscreen"` (in that priority).
+    pub reason: Option<&'static str>,
+    /// For `"hour"`: when the hide ends, in ms since the Unix epoch.
+    pub until_ms: Option<u64>,
+}
+
+fn pet_state_of(shared: &Shared) -> PetState {
+    let reason = if !shared.show_pet.load(Ordering::Relaxed) {
+        Some("setting")
+    } else if shared.pet_snoozed.load(Ordering::Relaxed) {
+        Some("hour")
+    } else if shared.fullscreen.load(Ordering::Relaxed) {
+        Some("fullscreen")
+    } else {
+        None
+    };
+    let until = shared.snooze_until_ms.load(Ordering::Relaxed);
+    PetState { visible: reason.is_none(), reason, until_ms: (reason == Some("hour") && until > 0).then_some(until) }
+}
+
+#[tauri::command]
+pub fn get_pet_state(state: tauri::State<AppState>) -> PetState {
+    pet_state_of(&state.shared)
+}
+
+/// "Come out now" in the main window: ends a running 1-hour hide.
+#[tauri::command]
+pub fn pet_cancel_snooze(app: AppHandle, state: tauri::State<AppState>) {
+    cancel_snooze(&state.shared);
+    sync(&app, &state.shared);
+}
+
+fn now_ms() -> u64 {
+    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_millis() as u64)
 }
 
 fn lock<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
@@ -333,6 +375,7 @@ pub fn on_menu_event(app: &AppHandle, id: &str) {
 fn snooze(app: &AppHandle, dur: Duration) {
     let Some(state) = app.try_state::<AppState>() else { return };
     let gen = state.shared.snooze_gen.fetch_add(1, Ordering::Relaxed) + 1;
+    state.shared.snooze_until_ms.store(now_ms() + dur.as_millis() as u64, Ordering::Relaxed);
     state.shared.pet_snoozed.store(true, Ordering::Relaxed);
     sync(app, &state.shared);
     let app = app.clone();
@@ -341,6 +384,7 @@ fn snooze(app: &AppHandle, dur: Duration) {
         let Some(state) = app.try_state::<AppState>() else { return };
         if state.shared.snooze_gen.load(Ordering::Relaxed) == gen {
             state.shared.pet_snoozed.store(false, Ordering::Relaxed);
+            state.shared.snooze_until_ms.store(0, Ordering::Relaxed);
             sync(&app, &state.shared);
         }
     });
@@ -350,4 +394,5 @@ fn snooze(app: &AppHandle, dur: Duration) {
 pub fn cancel_snooze(shared: &Shared) {
     shared.snooze_gen.fetch_add(1, Ordering::Relaxed);
     shared.pet_snoozed.store(false, Ordering::Relaxed);
+    shared.snooze_until_ms.store(0, Ordering::Relaxed);
 }
