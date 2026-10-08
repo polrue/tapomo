@@ -174,7 +174,9 @@ pub fn candidates(f: &Facts, lang: &str) -> Vec<Candidate> {
     }
     let pages = t.chars / CHARS_PER_PAGE;
     if pages >= 1 {
-        c.push(("tip.volume_today", vec![("n", num(t.chars as f64, 0, lang)), ("pages", num(pages as f64, 0, lang))], 2));
+        // One page reads "1 page": the singular wording has its own key.
+        let key = if pages == 1 { "tip.volume_today_one" } else { "tip.volume_today" };
+        c.push((key, vec![("n", num(t.chars as f64, 0, lang)), ("pages", num(pages as f64, 0, lang))], 2));
     }
     if let Some(app) = &f.top_app {
         c.push(("tip.top_app", vec![("app", app.clone())], 2));

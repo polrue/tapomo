@@ -52,6 +52,15 @@ async function renderSummary() {
   return s;
 }
 
+/** Muted line under the live card (Today view only): yesterday's average and characters, if any. */
+async function renderYesterday() {
+  const el = $('yesterday');
+  const y = range === 'today' ? await invoke('get_summary', { range: 'yesterday' }) : null;
+  el.hidden = !y || y.bursts === 0;
+  if (el.hidden) return;
+  el.textContent = tn('yesterday.line', y.chars_total, { wpm: fmt(y.avg_wpm), n: fmt(y.chars_total) });
+}
+
 /** Long weekday name (0 = Monday) in the current language. */
 function longDay(d) {
   const name = new Date(2024, 0, 1 + d).toLocaleDateString(document.documentElement.lang, { weekday: 'long' });
@@ -59,12 +68,31 @@ function longDay(d) {
 }
 
 let heatTipBound = false;
+let heatCells = [];
+let heatFocus = 0; // index of the cell that holds the single tab stop
 function bindHeatTip(grid) {
   if (heatTipBound) return;
   heatTipBound = true;
   const cell = (e) => e.target.closest?.('.cell[data-tip]');
   grid.addEventListener('mouseover', (e) => cell(e) && Tips.showText(cell(e), cell(e).dataset.tip));
   grid.addEventListener('mouseout', (e) => cell(e) && Tips.hide());
+  // Keyboard: one tab stop, arrows move between cells, the tooltip follows the focus.
+  grid.addEventListener('focusin', (e) => {
+    const c = cell(e);
+    if (!c) return;
+    heatCells[heatFocus]?.setAttribute('tabindex', '-1');
+    heatFocus = heatCells.indexOf(c);
+    c.setAttribute('tabindex', '0');
+    Tips.showText(c, c.dataset.tip);
+  });
+  grid.addEventListener('focusout', (e) => cell(e) && Tips.hide());
+  grid.addEventListener('keydown', (e) => {
+    const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -24, ArrowDown: 24 }[e.key];
+    const to = e.key === 'Home' ? 0 : e.key === 'End' ? heatCells.length - 1 : heatFocus + (step || 0);
+    if ((!step && e.key !== 'Home' && e.key !== 'End') || !heatCells[to]) return;
+    e.preventDefault();
+    heatCells[to].focus();
+  });
 }
 
 async function renderHeatmap(reference) {
@@ -78,7 +106,9 @@ async function renderHeatmap(reference) {
   $('heatmap-note').hidden = calibrated;
   const grid = $('heatmap');
   bindHeatTip(grid);
+  const hadFocus = grid.contains(document.activeElement) && document.activeElement.classList.contains('cell');
   grid.replaceChildren();
+  heatCells = [];
 
   grid.append(document.createElement('span'));
   for (let h = 0; h < 24; h++) {
@@ -105,17 +135,22 @@ async function renderHeatmap(reference) {
         el.style.setProperty('--lvl', lvl.toFixed(2));
         el.dataset.lvl = lvl.toFixed(2);
         if (calibrated) el.dataset.zone = zoneOfPct(pct);
-        const vars = { day: longDay(d), hour, wpm: fmt(c.avg_wpm), unit: t('unit.wpm'), pct: fmt(pct), bursts: c.bursts };
-        text = t(calibrated ? 'heatmap.tip.zone' : 'heatmap.tip', vars);
+        const vars = { day: longDay(d), hour, wpm: fmt(c.avg_wpm), unit: t('unit.wpm'), pct: fmt(pct), bursts: fmt(c.bursts) };
+        text = tn(calibrated ? 'heatmap.tip.zone' : 'heatmap.tip', c.bursts, vars);
       } else {
         text = `${longDay(d)} ${hour}:00 — ${t('heatmap.none')}`;
       }
       el.dataset.tip = text;
       el.setAttribute('role', 'img');
       el.setAttribute('aria-label', text);
+      el.tabIndex = -1;
+      heatCells.push(el);
       grid.append(el);
     }
   }
+  heatFocus = Math.min(heatFocus, heatCells.length - 1);
+  heatCells[heatFocus].tabIndex = 0;
+  if (hadFocus) heatCells[heatFocus].focus({ preventScroll: true });
 }
 
 async function renderApps() {
@@ -182,6 +217,7 @@ function renderSettings() {
   $('s-fullscreen').checked = settings.ignore_fullscreen;
   $('s-paused').checked = settings.paused;
   $('s-pet').checked = settings.show_pet;
+  $('s-updates').checked = settings.check_updates;
   $('paused-banner').hidden = !settings.paused;
 }
 
@@ -200,6 +236,7 @@ function renderLanguageSelect() {
 async function refreshAll() {
   renderTabs();
   try {
+    renderYesterday().catch(showError);
     const s = await renderSummary();
     if (s.bursts > 0) await Promise.all([renderHeatmap(s.reference), renderApps()]);
   } catch (e) {
@@ -233,6 +270,7 @@ async function onLanguageChange() {
   renderGlossary();
   paintLive(lastLive || {});
   renderPetState();
+  renderVersion();
   renderExclusions().catch(showError);
   refreshAll();
 }
@@ -254,6 +292,11 @@ function bindControls() {
   $('s-autostart').addEventListener('change', () => saveSettings({ autostart: $('s-autostart').checked }));
   $('s-fullscreen').addEventListener('change', () => saveSettings({ ignore_fullscreen: $('s-fullscreen').checked }));
   $('s-pet').addEventListener('change', () => saveSettings({ show_pet: $('s-pet').checked }));
+  $('s-updates').addEventListener('change', async () => {
+    await saveSettings({ check_updates: $('s-updates').checked });
+    checkForUpdate();
+  });
+  $('welcome-again').addEventListener('click', () => Welcome.open());
   $('s-paused').addEventListener('change', async () => {
     await saveSettings({ paused: $('s-paused').checked });
     renderSettings();
@@ -424,6 +467,80 @@ function glueInfo() {
   });
 }
 
+// ------------------------------------------------------- version & updates
+
+const RELEASES_API = 'https://api.github.com/repos/polrue/tapomo/releases?per_page=10';
+const RELEASE_PAGE = 'https://github.com/polrue/tapomo/releases/tag/v';
+const UPDATE_EVERY_MS = 24 * 60 * 60 * 1000;
+const UPDATE_CACHE_KEY = 'tapomo.update';
+let installed = null; // e.g. "0.2.3"
+let latest = null; // { v, url } of the newest release, once known
+
+/** "v1.2.3" -> [1, 2, 3]; anything else (pre-release suffixes included) -> null. */
+function parseSemver(tag) {
+  const m = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(String(tag).trim());
+  return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null;
+}
+
+/** > 0 when a is newer than b. */
+function compareSemver(a, b) {
+  for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] - b[i];
+  return 0;
+}
+
+function renderVersion() {
+  const link = $('version-link');
+  const pill = $('update-pill');
+  link.hidden = !installed;
+  if (installed) {
+    link.textContent = t('version.label', { v: installed });
+    link.href = RELEASE_PAGE + installed;
+  }
+  const mine = installed && parseSemver(installed);
+  const newer = settings && settings.check_updates && latest && mine && compareSemver(parseSemver(latest.v), mine) > 0;
+  pill.hidden = !newer;
+  if (newer) {
+    pill.textContent = t('update.available', { v: latest.v });
+    pill.href = latest.url;
+  }
+}
+
+/** The newest non-draft release of the list, as { v, url }, or null. */
+function newestRelease(list) {
+  let best = null;
+  for (const r of Array.isArray(list) ? list : []) {
+    const sv = !r.draft && parseSemver(r.tag_name);
+    if (sv && (!best || compareSemver(sv, best.sv) > 0)) best = { sv, v: sv.join('.'), url: r.html_url };
+  }
+  return best && /^https:\/\/github\.com\//.test(best.url) ? { v: best.v, url: best.url } : null;
+}
+
+/**
+ * At most one request per 24 h (the answer is cached in localStorage), and none at all when the
+ * setting is off. Releases are pre-releases, so /releases/latest would never answer. Fails silently.
+ */
+async function checkForUpdate() {
+  if (!settings || !settings.check_updates) {
+    renderVersion();
+    return;
+  }
+  let cache = null;
+  try { cache = JSON.parse(localStorage.getItem(UPDATE_CACHE_KEY)); } catch (_) { /* storage can be unavailable */ }
+  const age = cache ? Date.now() - cache.at : Infinity;
+  if (cache && age >= 0 && age < UPDATE_EVERY_MS) {
+    latest = cache.latest || null;
+    renderVersion();
+    return;
+  }
+  try {
+    const res = await fetch(RELEASES_API, { headers: { Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return;
+    latest = newestRelease(await res.json());
+    try { localStorage.setItem(UPDATE_CACHE_KEY, JSON.stringify({ at: Date.now(), latest })); } catch (_) { /* optional */ }
+    renderVersion();
+  } catch (_) { /* offline, rate-limited or blocked: stay quiet */ }
+}
+
 // ----------------------------------------------------------- hiding header
 
 let petState = { visible: true, reason: null, until_ms: null };
@@ -550,10 +667,16 @@ async function init() {
   await refreshPetState();
   glueInfo();
   try {
-    $('about-version').textContent = t('about.version', { v: await window.__TAURI__.app.getVersion() });
+    installed = await window.__TAURI__.app.getVersion();
+    $('about-version').textContent = t('about.version', { v: installed });
   } catch (e) {
     showError(e);
   }
+  renderVersion();
+  checkForUpdate();
+  // A window that stays open for days asks again once the cache is a day old.
+  setInterval(checkForUpdate, 60 * 60 * 1000);
+  if (!settings.welcome_done) Welcome.open(() => saveSettings({ welcome_done: true }));
   renderExclusions().catch(showError);
   refreshAll();
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { refreshAll(); refreshPetState(); } });
