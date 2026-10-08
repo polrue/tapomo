@@ -74,6 +74,8 @@ fn main() {
             pet::pet_open_main,
             pet::pet_hint,
             pet::pet_menu,
+            pet::get_pet_state,
+            pet::pet_cancel_snooze,
         ])
         .on_menu_event(|app, event| {
             if let Some(id) = event.id().as_ref().strip_prefix("pet_") {

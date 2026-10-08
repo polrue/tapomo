@@ -195,10 +195,12 @@ async function onLanguageChange() {
   await saveSettings({ language: $('s-language').value });
   setLanguage(resolveLanguage(settings.language));
   applyI18n();
+  glueInfo();
   renderLanguageSelect();
   renderSettings();
   renderGlossary();
   paintLive(lastLive || {});
+  renderPetState();
   renderExclusions().catch(showError);
   refreshAll();
 }
@@ -366,7 +368,75 @@ function blush() {
   setTimeout(() => m.classList.remove('blush'), 2500);
 }
 
+/**
+ * Keeps every ⓘ attached to the last word of its label, so it can never wrap onto a line of its
+ * own: the last word and the button go in one nowrap span. Run it after every `applyI18n()`.
+ */
+function glueInfo() {
+  document.querySelectorAll('.info').forEach((btn) => {
+    let sp = btn.previousElementSibling;
+    if (sp && sp.classList.contains('nw')) sp = sp.previousElementSibling;
+    if (!sp || !(sp.dataset.i18n || sp.dataset.i18nGlue)) return;
+    if (sp.dataset.i18n) { sp.dataset.i18nGlue = sp.dataset.i18n; delete sp.dataset.i18n; }
+    let nw = btn.parentElement.classList.contains('nw') ? btn.parentElement : null;
+    if (!nw) {
+      nw = document.createElement('span');
+      nw.className = 'nw';
+      nw.append(document.createElement('span'), btn);
+      sp.after(nw);
+    }
+    const text = t(sp.dataset.i18nGlue);
+    const i = text.lastIndexOf(' ');
+    sp.textContent = i < 0 ? '' : text.slice(0, i + 1);
+    nw.firstElementChild.textContent = i < 0 ? text : text.slice(i + 1);
+  });
+}
+
+// ----------------------------------------------------------- hiding header
+
+let petState = { visible: true, reason: null, until_ms: null };
+let hourTimer = null;
+
+function hourMinutes() {
+  return Math.max(1, Math.ceil(((petState.until_ms || Date.now()) - Date.now()) / 60000));
+}
+
+/** Header: Tapomo peeks from behind the edge while the floating one is not on screen. */
+function renderPetState() {
+  const { reason } = petState;
+  const hidden = !petState.visible && !!reason;
+  Mascot.setHiding($('mascot'), hidden);
+  const note = $('hide-note');
+  const btn = $('hide-btn');
+  note.hidden = !hidden;
+  clearInterval(hourTimer);
+  if (!hidden) return;
+  const hasBtn = reason === 'setting' || reason === 'hour';
+  $('hide-text').textContent = t(`pet.hide.${reason}`, { m: reason === 'hour' ? hourMinutes() : '' });
+  btn.hidden = !hasBtn;
+  if (hasBtn) btn.textContent = t(`pet.hide.${reason}.btn`);
+  if (reason === 'hour') hourTimer = setInterval(renderPetState, 30000);
+}
+
+async function refreshPetState() {
+  try {
+    petState = await invoke('get_pet_state');
+    renderPetState();
+  } catch (e) {
+    showError(e);
+  }
+}
+
+function comeOut() {
+  if (petState.reason === 'hour') invoke('pet_cancel_snooze').catch(showError);
+  else if (petState.reason === 'setting') saveSettings({ show_pet: true }).then(renderSettings);
+}
+
 async function bindEvents() {
+  await listen('tapomo://pet-state', (e) => {
+    petState = e.payload;
+    renderPetState();
+  });
   await listen('tapomo://key', () => {
     squish();
     // Keep the "current streak" tile live without hammering the database.
@@ -422,6 +492,7 @@ async function init() {
   renderGlossary();
   paintLive({});
   bindControls();
+  $('hide-btn').addEventListener('click', comeOut);
   Tips.init({
     vars: () => ({
       pause: fmt((settings ? settings.pause_ms : 2000) / 1000, 1),
@@ -440,10 +511,12 @@ async function init() {
     if (lookFrame) return;
     lookFrame = requestAnimationFrame(() => {
       lookFrame = 0;
-      Mascot.lookAtPoint($('mascot'), e.clientX, e.clientY);
+      if (!Mascot.isHiding($('mascot'))) Mascot.lookAtPoint($('mascot'), e.clientX, e.clientY);
     });
   });
   await bindEvents();
+  await refreshPetState();
+  glueInfo();
   try {
     $('about-version').textContent = t('about.version', { v: await window.__TAURI__.app.getVersion() });
   } catch (e) {
@@ -451,7 +524,8 @@ async function init() {
   }
   renderExclusions().catch(showError);
   refreshAll();
-  document.addEventListener('visibilitychange', () => !document.hidden && refreshAll());
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { refreshAll(); refreshPetState(); } });
+  window.addEventListener('focus', refreshPetState);
 }
 
 init().catch(showError);

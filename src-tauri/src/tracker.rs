@@ -5,7 +5,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::sync::mpsc::{Receiver, RecvTimeoutError, SyncSender};
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -50,6 +50,8 @@ pub struct Shared {
     pub pet_snoozed: AtomicBool,
     /// Bumped whenever a snooze starts or is cancelled, so an old timer can tell it is stale.
     pub snooze_gen: AtomicU32,
+    /// When the running snooze ends, in ms since the Unix epoch (0 = none).
+    pub snooze_until_ms: AtomicU64,
 }
 
 impl Shared {

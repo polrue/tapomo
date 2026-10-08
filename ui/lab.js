@@ -9,6 +9,8 @@
     core: {
       invoke: async (cmd, args) => {
         if (cmd === 'get_settings') return { ...settings };
+        if (cmd === 'get_pet_state') return petPayload();
+        if (cmd === 'pet_cancel_snooze') setHide('visible');
         if (cmd === 'get_pet_tip') return nextSampleTip(args && args.lang);
         if (cmd === 'pet_hint') return hintOn;
         if (cmd === 'pet_open_main') logMouse('double-click: the main window would open');
@@ -26,8 +28,8 @@
 
   // Opened from disk, fetch('locales/..') is blocked: fall back to the few strings the pet uses.
   const fallback = {
-    es: { 'pet.record': '¡Nuevo récord!', 'pet.oops': '¡ups!', 'pet.oops_big': '¡uuups!', 'pet.hi': '¡hola!' },
-    en: { 'pet.record': 'New record!', 'pet.oops': 'oops!', 'pet.oops_big': 'ooooops!', 'pet.hi': 'hi!' },
+    es: { 'pet.record': '¡Nuevo récord!', 'pet.oops': '¡ups!', 'pet.oops_big': '¡uuups!', 'pet.hi': '¡hola!', 'pet.here': '¡aquí estoy!', 'pet.hide.setting': 'Estoy escondido 🙈', 'pet.hide.setting.btn': '¡Sal!', 'pet.hide.hour': 'Vuelvo en {m} min', 'pet.hide.hour.btn': '¡Sal ya!', 'pet.hide.fullscreen': 'Me he escondido mientras ves algo a pantalla completa' },
+    en: { 'pet.record': 'New record!', 'pet.oops': 'oops!', 'pet.oops_big': 'ooooops!', 'pet.hi': 'hi!', 'pet.here': 'here I am!', 'pet.hide.setting': "I'm hiding 🙈", 'pet.hide.setting.btn': 'Come out!', 'pet.hide.hour': 'Back in {m} min', 'pet.hide.hour.btn': 'Come out now!', 'pet.hide.fullscreen': "I'm hiding while you watch something fullscreen" },
   };
   const realLoadAll = loadAll; // eslint-disable-line no-undef
   loadAll = async () => { // eslint-disable-line no-global-assign, no-undef
@@ -169,6 +171,40 @@
   button(react, 'Hover off', () => emit('tapomo://pet-hover', false), false);
   button(react, 'Blink', () => Mascot.blink($('mascot')));
   button(react, 'Squish', () => Mascot.squish($('mascot')));
+
+  // ------------------------------------------- header: Tapomo hiding (mock of get_pet_state)
+  // Same states as the main window: visible | setting | hour | fullscreen.
+  let hideMode = 'visible';
+  const hideUntil = () => Date.now() + 47 * 60000;
+  function petPayload() {
+    return { visible: hideMode === 'visible', reason: hideMode === 'visible' ? null : hideMode, until_ms: hideMode === 'hour' ? hideUntil() : null };
+  }
+  function renderHeader() {
+    const hidden = hideMode !== 'visible';
+    Mascot.setHiding($('mascot-h'), hidden);
+    $('stage-box').classList.toggle('away', hidden);
+    $('hdr-note').hidden = !hidden;
+    if (!hidden) return;
+    $('hdr-text').textContent = t(`pet.hide.${hideMode}`, { m: 47 });
+    const hasBtn = hideMode !== 'fullscreen';
+    $('hdr-btn').hidden = !hasBtn;
+    if (hasBtn) $('hdr-btn').textContent = t(`pet.hide.${hideMode}.btn`);
+  }
+  function setHide(mode) {
+    hideMode = mode;
+    renderHeader();
+    emit('tapomo://pet-state', petPayload());
+    const log = $('hide-log');
+    if (log) log.textContent = `pet-state: ${JSON.stringify(petPayload())}`;
+  }
+  Mascot.mount($('mascot-h'));
+  const hide = $('g-hide');
+  const cycle = ['setting', 'hour', 'fullscreen', 'visible'];
+  button(hide, 'Header: hiding (cycle)', () => setHide(cycle[(cycle.indexOf(hideMode) + 1) % cycle.length]), false);
+  for (const [label, mode] of [['Hidden by setting', 'setting'], ['Hidden for 1 hour', 'hour'], ['Fullscreen app', 'fullscreen'], ['Visible (come out)', 'visible']]) button(hide, label, () => setHide(mode), false);
+  $('hdr-btn').addEventListener('click', () => setHide('visible')); // "Come out!" / "Come out now!"
+  (handlers['tapomo://settings'] ||= []).push(() => setTimeout(renderHeader, 0));
+  renderHeader();
 
   // ------------------------------------------------------------ globals
   $('speed').addEventListener('input', () => {

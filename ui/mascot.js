@@ -431,8 +431,46 @@ const Mascot = (() => {
     look(svg, (dx / dist) * k, (dy / dist) * k);
   }
 
+  // ------------------------------------------------------------ hiding
+
+  /**
+   * Hiding: Tapomo ducks behind the bottom edge of its box (mascot.css, `.hiding` on the parent
+   * element) and glances left and right every few seconds. Coming out pops up with a little hop.
+   * With reduced motion it just sits there, eyes still.
+   */
+  function setHiding(svg, on) {
+    on = !!on;
+    if (!!svg.__hiding === on) return;
+    const was = !!svg.__hiding;
+    svg.__hiding = on;
+    if (svg.parentElement) svg.parentElement.classList.toggle('hiding', on);
+    clearTimeout(svg.__glance);
+    clearTimeout(svg.__pop);
+    if (on) {
+      setFace(svg, { eyes: 'round', mouth: 'small' });
+      look(svg, 0, 0.2);
+      const glance = () => {
+        svg.__glance = setTimeout(() => {
+          if (reduced() || document.hidden) return glance();
+          const dir = Math.random() < 0.5 ? -1 : 1;
+          look(svg, dir * 1.3, 0.2);
+          svg.__glance = setTimeout(() => {
+            // Sometimes a quick look at the other side before settling back.
+            if (Math.random() < 0.4) look(svg, -dir * 1.3, 0.2);
+            svg.__glance = setTimeout(() => { look(svg, 0, 0.2); glance(); }, dur(700));
+          }, dur(800));
+        }, dur(2200 + Math.random() * 2400));
+      };
+      if (!reduced()) glance();
+    } else {
+      look(svg, 0, 0);
+      setFace(svg, {});
+      if (was && !reduced()) svg.__pop = setTimeout(() => jump(svg, { big: false }), dur(330));
+    }
+  }
+
   // Loops (breathing, z's, speed lines, glow) pause while nothing is on screen.
   document.addEventListener('visibilitychange', () => document.documentElement.classList.toggle('is-hidden', document.hidden));
 
-  return { mount, setFace, keyTick, keyRate, squish, tilt, jump, wake, blink, setZone, setShades, setSleeping, setHover, setHeld, look, lookAtPoint, burstStars, reduced };
+  return { mount, setFace, keyTick, keyRate, squish, tilt, jump, wake, blink, setZone, setShades, setSleeping, setHover, setHeld, setHiding, isHiding: (svg) => !!svg.__hiding, look, lookAtPoint, burstStars, reduced };
 })();

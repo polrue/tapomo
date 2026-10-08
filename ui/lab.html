@@ -29,6 +29,12 @@
     .menu-mock { list-style: none; margin: 8px 0 0; padding: 4px; width: 220px; background: #fff; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.25); }
     .menu-mock li { padding: 5px 12px; border-radius: 5px; }
     .menu-mock li:hover { background: #ffe3d8; }
+    :root { --accent: #ff9e7a; --accent-strong: #f0764a; --ink: #23202b; --muted: #7b7589; --line: #e3d6cc; }
+    .hdr { display: flex; align-items: center; gap: 14px; padding: 8px 4px; }
+    .hdr b { font-size: 1.4rem; letter-spacing: -0.02em; }
+    .hdr .hide-note { min-height: 1.4em; }
+    .stage-box.away .scaler { opacity: 0; transition: opacity 200ms; }
+    .stage-box .scaler { transition: opacity 200ms; }
     .note { margin: 0; color: #6b6577; font-size: 12px; }
   </style>
 </head>
@@ -63,6 +69,14 @@
       <fieldset><legend>Live zone</legend><div class="btns" id="g-zone"></div></fieldset>
       <fieldset><legend>Mouse actions on Tapomo</legend><div class="btns" id="g-mouse"></div>
         <ul id="menu-mock" class="menu-mock" hidden></ul><p class="note" id="mouse-log"></p></fieldset>
+      <fieldset><legend>Main window header (Tapomo hiding)</legend>
+        <div class="hdr">
+          <div class="mascot-wrap" id="hdr-wrap"><svg id="mascot-h" viewBox="0 0 160 160" role="img" aria-label="Tapomo"></svg></div>
+          <div><b>Tapomo</b><p class="hide-note" id="hdr-note" hidden><span id="hdr-text"></span><button type="button" class="pill" id="hdr-btn" hidden></button></p></div>
+        </div>
+        <div class="btns" id="g-hide"></div>
+        <p class="note" id="hide-log"></p>
+      </fieldset>
       <fieldset><legend>Reactions and states</legend><div class="btns" id="g-react"></div></fieldset>
     </div>
   </div>
