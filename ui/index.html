@@ -80,7 +80,15 @@
 
       <section class="card">
         <h2><span data-i18n="heatmap.title"></span><button type="button" class="info" data-tip="tip.heatmap" data-i18n-aria="tip.more">i</button></h2>
-        <div id="heatmap" class="heatmap" role="img"></div>
+        <div id="heatmap" class="heatmap" role="group" data-i18n-aria="heatmap.title"></div>
+        <div id="heatmap-legend" class="heat-legend" hidden>
+          <span class="chip"><i data-zone="warming"></i><span data-i18n="heatmap.z.warming"></span></span>
+          <span class="chip"><i data-zone="good"></i><span data-i18n="heatmap.z.good"></span></span>
+          <span class="chip"><i data-zone="fire"></i><span data-i18n="heatmap.z.fire"></span></span>
+          <span class="chip"><i data-zone="beating"></i><span data-i18n="heatmap.z.beating"></span></span>
+          <span class="chip more"><i class="ramp"></i><span data-i18n="heatmap.more"></span></span>
+        </div>
+        <p id="heatmap-note" class="muted heat-note" data-i18n="heatmap.calibrating" hidden></p>
       </section>
 
       <section class="card">

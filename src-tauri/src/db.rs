@@ -208,6 +208,8 @@ pub struct Summary {
     pub chars_total: u64,
     pub active_minutes: f64,
     pub bursts: u64,
+    /// Personal 100 % from the same peaks and function the live tracker uses (None while calibrating).
+    pub reference: Option<f64>,
 }
 
 /// Speeds are duration-weighted: total intervals over total burst time,
@@ -236,6 +238,7 @@ pub fn summary(conn: &Connection, range: &str, current_streak: u32) -> rusqlite:
         chars_total: chars,
         active_minutes: minutes,
         bursts,
+        reference: tapomo_core::personal_reference(&peak_data(conn)?.0),
     })
 }
 

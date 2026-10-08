@@ -6,16 +6,36 @@
 .m-shadow, .m-shadow-g, .m-glow ellipse, .m-zzz .z { transform-box: fill-box; transform-origin: 50% 50%; }
 .mascot .eyes-blink { transform-origin: 80px 84px; }
 
-.mascot .eyes-blink > g, .mascot [data-part="mouth"] > *, .mascot .m-extras { display: none; }
+.mascot .m-extras { display: none; }
+/* Eye and mouth variants cross-fade (never pop): only the chosen one is opaque. */
+.mascot .eyes-blink > g, .mascot [data-part="mouth"] > * { opacity: 0; transition: opacity calc(240ms / var(--speed)) ease; }
 .mascot[data-eyes="round"] .eyes-round,
 .mascot[data-eyes="sparkle"] .eyes-sparkle,
+.mascot[data-eyes="wide"] .eyes-wide,
+.mascot[data-eyes="star"] .eyes-star,
 .mascot[data-eyes="dots"] .eyes-dots,
 .mascot[data-eyes="closed"] .eyes-closed,
 .mascot[data-mouth="smile"] .mouth-smile,
 .mascot[data-mouth="small"] .mouth-small,
+.mascot[data-mouth="o"] .mouth-o,
 .mascot[data-mouth="big"] .mouth-big,
 .mascot[data-mouth="open"] .mouth-open,
-.mascot[data-mouth="wavy"] .mouth-wavy { display: inline; }
+.mascot[data-mouth="wavy"] .mouth-wavy { opacity: 1; }
+
+/* "Don't lose it!": raised eyebrows slide in, and the whole face trembles very slightly (12 Hz, ~1 px). */
+.mascot .m-brows { opacity: 0; transform: translateY(5px); transition: opacity calc(240ms / var(--speed)) ease, transform calc(240ms / var(--speed)) ease; }
+.mascot[data-brows="up"] .m-brows { opacity: 1; transform: none; }
+.mascot.tense .m-shake { animation: m-tense calc(332ms / var(--speed)) step-end infinite; }
+@keyframes m-tense {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(.8px, -.5px); }
+  50% { transform: translate(-.6px, .4px); }
+  75% { transform: translate(.4px, .7px); }
+}
+
+/* The record crown sits on top of the head; pop-on and fly-off are animated from JS. */
+.mascot[data-crown="on"] .m-crown { display: inline; }
+.m-crown { transform-box: fill-box; transform-origin: 50% 100%; }
 
 .cheek { opacity: .45; transition: opacity 300ms ease; }
 .mascot.blush .cheek, .mascot.hover .cheek { opacity: .95; }

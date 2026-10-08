@@ -16,6 +16,7 @@ const CLICK_MS = 350; // a press shorter than this that barely moves is a click
 const CLICK_PX = 4;
 const DBLCLICK_MS = 250; // a second click within this opens the main window instead of showing a tip
 const HINT_MS = 3500;
+const RECORD_JUMP_MS = 900; // length of the new-record jump; the crown appears right after it
 // When typing stops the bar eases down to 0 (exponential, tau 2.5 s, ~8 s in all), and the
 // zone, colour, face and effects follow the falling value.
 const DECAY_TAU = 2.5;
@@ -32,6 +33,7 @@ const state = {
   zone: null,
   streak: { current: 0, best: 0 },
   oopsUntil: 0,
+  crownHoldUntil: 0, // the crown waits for the new-record jump to finish
   // Live value shown (percent of the personal reference) and how it moves.
   display: 0,
   target: 0,
@@ -49,21 +51,36 @@ function renderFace() {
   const sleeping = state.asleep || state.paused;
   Mascot.setSleeping(svg, sleeping);
   Mascot.setZone(svg, state.zone);
-  if (sleeping) return Mascot.setFace(svg, { eyes: 'closed', mouth: 'small' });
+  if (sleeping) {
+    Mascot.setCrown(svg, false);
+    return Mascot.setFace(svg, { eyes: 'closed', mouth: 'small' });
+  }
   if (Date.now() < state.oopsUntil) return Mascot.setFace(svg, { eyes: 'dots', mouth: 'wavy' });
   const level = faceLevel();
+  Mascot.setCrown(svg, level === 5);
   if (level === 0) Mascot.setFace(svg, { eyes: 'round', mouth: 'smile' });
   else if (level === 1) Mascot.setFace(svg, { eyes: 'round', mouth: 'big' });
   else if (level === 2) Mascot.setFace(svg, { eyes: 'sparkle', mouth: 'big' });
-  else Mascot.setFace(svg, { eyes: 'sparkle', mouth: 'open', cheeks: true });
+  else if (level === 3) Mascot.setFace(svg, { eyes: 'sparkle', mouth: 'open', cheeks: true });
+  else if (level === 4) Mascot.setFace(svg, { eyes: 'wide', mouth: 'o', brows: true, tense: true });
+  else Mascot.setFace(svg, { eyes: 'star', mouth: 'open', cheeks: true });
 }
 
-/** 0-3 from the streak (current / all-time best); while the value decays the face calms down with it. */
+/**
+ * 0-5 from the streak (current / all-time best); while the value decays the face calms down with it.
+ *   0 <25 %  1 25-50 %  2 50-75 %  3 75-90 %  4 90-<100 % ("don't lose it!")  5 >=100 % (extending the record: crown).
+ * With no record yet (best 0) the absolute streak decides, capped at 2: 0-30, 30-80, 80+ characters.
+ */
 function faceLevel() {
   const { current, best } = state.streak;
   const calm = state.mode === 'decay' && state.decayFrom > 0 ? Math.min(1, state.display / state.decayFrom) : 1;
-  const ratio = (best > 0 ? current / best : 0) * calm;
-  return ratio < 0.25 ? 0 : ratio < 0.5 ? 1 : ratio < 0.75 ? 2 : 3;
+  if (!(best > 0)) {
+    const c = current * calm;
+    return c < 30 ? 0 : c < 80 ? 1 : 2;
+  }
+  const ratio = (current / best) * calm;
+  if (ratio >= 1) return Date.now() < state.crownHoldUntil ? 4 : 5; // the record jump plays first
+  return ratio < 0.25 ? 0 : ratio < 0.5 ? 1 : ratio < 0.75 ? 2 : ratio < 0.9 ? 3 : 4;
 }
 
 function say(key, ms, big = false) {
@@ -100,6 +117,9 @@ function onKey(cls) {
   Mascot.keyTick(svg);
   if (cls === 'delete' || cls === 'word_delete') {
     const big = cls === 'word_delete';
+    // Backspace breaks the streak: the crown (if any) flies off before the face goes back to level 1.
+    Mascot.crownFlyOff(svg);
+    state.streak = { ...state.streak, current: 0 };
     say(big ? 'pet.oops_big' : 'pet.oops', OOPS_MS, big);
     Mascot.tilt(svg);
     state.oopsUntil = Date.now() + OOPS_MS;
@@ -176,15 +196,43 @@ function paintBar() {
     const pct = cal ? (cal.have / Math.max(1, cal.need)) * 100 : (Math.min(BAR_MAX, state.display) / BAR_MAX) * 100;
     $('livefill').style.width = `${Math.max(cal ? 6 : 0, Math.min(100, pct)).toFixed(2)}%`;
   }
-  const sig = `${state.zone}|${state.asleep}|${state.paused}|${faceLevel()}`;
+  const level = faceLevel();
+  const zr = ZONE_RANK[state.zone] ?? -1;
+  // Positive change only (level or zone going up) earns a burst, sized by importance; the biggest wins.
+  const rank = Math.max(level > prevLevel ? LEVEL_BURST[level] : 0, zr > prevZoneRank ? ZONE_BURST[zr] : 0);
+  prevLevel = level;
+  prevZoneRank = zr;
+  if (rank && !state.asleep && !state.paused) celebrate(rank);
+  const sig = `${state.zone}|${state.asleep}|${state.paused}|${level}`;
   if (sig !== lastSig) {
     lastSig = sig;
     renderFace();
   }
 }
 
+// Star bursts on upgrades: 1 small (4-5 tiny stars), 2 medium, 3 full. At most one per BURST_GAP_MS.
+const ZONE_RANK = { warming: 0, good: 1, fire: 2, beating: 3 };
+const ZONE_BURST = [0, 1, 2, 3];
+const LEVEL_BURST = [0, 1, 1, 2, 2, 3]; // by face level 0-5 (levels 2-3 small, 4-5 medium, 6 full)
+const BURST_GAP_MS = 1500;
+const BURSTS = [null, [5, 0.45], [7, 0.75], [10, 1]];
+let prevLevel = 0;
+let prevZoneRank = -1;
+let lastBurstAt = 0;
+function celebrate(rank, force = false) {
+  const now = Date.now();
+  if (!force && now - lastBurstAt < BURST_GAP_MS) return;
+  lastBurstAt = now;
+  Mascot.burstStars(svg, ...BURSTS[rank]);
+}
+
 function onRecord() {
   if (state.paused || state.asleep) return;
+  if (!svg.__crown) {
+    state.crownHoldUntil = Date.now() + RECORD_JUMP_MS;
+    setTimeout(paintBar, RECORD_JUMP_MS + 20);
+  }
+  lastBurstAt = Date.now(); // the jump throws its own full burst
   Mascot.jump(svg, { big: true });
   say('pet.record', 2200, true);
 }
@@ -291,6 +339,7 @@ async function onClick() {
     state.lastKeyAt = Date.now();
   } else {
     Mascot.jump(svg, { big: false });
+    celebrate(1); // small burst with the happy hop (rate-limited)
   }
   try {
     const tip = await invoke('get_pet_tip', { lang: current });
@@ -391,6 +440,6 @@ async function init() {
 }
 
 // Used by the animation lab (lab.html) to force sleep without waiting three minutes.
-window.TapomoPet = { sleep: goToSleep, click: onClick, appear: () => onPetState({ visible: false }) || onPetState({ visible: true }), get asleep() { return state.asleep; }, get display() { return state.display; }, get mode() { return state.mode; } };
+window.TapomoPet = { celebrate: (r) => celebrate(r, true), sleep: goToSleep, click: onClick, appear: () => onPetState({ visible: false }) || onPetState({ visible: true }), get asleep() { return state.asleep; }, get display() { return state.display; }, get mode() { return state.mode; } };
 
 init().catch(console.error);

@@ -52,10 +52,32 @@ async function renderSummary() {
   return s;
 }
 
-async function renderHeatmap() {
+/** Long weekday name (0 = Monday) in the current language. */
+function longDay(d) {
+  const name = new Date(2024, 0, 1 + d).toLocaleDateString(document.documentElement.lang, { weekday: 'long' });
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+let heatTipBound = false;
+function bindHeatTip(grid) {
+  if (heatTipBound) return;
+  heatTipBound = true;
+  const cell = (e) => e.target.closest?.('.cell[data-tip]');
+  grid.addEventListener('mouseover', (e) => cell(e) && Tips.showText(cell(e), cell(e).dataset.tip));
+  grid.addEventListener('mouseout', (e) => cell(e) && Tips.hide());
+}
+
+async function renderHeatmap(reference) {
   const cells = await invoke('get_heatmap', { range });
+  // Hue = zone of the cell's average against the personal reference; intensity = how much was typed
+  // (bursts relative to the busiest cell). While calibrating there is no reference: one hue by speed.
+  const calibrated = reference > 0;
   const max = Math.max(1, ...cells.map((c) => c.avg_wpm));
+  const maxBursts = Math.max(1, ...cells.map((c) => c.bursts));
+  $('heatmap-legend').hidden = !calibrated;
+  $('heatmap-note').hidden = calibrated;
   const grid = $('heatmap');
+  bindHeatTip(grid);
   grid.replaceChildren();
 
   grid.append(document.createElement('span'));
@@ -74,13 +96,23 @@ async function renderHeatmap() {
       const c = cells[d * 24 + h];
       const el = document.createElement('span');
       el.className = 'cell';
+      const hour = String(h).padStart(2, '0');
+      let text;
       if (c && c.bursts > 0) {
+        const pct = calibrated ? (c.avg_wpm / reference) * 100 : 0;
         // Keep a visible floor so slow-but-present hours don't look empty.
-        el.style.setProperty('--lvl', (0.2 + 0.8 * (c.avg_wpm / max)).toFixed(2));
-        el.title = t('heatmap.tip', { day: t(`day.${d}`), hour: String(h).padStart(2, '0'), wpm: fmt(c.avg_wpm), bursts: c.bursts });
+        const lvl = calibrated ? 0.25 + 0.75 * (c.bursts / maxBursts) : 0.2 + 0.8 * (c.avg_wpm / max);
+        el.style.setProperty('--lvl', lvl.toFixed(2));
+        el.dataset.lvl = lvl.toFixed(2);
+        if (calibrated) el.dataset.zone = zoneOfPct(pct);
+        const vars = { day: longDay(d), hour, wpm: fmt(c.avg_wpm), unit: t('unit.wpm'), pct: fmt(pct), bursts: c.bursts };
+        text = t(calibrated ? 'heatmap.tip.zone' : 'heatmap.tip', vars);
       } else {
-        el.title = `${t(`day.${d}`)} ${String(h).padStart(2, '0')}:00 — ${t('heatmap.none')}`;
+        text = `${longDay(d)} ${hour}:00 — ${t('heatmap.none')}`;
       }
+      el.dataset.tip = text;
+      el.setAttribute('role', 'img');
+      el.setAttribute('aria-label', text);
       grid.append(el);
     }
   }
@@ -169,7 +201,7 @@ async function refreshAll() {
   renderTabs();
   try {
     const s = await renderSummary();
-    if (s.bursts > 0) await Promise.all([renderHeatmap(), renderApps()]);
+    if (s.bursts > 0) await Promise.all([renderHeatmap(s.reference), renderApps()]);
   } catch (e) {
     showError(e);
   }

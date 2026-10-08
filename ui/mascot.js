@@ -12,6 +12,16 @@ const Mascot = (() => {
   const star = (x, y, s = 1) =>
     `<path transform="translate(${x} ${y}) scale(${s})" d="M0 -4 L1.1 -1.1 L4 0 L1.1 1.1 L0 4 L-1.1 1.1 L-4 0 L-1.1 -1.1Z" fill="#fff"/>`;
 
+  /** 5-point star polygon points, centred on (cx, cy), one point straight up. */
+  const starPoints = (cx, cy, R, r) =>
+    Array.from({ length: 10 }, (_, i) => {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      const k = i % 2 ? r : R;
+      return `${(cx + Math.cos(a) * k).toFixed(2)},${(cy + Math.sin(a) * k).toFixed(2)}`;
+    }).join(' ');
+  const goldStar = (cx, cy) =>
+    `<polygon points="${starPoints(cx, cy, 11.5, 4.9)}" fill="#ffcc4d" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/>`;
+
   const markup = `
     <defs>
       <radialGradient id="m-shadow-grad">
@@ -34,7 +44,7 @@ const Mascot = (() => {
     </g>
     <g class="m-shadow-g"><ellipse class="m-shadow" cx="80" cy="142" rx="46" ry="7.5" fill="url(#m-shadow-grad)"/></g>
     <g class="m-hop"><g class="m-bob"><g class="m-lift"><g class="m-breath">
-    <g id="mascot-body" class="mascot-body">
+    <g class="m-shake"><g id="mascot-body" class="mascot-body">
       <rect x="30" y="40" width="100" height="98" rx="30" fill="#ff9e7a"/>
       <rect x="40" y="46" width="80" height="72" rx="22" fill="#ffffff" opacity=".28"/>
       <g data-part="eyes"><g class="eyes-look"><g class="eyes-blink">
@@ -47,19 +57,28 @@ const Mascot = (() => {
           ${star(64.5, 81.5, 1.15)}${star(100.5, 81.5, 1.15)}
           <circle cx="59" cy="87.5" r="1.4" fill="#fff"/><circle cx="95" cy="87.5" r="1.4" fill="#fff"/>
         </g>
+        <g class="eyes-wide">
+          <circle cx="62" cy="84" r="9.45" fill="${INK}"/><circle cx="98" cy="84" r="9.45" fill="${INK}"/>
+          <circle cx="64.8" cy="80.8" r="3.5" fill="#fff"/><circle cx="100.8" cy="80.8" r="3.5" fill="#fff"/>
+          <circle cx="58.8" cy="88.4" r="1.7" fill="#fff"/><circle cx="94.8" cy="88.4" r="1.7" fill="#fff"/>
+        </g>
+        <g class="eyes-star">${goldStar(62, 84)}${goldStar(98, 84)}</g>
         <g class="eyes-dots">
           <circle cx="62" cy="85" r="3.2" fill="${INK}"/><circle cx="98" cy="85" r="3.2" fill="${INK}"/>
         </g>
         <g class="eyes-closed" fill="none" stroke="${INK}" stroke-width="3.5" stroke-linecap="round">
           <path d="M55 85 Q62 79 69 85"/><path d="M91 85 Q98 79 105 85"/>
         </g>
-      </g></g></g>
+      </g>
+      <g class="m-brows" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"><path d="M54 66 Q62 60 70 65"/><path d="M90 65 Q98 60 106 66"/></g>
+      </g></g>
       <g class="m-cheeks" data-part="cheeks">
         <circle class="cheek" cx="50" cy="98" r="7" fill="#ff6f61"/><circle class="cheek" cx="110" cy="98" r="7" fill="#ff6f61"/>
       </g>
       <g data-part="mouth" fill="none" stroke="${INK}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
         <path class="mouth-smile" d="M72 100 Q80 108 88 100"/>
         <path class="mouth-small" d="M75 102 Q80 105 85 102"/>
+        <ellipse class="mouth-o" cx="80" cy="105" rx="4.2" ry="5" fill="${INK}" stroke="none"/>
         <path class="mouth-big" d="M67 97 Q80 116 93 97"/>
         <g class="mouth-open"><path d="M69 98 Q80 120 91 98 Z" fill="${INK}"/><ellipse cx="80" cy="110" rx="4.5" ry="2.6" fill="#ff6f61" stroke="none"/></g>
         <path class="mouth-wavy" d="M67 104 q3.5 -6 7 0 t7 0 t7 0"/>
@@ -69,7 +88,12 @@ const Mascot = (() => {
         <path d="M77 82h6" stroke="${INK}" stroke-width="3"/>
         <path d="M52 80l8 0M88 80l8 0" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".7"/>
       </g>
-    </g></g></g></g></g>
+      <g class="m-extras m-crown" aria-hidden="true">
+        <g transform="rotate(-8 80 42)"><path d="M63 42 L61 26 L72 34 L80 22 L88 34 L99 26 L97 42 Z" fill="#ffcc4d" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/>
+        <circle cx="61" cy="26" r="2.3" fill="#ffcc4d" stroke="${INK}" stroke-width="1.6"/><circle cx="80" cy="22" r="2.3" fill="#ffcc4d" stroke="${INK}" stroke-width="1.6"/><circle cx="99" cy="26" r="2.3" fill="#ffcc4d" stroke="${INK}" stroke-width="1.6"/>
+        <path d="M67 38 H93" stroke="#fff3c4" stroke-width="2" stroke-linecap="round" opacity=".8"/></g>
+      </g>
+    </g></g></g></g></g></g>
     <g class="m-extras m-zzz" aria-hidden="true" fill="${INK}" font-family="inherit" font-weight="800">
       <text class="z z1" x="112" y="44" font-size="16" style="--dl:0s">z</text>
       <text class="z z2" x="124" y="30" font-size="20" style="--dl:1.1s">z</text>
@@ -98,11 +122,17 @@ const Mascot = (() => {
     return svg;
   }
 
-  /** eyes: round|sparkle|dots|closed · mouth: smile|small|big|open|wavy · cheeks: false|true (strong blush) */
-  function setFace(svg, { eyes = 'round', mouth = 'smile', cheeks = false } = {}) {
+  /**
+   * eyes: round|sparkle|wide|star|dots|closed · mouth: smile|small|o|big|open|wavy · cheeks: false|true (strong blush)
+   * brows: raised eyebrows · tense: a very subtle 12 Hz tremble. Parts cross-fade (mascot.css), they never pop.
+   */
+  function setFace(svg, { eyes = 'round', mouth = 'smile', cheeks = false, brows = false, tense = false } = {}) {
     svg.dataset.eyes = eyes;
     svg.dataset.mouth = mouth;
+    if (brows) svg.dataset.brows = 'up';
+    else delete svg.dataset.brows;
     svg.classList.toggle('blush', cheeks);
+    svg.classList.toggle('tense', tense);
     if (eyes === 'closed') look(svg, 0, 0);
   }
 
@@ -225,6 +255,57 @@ const Mascot = (() => {
     if (big) setTimeout(() => burstStars(svg), dur(T * 0.16));
   }
 
+  /**
+   * The record crown: pops on with a bounce, stays while on. `setCrown(svg, false)` fades it away;
+   * `crownFlyOff` throws it up and sideways, spinning (the streak broke).
+   */
+  function setCrown(svg, on) {
+    on = !!on;
+    if (!!svg.__crown === on) return;
+    svg.__crown = on;
+    const crown = part(svg, '.m-crown');
+    svg.__anim.crown?.cancel();
+    svg.__anim.crown = null;
+    if (on) {
+      svg.dataset.crown = 'on';
+      svg.__anim.crown = run(
+        crown,
+        [
+          { transform: 'translateY(-16px) scale(.2) rotate(-25deg)', opacity: 0, easing: 'cubic-bezier(.2,.8,.3,1)' },
+          { transform: 'translateY(2px) scale(1.25) rotate(6deg)', opacity: 1, offset: 0.5, easing: 'ease-in-out' },
+          { transform: 'translateY(-1px) scale(.94) rotate(-2deg)', opacity: 1, offset: 0.75, easing: 'ease-in-out' },
+          { transform: 'translateY(0) scale(1) rotate(0deg)', opacity: 1 },
+        ],
+        { duration: 520 }
+      );
+    } else {
+      const anim = run(crown, [{ opacity: 1 }, { opacity: 0 }], { duration: 260, easing: 'ease-out' });
+      svg.__anim.crown = anim;
+      if (anim) anim.onfinish = () => !svg.__crown && delete svg.dataset.crown;
+      else delete svg.dataset.crown;
+    }
+  }
+
+  function crownFlyOff(svg) {
+    if (!svg.__crown) return;
+    svg.__crown = false;
+    const crown = part(svg, '.m-crown');
+    svg.__anim.crown?.cancel();
+    const dir = Math.random() < 0.5 ? -1 : 1;
+    const anim = run(
+      crown,
+      [
+        { transform: 'translate(0px,0px) rotate(0deg)', opacity: 1, easing: 'cubic-bezier(.2,.7,.4,1)' },
+        { transform: `translate(${dir * 24}px,-44px) rotate(${dir * 200}deg)`, opacity: 1, offset: 0.55, easing: 'ease-in' },
+        { transform: `translate(${dir * 44}px,-22px) rotate(${dir * 400}deg)`, opacity: 0 },
+      ],
+      { duration: 800 }
+    );
+    svg.__anim.crown = anim;
+    if (anim) anim.onfinish = () => !svg.__crown && delete svg.dataset.crown;
+    else delete svg.dataset.crown;
+  }
+
   /** Eyes pop open (wake up), plus a small hop. */
   function wake(svg) {
     if (reduced()) return;
@@ -235,7 +316,7 @@ const Mascot = (() => {
   function blink(svg) {
     const eyes = part(svg, '.eyes-blink');
     if (!eyes || document.hidden || svg.classList.contains('sleeping')) return;
-    if (svg.dataset.eyes !== 'round' && svg.dataset.eyes !== 'sparkle') return;
+    if (!['round', 'sparkle', 'wide'].includes(svg.dataset.eyes)) return;
     const once = () => run(eyes, [{ transform: 'scaleY(1)' }, { transform: 'scaleY(.08)', offset: 0.5 }, { transform: 'scaleY(1)' }], { duration: 120, easing: 'ease-in-out' });
     once();
     if (Math.random() < 0.18) setTimeout(once, dur(210));
@@ -472,5 +553,5 @@ const Mascot = (() => {
   // Loops (breathing, z's, speed lines, glow) pause while nothing is on screen.
   document.addEventListener('visibilitychange', () => document.documentElement.classList.toggle('is-hidden', document.hidden));
 
-  return { mount, setFace, keyTick, keyRate, squish, tilt, jump, wake, blink, setZone, setShades, setSleeping, setHover, setHeld, setHiding, isHiding: (svg) => !!svg.__hiding, look, lookAtPoint, burstStars, reduced };
+  return { mount, setFace, keyTick, keyRate, squish, tilt, jump, wake, blink, setZone, setShades, setSleeping, setHover, setHeld, setCrown, crownFlyOff, setHiding, isHiding: (svg) => !!svg.__hiding, look, lookAtPoint, burstStars, reduced };
 })();
