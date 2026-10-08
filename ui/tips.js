@@ -29,6 +29,17 @@ const Tips = (() => {
     el.style.top = `${above >= 8 ? above : r.bottom + 8}px`;
   }
 
+  /** Same tooltip for any element with ready-made text (heatmap cells): no glossary hint. */
+  function showText(anchor, text) {
+    ensure();
+    if (current && current !== anchor) current.removeAttribute('aria-describedby');
+    current = anchor;
+    el.textContent = text;
+    el.hidden = false;
+    anchor.setAttribute('aria-describedby', 'tip');
+    position(anchor);
+  }
+
   function show(btn) {
     ensure();
     if (current && current !== btn) current.removeAttribute('aria-describedby');
@@ -71,5 +82,5 @@ const Tips = (() => {
     window.addEventListener('resize', hide);
   }
 
-  return { init, show, hide };
+  return { init, show, showText, hide };
 })();

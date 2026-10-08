@@ -146,7 +146,8 @@
   $('stopburst').addEventListener('click', () => stopTyping(true));
 
   const streak = $('g-streak');
-  for (const [label, v] of [['0 %', 0], ['25 %', 0.3], ['50 %', 0.55], ['75 %', 0.8], ['100 %', 1]]) button(streak, label, () => { model.streak = v; pushLive(); }, false);
+  for (const pct of [10, 40, 60, 80, 95, 100]) button(streak, `${pct} %`, () => { model.streak = pct / 100; pushLive(); }, false);
+  button(streak, 'Break record streak (backspace)', () => { model.streak = 0; emit('tapomo://key', 'delete'); pushLive(); }, false);
 
   const zones = $('g-zone');
   button(zones, 'Idle', () => { model.wpm = null; model.calibrating = null; pushLive(); }, false);
@@ -162,6 +163,7 @@
   button(mouse, 'Double-click', () => logMouse('double-click: the main window would open'), false);
   button(mouse, 'Right-click (menu)', showMenuMock, false);
   button(mouse, 'Hover hint (first 3 times)', () => { hintOn = true; emit('tapomo://pet-hover', false); emit('tapomo://pet-hover', true); setTimeout(() => (hintOn = false), 100); }, false);
+  for (const [label, r] of [['Burst: small', 1], ['Burst: medium', 2], ['Burst: full', 3]]) button(react, label, () => window.TapomoPet.celebrate(r));
   button(react, 'New record', () => emit('tapomo://record'));
   button(react, 'Sleep', () => window.TapomoPet.sleep(), false);
   button(react, 'Wake', key('char'));
