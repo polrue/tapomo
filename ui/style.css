@@ -135,7 +135,7 @@ main { padding: 8px 24px 32px; max-width: 960px; margin: 0 auto; }
 .heatmap .cell[data-zone="good"], .heat-legend i[data-zone="good"] { --zc: var(--zone-good); }
 .heatmap .cell[data-zone="fire"], .heat-legend i[data-zone="fire"] { --zc: var(--zone-fire); }
 .heatmap .cell[data-zone="beating"], .heat-legend i[data-zone="beating"] { --zc: var(--zone-beating); }
-.heatmap .cell[data-lvl]:hover { outline: 2px solid var(--ink); outline-offset: 1px; }
+.heatmap .cell[data-lvl]:hover, .heatmap .cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
 .heat-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 12px; font-size: 0.8rem; color: var(--muted); font-weight: 700; }
 .heat-legend .chip { display: inline-flex; align-items: center; gap: 6px; }
 .heat-legend i { width: 14px; height: 14px; border-radius: 4px; background: var(--zc); }
@@ -264,7 +264,7 @@ a { color: var(--accent-strong); font-weight: 700; }
 .tile.big .info:hover, .tile.big .info:focus-visible { background: #23202b; border-color: #23202b; color: var(--accent); }
 .card h2 .info { font-size: 11px; }
 .nw { white-space: nowrap; }
-.lbl { display: inline-flex; align-items: center; }
+.lbl { display: inline-flex; align-items: center; column-gap: .28em; } /* flex drops the label's trailing space */
 .tip {
   position: fixed; z-index: 50; max-width: 280px; padding: 8px 12px; border-radius: 10px;
   background: var(--ink); color: var(--bg); font-size: 0.85rem; font-weight: 600; line-height: 1.35;
@@ -279,3 +279,46 @@ a { color: var(--accent-strong); font-weight: 700; }
 .glossary[open] summary::after { content: " ▴"; }
 .glossary dt { font-weight: 800; margin-top: 12px; }
 .glossary dd { margin: 2px 0 0; color: var(--muted); }
+
+/* ------------------------------------------------- version, update, yesterday */
+.ver-line { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 0.85rem; }
+.ver { color: var(--muted); font-weight: 700; text-decoration: none; }
+.ver:hover, .ver:focus-visible { color: var(--accent-strong); text-decoration: underline; }
+a.pill { display: inline-block; text-decoration: none; padding: 2px 12px; }
+.yesterday { margin: 0 0 16px; padding: 0 4px; font-size: 0.9rem; }
+.sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ------------------------------------------------------------- welcome */
+.welcome {
+  position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: color-mix(in srgb, var(--ink) 45%, transparent); animation: welcome-fade 240ms ease-out;
+}
+.welcome-card {
+  position: relative; width: min(460px, 100%); max-height: 100%; overflow: auto; padding: 28px 28px 22px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 24px; text-align: center;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .3); animation: welcome-pop 380ms cubic-bezier(.34, 1.4, .64, 1);
+}
+.welcome-card:focus { outline: none; }
+.welcome-skip {
+  position: absolute; top: 12px; right: 14px; padding: 4px 10px; background: none; color: var(--muted); font-weight: 700;
+}
+.welcome-skip:hover { background: var(--cell-empty); color: var(--ink); }
+.welcome-stage { display: flex; justify-content: center; padding: 18px 0 6px; }
+.welcome-stage .mascot { width: 150px; height: 150px; }
+.welcome-body { min-height: 9.5rem; }
+.welcome-body h2 { margin: 6px 0 8px; font-size: 1.35rem; letter-spacing: -0.01em; }
+.welcome-body p { margin: 0; color: var(--muted); font-size: 1rem; }
+.welcome-dots { display: flex; justify-content: center; gap: 8px; margin: 14px 0 16px; }
+.welcome-dots i { width: 8px; height: 8px; border-radius: 999px; background: var(--line); transition: width 220ms ease, background-color 220ms ease; }
+.welcome-dots i[data-on] { width: 24px; background: var(--accent); }
+.welcome-nav { display: flex; justify-content: space-between; gap: 12px; }
+.welcome-nav button { min-width: 7rem; padding: 8px 18px; border-radius: 999px; }
+.welcome-nav .ghost { background: none; color: var(--muted); }
+.welcome-nav .ghost:hover { background: var(--cell-empty); color: var(--ink); }
+.welcome-nav .ghost[hidden] { display: block !important; visibility: hidden; }
+@keyframes welcome-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes welcome-pop { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .welcome, .welcome-card { animation: none; }
+  .welcome-dots i { transition: none; }
+}

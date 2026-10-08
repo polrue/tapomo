@@ -133,6 +133,8 @@ fn changed_settings(old: &Settings, new: &Settings) -> Vec<&'static str> {
         ("ignore_fullscreen", old.ignore_fullscreen != new.ignore_fullscreen),
         ("paused", old.paused != new.paused),
         ("show_pet", old.show_pet != new.show_pet),
+        ("check_updates", old.check_updates != new.check_updates),
+        ("welcome_done", old.welcome_done != new.welcome_done),
     ]
     .into_iter()
     .filter_map(|(name, changed)| changed.then_some(name))

@@ -32,6 +32,11 @@ function t(key, vars) {
   return s;
 }
 
+/** Count strings: picks `key_one` when n is 1, else `key_other`. `{n}` defaults to n. */
+function tn(key, n, vars) {
+  return t(`${key}_${n === 1 ? 'one' : 'other'}`, { n, ...vars });
+}
+
 /** Fills every [data-i18n] (text), [data-i18n-placeholder] and [data-i18n-title] in the document. */
 function applyI18n(root = document) {
   root.querySelectorAll('[data-i18n]').forEach((el) => (el.textContent = t(el.dataset.i18n)));

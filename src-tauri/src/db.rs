@@ -47,6 +47,16 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
         }
         conn.execute_batch("PRAGMA user_version = 1; COMMIT;")?;
     }
+    if version < 2 {
+        // Welcome screen: people who already have bursts recorded have been here before. Additive only.
+        conn.execute_batch(
+            "BEGIN;
+             INSERT OR IGNORE INTO settings(key, value)
+                 SELECT 'welcome_done', '1' WHERE EXISTS (SELECT 1 FROM bursts);
+             PRAGMA user_version = 2;
+             COMMIT;",
+        )?;
+    }
     Ok(())
 }
 
@@ -62,6 +72,10 @@ pub struct Settings {
     pub paused: bool,
     /// Floating Tapomo on the desktop.
     pub show_pet: bool,
+    /// Ask GitHub (and only GitHub) for the list of releases, at most once a day.
+    pub check_updates: bool,
+    /// The first-run welcome has been seen or skipped.
+    pub welcome_done: bool,
 }
 
 pub fn get_raw(conn: &Connection, key: &str) -> rusqlite::Result<Option<String>> {
@@ -89,6 +103,8 @@ pub fn get_settings(conn: &Connection) -> rusqlite::Result<Settings> {
         ignore_fullscreen: flag("ignore_fullscreen", true)?,
         paused: flag("paused", false)?,
         show_pet: flag("show_pet", true)?,
+        check_updates: flag("check_updates", true)?,
+        welcome_done: flag("welcome_done", false)?,
     })
 }
 
@@ -99,7 +115,9 @@ pub fn set_settings(conn: &Connection, s: &Settings) -> rusqlite::Result<()> {
     set_raw(conn, "autostart", b(s.autostart))?;
     set_raw(conn, "ignore_fullscreen", b(s.ignore_fullscreen))?;
     set_raw(conn, "paused", b(s.paused))?;
-    set_raw(conn, "show_pet", b(s.show_pet))
+    set_raw(conn, "show_pet", b(s.show_pet))?;
+    set_raw(conn, "check_updates", b(s.check_updates))?;
+    set_raw(conn, "welcome_done", b(s.welcome_done))
 }
 
 /// Saved position of the floating Tapomo (physical px). Kept out of [`Settings`]
@@ -187,6 +205,7 @@ pub fn remove_exclusion(conn: &Connection, exe: &str) -> rusqlite::Result<()> {
 pub(crate) fn range_start_ms(conn: &Connection, range: &str) -> rusqlite::Result<i64> {
     let days_back = match range {
         "today" => 0,
+        "yesterday" => 1,
         "7d" => 6,
         "30d" => 29,
         _ => return Ok(0),
@@ -196,6 +215,11 @@ pub(crate) fn range_start_ms(conn: &Connection, range: &str) -> rusqlite::Result
         [format!("-{days_back} days")],
         |r| r.get(0),
     )
+}
+
+/// End (exclusive) of `range` in Unix ms: only "yesterday" stops before now.
+fn range_end_ms(conn: &Connection, range: &str) -> rusqlite::Result<i64> {
+    if range == "yesterday" { range_start_ms(conn, "today") } else { Ok(i64::MAX) }
 }
 
 #[derive(Debug, Serialize)]
@@ -216,6 +240,7 @@ pub struct Summary {
 /// not a mean of per-burst means. Same maths as `Burst::gross_wpm`.
 pub fn summary(conn: &Connection, range: &str, current_streak: u32) -> rusqlite::Result<Summary> {
     let since = range_start_ms(conn, range)?;
+    let until = range_end_ms(conn, range)?;
     let (bursts, chars, dur_ms, gross, net, peak): (u64, u64, f64, f64, f64, Option<f64>) = conn.query_row(
         "SELECT COUNT(*),
                 COALESCE(SUM(chars), 0),
@@ -223,8 +248,8 @@ pub fn summary(conn: &Connection, range: &str, current_streak: u32) -> rusqlite:
                 COALESCE(SUM(MAX(chars - 1, 0)), 0),
                 COALESCE(SUM(MAX(chars - backspaces - 1, 0)), 0),
                 MAX(peak_wpm)
-         FROM bursts WHERE start_ms >= ?1",
-        [since],
+         FROM bursts WHERE start_ms >= ?1 AND start_ms < ?2",
+        [since, until],
         |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?)),
     )?;
     let minutes = dur_ms / 60_000.0;

@@ -213,7 +213,7 @@ function paintBar() {
 // Star bursts on upgrades: 1 small (4-5 tiny stars), 2 medium, 3 full. At most one per BURST_GAP_MS.
 const ZONE_RANK = { warming: 0, good: 1, fire: 2, beating: 3 };
 const ZONE_BURST = [0, 1, 2, 3];
-const LEVEL_BURST = [0, 1, 1, 2, 2, 3]; // by face level 0-5 (levels 2-3 small, 4-5 medium, 6 full)
+const LEVEL_BURST = [0, 1, 1, 2, 2, 3]; // by face level 0-5 (levels 1-2 small, 3-4 medium, 5 full)
 const BURST_GAP_MS = 1500;
 const BURSTS = [null, [5, 0.45], [7, 0.75], [10, 1]];
 let prevLevel = 0;
