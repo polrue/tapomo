@@ -78,6 +78,7 @@
 .mascot.sleeping .m-zzz { display: inline; }
 .mascot.sleeping .m-lines, .mascot.sleeping .m-glow { opacity: 0 !important; }
 .m-zzz .z { opacity: 0; animation: m-z calc(3.4s / var(--speed)) ease-in-out infinite; animation-delay: calc(var(--dl, 0s) / var(--speed)); }
+.m-zzz .z { paint-order: stroke; stroke: #fff8f3; stroke-width: 3px; stroke-linejoin: round; } /* readable on dark desktops too */
 @keyframes m-z {
   0% { transform: translate(-5px, 10px) scale(.6) rotate(-10deg); opacity: 0; }
   25% { opacity: 1; }

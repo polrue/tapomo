@@ -12,6 +12,7 @@
     <div class="mascot-wrap" id="mascot-wrap"><svg id="mascot" viewBox="0 0 160 160" role="img" aria-label="Tapomo"></svg></div>
     <div class="brand">
       <h1>Tapomo</h1>
+      <p class="ver-line"><a id="version-link" class="ver" href="#" target="_blank" rel="noopener" data-i18n-title="version.title" hidden></a><a id="update-pill" class="pill" href="#" target="_blank" rel="noopener" hidden></a></p>
       <p class="hide-note" id="hide-note" aria-live="polite" hidden><span id="hide-text"></span><button type="button" class="pill" id="hide-btn" hidden></button></p>
       <p class="tagline" id="paused-banner" hidden data-i18n="paused.banner"></p>
     </div>
@@ -43,6 +44,8 @@
       </div>
       <div class="live-note"><p class="live-text" id="live-text"></p><button type="button" class="info" id="live-burst-info" data-tip="tip.longburst" data-i18n-aria="tip.more" hidden>i</button></div>
     </section>
+
+    <p id="yesterday" class="muted yesterday" hidden></p>
 
     <section id="empty" class="empty" hidden>
       <h2 data-i18n="empty.title"></h2>
@@ -123,6 +126,8 @@
       <label class="check"><input id="s-paused" type="checkbox"><span data-i18n="settings.paused"></span></label>
       <label class="check"><input id="s-pet" type="checkbox"><span data-i18n="settings.show_pet"></span></label>
       <p class="hint" data-i18n="settings.show_pet.hint"></p>
+      <label class="check"><input id="s-updates" type="checkbox"><span data-i18n="settings.check_updates"></span></label>
+      <p class="hint" data-i18n="settings.check_updates.hint"></p>
 
       <h3 data-i18n="settings.logs"></h3>
       <p class="hint" data-i18n="settings.logs.hint"></p>
@@ -147,6 +152,7 @@
       <p id="about-version" class="muted"></p>
       <p class="privacy" data-i18n="about.privacy"></p>
       <p class="privacy" data-i18n="about.privacy_passwords"></p>
+      <p><button type="button" id="welcome-again" data-i18n="welcome.again"></button></p>
       <p class="links">
         <a href="https://github.com/polrue/tapomo" target="_blank" rel="noopener" data-i18n="about.source"></a>
         <a class="coffee" href="https://github.com/sponsors/polrue" target="_blank" rel="noopener" data-i18n="about.coffee"></a>
@@ -154,9 +160,27 @@
     </section>
   </main>
 
+  <div id="welcome" class="welcome" hidden>
+    <div class="welcome-card" role="dialog" aria-modal="true" aria-labelledby="welcome-title" aria-describedby="welcome-text" tabindex="-1">
+      <button type="button" class="welcome-skip" id="welcome-skip" data-i18n="welcome.skip"></button>
+      <div class="welcome-stage"><svg id="welcome-mascot" viewBox="0 0 160 160" role="img" aria-label="Tapomo"></svg></div>
+      <div class="welcome-body" id="welcome-body">
+        <h2 id="welcome-title"></h2>
+        <p id="welcome-text"></p>
+      </div>
+      <p class="sr" id="welcome-step" aria-live="polite"></p>
+      <div class="welcome-dots" id="welcome-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="welcome-nav">
+        <button type="button" class="ghost" id="welcome-back" data-i18n="welcome.back"></button>
+        <button type="button" id="welcome-next"></button>
+      </div>
+    </div>
+  </div>
+
   <script src="i18n.js"></script>
   <script src="mascot.js"></script>
   <script src="tips.js"></script>
+  <script src="welcome.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
