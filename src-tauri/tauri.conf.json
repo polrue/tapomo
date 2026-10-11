@@ -25,7 +25,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "msi"],
+    "targets": ["nsis"],
     "publisher": "Pol Rue",
     "copyright": "Copyright (C) Pol Rue. GPL-3.0-or-later.",
     "license": "GPL-3.0-or-later",
@@ -40,6 +40,7 @@
     "windows": {
       "nsis": {
         "installerIcon": "icons/icon.ico",
+        "template": "installer/installer.nsi",
         "headerImage": "installer/header.bmp",
         "sidebarImage": "installer/sidebar.bmp",
         "languages": ["Spanish", "English"],

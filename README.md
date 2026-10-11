@@ -32,7 +32,7 @@ Los campos de contraseña se ignoran por completo: ni se cuentan ni se cronometr
 
 ## Descarga
 
-Todavía no hay versiones publicadas. Mientras tanto, descarga el instalador (`.msi` o `.exe`) del artefacto `tapomo-windows` de la última ejecución correcta de [Actions](https://github.com/polrue/tapomo/actions). El instalador aún **no está firmado**: Windows SmartScreen mostrará un aviso; pulsa «Más información → Ejecutar de todas formas».
+Todavía no hay versiones publicadas. Mientras tanto, descarga el instalador (`.exe`) del artefacto `tapomo-windows` de la última ejecución correcta de [Actions](https://github.com/polrue/tapomo/actions). El instalador aún **no está firmado**: Windows SmartScreen mostrará un aviso; pulsa «Más información → Ejecutar de todas formas».
 
 ## Compilar desde el código
 
@@ -82,7 +82,7 @@ Password fields are ignored entirely: not counted, not timed (detected via UI Au
 
 ### Download
 
-There are no releases yet. For now, grab the installer (`.msi` or `.exe`) from the `tapomo-windows` artifact of the latest successful [Actions](https://github.com/polrue/tapomo/actions) run. The installer is **unsigned**, so Windows SmartScreen will warn you: click "More info → Run anyway".
+There are no releases yet. For now, grab the installer (`.exe`) from the `tapomo-windows` artifact of the latest successful [Actions](https://github.com/polrue/tapomo/actions) run. The installer is **unsigned**, so Windows SmartScreen will warn you: click "More info → Run anyway".
 
 ### Build from source
 
