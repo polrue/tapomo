@@ -34,6 +34,5 @@ jobs:
         with:
           name: tapomo-windows
           path: |
-            target/release/bundle/msi/*.msi
             target/release/bundle/nsis/*.exe
           if-no-files-found: error
