@@ -57,6 +57,7 @@ fn main() {
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, Some(vec!["--minimized"])))
         .invoke_handler(tauri::generate_handler![
             commands::get_summary,
+            commands::get_daily_goal,
             commands::get_heatmap,
             commands::get_apps,
             commands::set_alias,

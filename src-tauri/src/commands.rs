@@ -10,7 +10,7 @@ use tauri::menu::{CheckMenuItem, MenuItem};
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 
-use crate::db::{self, AppStat, HeatCell, Settings, Summary};
+use crate::db::{self, AppStat, DailyGoal, HeatCell, Settings, Summary};
 use crate::{i18n, pet};
 use crate::tracker::{Msg, Shared};
 
@@ -44,6 +44,13 @@ impl AppState {
 pub fn get_summary(state: State<AppState>, range: String) -> CmdResult<Summary> {
     let streak = state.shared.streak.load(Ordering::Relaxed);
     state.with_db(|c| db::summary(c, &range, streak))
+}
+
+/// Daily goal progress and day streak (the burst still open counts towards today).
+#[tauri::command]
+pub fn get_daily_goal(state: State<AppState>) -> CmdResult<DailyGoal> {
+    let open_ms = state.shared.open_burst_ms.load(Ordering::Relaxed);
+    state.with_db(|c| db::daily_goal(c, open_ms))
 }
 
 #[tauri::command]
@@ -135,6 +142,8 @@ fn changed_settings(old: &Settings, new: &Settings) -> Vec<&'static str> {
         ("show_pet", old.show_pet != new.show_pet),
         ("check_updates", old.check_updates != new.check_updates),
         ("welcome_done", old.welcome_done != new.welcome_done),
+        ("daily_goal_min", old.daily_goal_min != new.daily_goal_min),
+        ("weekend_rest", old.weekend_rest != new.weekend_rest),
     ]
     .into_iter()
     .filter_map(|(name, changed)| changed.then_some(name))
@@ -184,7 +193,8 @@ pub fn set_show_pet(app: &AppHandle, on: bool) {
 #[tauri::command]
 pub fn get_pet_tip(state: State<AppState>, lang: String) -> CmdResult<Option<crate::pet_tip::PetTip>> {
     let lang = i18n::resolve(&lang);
-    state.with_db(|c| crate::pet_tip::next_tip(c, lang))
+    let open_ms = state.shared.open_burst_ms.load(Ordering::Relaxed);
+    state.with_db(|c| crate::pet_tip::next_tip(c, lang, open_ms))
 }
 
 /// Opens the folder holding the log files in the file manager.

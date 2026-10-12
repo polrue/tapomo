@@ -76,6 +76,18 @@ pub struct Settings {
     pub check_updates: bool,
     /// The first-run welcome has been seen or skipped.
     pub welcome_done: bool,
+    /// Daily goal in active minutes: 0 (off), 10, 20 or 30.
+    pub daily_goal_min: u32,
+    /// Saturdays and Sundays never break the day streak.
+    pub weekend_rest: bool,
+}
+
+/// Goal choices offered in the settings; anything else falls back to the default.
+pub const GOAL_CHOICES: [u32; 4] = [0, 10, 20, 30];
+pub const DEFAULT_GOAL_MIN: u32 = 20;
+
+fn valid_goal(min: u32) -> u32 {
+    if GOAL_CHOICES.contains(&min) { min } else { DEFAULT_GOAL_MIN }
 }
 
 pub fn get_raw(conn: &Connection, key: &str) -> rusqlite::Result<Option<String>> {
@@ -105,6 +117,8 @@ pub fn get_settings(conn: &Connection) -> rusqlite::Result<Settings> {
         show_pet: flag("show_pet", true)?,
         check_updates: flag("check_updates", true)?,
         welcome_done: flag("welcome_done", false)?,
+        daily_goal_min: valid_goal(get_raw(conn, "daily_goal_min")?.and_then(|v| v.parse().ok()).unwrap_or(DEFAULT_GOAL_MIN)),
+        weekend_rest: flag("weekend_rest", false)?,
     })
 }
 
@@ -117,7 +131,9 @@ pub fn set_settings(conn: &Connection, s: &Settings) -> rusqlite::Result<()> {
     set_raw(conn, "paused", b(s.paused))?;
     set_raw(conn, "show_pet", b(s.show_pet))?;
     set_raw(conn, "check_updates", b(s.check_updates))?;
-    set_raw(conn, "welcome_done", b(s.welcome_done))
+    set_raw(conn, "welcome_done", b(s.welcome_done))?;
+    set_raw(conn, "daily_goal_min", &valid_goal(s.daily_goal_min).to_string())?;
+    set_raw(conn, "weekend_rest", b(s.weekend_rest))
 }
 
 /// Saved position of the floating Tapomo (physical px). Kept out of [`Settings`]
@@ -197,6 +213,59 @@ pub fn add_exclusion(conn: &Connection, exe: &str) -> rusqlite::Result<()> {
 pub fn remove_exclusion(conn: &Connection, exe: &str) -> rusqlite::Result<()> {
     conn.execute("DELETE FROM exclusions WHERE exe = ?1", [exe])?;
     Ok(())
+}
+
+// ----------------------------------------------------------- daily goal
+
+/// SQL for the local day number (days since 1970-01-01) of a Unix-ms timestamp expression.
+const DAY_OF_START: &str = "CAST(ROUND(julianday(date(start_ms / 1000, 'unixepoch', 'localtime')) - 2440587.5) AS INTEGER)";
+
+/// Today's local day number, same scale as [`daily_active`].
+pub fn today_day(conn: &Connection) -> rusqlite::Result<i64> {
+    conn.query_row("SELECT CAST(ROUND(julianday(date('now', 'localtime')) - 2440587.5) AS INTEGER)", [], |r| r.get(0))
+}
+
+/// Active typing time per local day: the sum of burst durations, by the day each burst started.
+/// Derived on demand from `bursts` (indexed by `start_ms`); no separate table to keep in sync.
+pub fn daily_active(conn: &Connection) -> rusqlite::Result<Vec<(i64, u64)>> {
+    let sql = format!("SELECT {DAY_OF_START}, SUM(end_ms - start_ms) FROM bursts GROUP BY 1");
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map([], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?.max(0) as u64)))?;
+    rows.collect()
+}
+
+/// Active time of today alone (cheap: uses the start-of-day index range).
+pub fn today_active_ms(conn: &Connection) -> rusqlite::Result<u64> {
+    let since = range_start_ms(conn, "today")?;
+    let ms: i64 = conn.query_row("SELECT COALESCE(SUM(end_ms - start_ms), 0) FROM bursts WHERE start_ms >= ?1", [since], |r| r.get(0))?;
+    Ok(ms.max(0) as u64)
+}
+
+#[derive(Debug, Serialize)]
+pub struct DailyGoal {
+    pub goal_min: u32,
+    pub today_ms: u64,
+    pub met_today: bool,
+    pub streak_days: u32,
+    pub freeze_used_this_week: bool,
+    pub freeze_saved_streak_recently: bool,
+}
+
+/// `open_ms` is the burst still being typed, which is not stored yet.
+pub fn daily_goal(conn: &Connection, open_ms: u64) -> rusqlite::Result<DailyGoal> {
+    let settings = get_settings(conn)?;
+    let today = today_day(conn)?;
+    let mut days = daily_active(conn)?;
+    days.push((today, open_ms));
+    let status = tapomo_core::goal_status(&days, today, u64::from(settings.daily_goal_min) * 60_000, settings.weekend_rest);
+    Ok(DailyGoal {
+        goal_min: settings.daily_goal_min,
+        today_ms: status.today_ms,
+        met_today: status.met_today,
+        streak_days: status.streak_days,
+        freeze_used_this_week: status.freeze_used_this_week,
+        freeze_saved_streak_recently: status.freeze_saved_streak_recently,
+    })
 }
 
 // -------------------------------------------------------------------- stats

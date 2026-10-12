@@ -61,6 +61,52 @@ async function renderYesterday() {
   el.textContent = tn('yesterday.line', y.chars_total, { wpm: fmt(y.avg_wpm), n: fmt(y.chars_total) });
 }
 
+// -------------------------------------------------------------- daily goal
+
+const RING_LEN = 2 * Math.PI * 42; // matches stroke-dasharray in style.css
+let lastGoal = null;
+
+/** Daily-goal card (Today view only, and only while a goal is set): ring, minutes, streak. */
+async function renderGoal() {
+  const card = $('goal');
+  const g = range === 'today' ? await invoke('get_daily_goal') : null;
+  lastGoal = g;
+  card.hidden = !g || g.goal_min === 0;
+  if (card.hidden) return;
+  const goalMs = g.goal_min * 60000;
+  const frac = Math.min(1, g.today_ms / goalMs);
+  const minutes = Math.floor(g.today_ms / 60000);
+  card.toggleAttribute('data-met', g.met_today);
+  // Set on the next frame so the arc animates from where it was (or from empty on first show).
+  requestAnimationFrame(() => $('goal-arc').style.strokeDashoffset = String(RING_LEN * (1 - frac)));
+  $('goal-pct').textContent = `${Math.round(frac * 100)}%`;
+  const label = t('goal.progress', { m: fmt(minutes), goal: fmt(g.goal_min) });
+  $('goal-progress').textContent = label;
+  $('goal-progress').setAttribute('aria-valuemax', String(g.goal_min));
+  $('goal-progress').setAttribute('aria-valuenow', String(Math.min(minutes, g.goal_min)));
+  $('goal-progress').setAttribute('aria-valuetext', t('goal.progress_aria', { m: fmt(minutes), goal: fmt(g.goal_min) }));
+  $('goal-sub').textContent = t(g.met_today ? 'goal.done' : 'goal.sub');
+  const streak = document.querySelector('.goal-streak');
+  streak.toggleAttribute('data-zero', g.streak_days === 0);
+  $('goal-days').textContent = g.streak_days > 0 ? tn('goal.streak', g.streak_days, { n: fmt(g.streak_days) }) : t('goal.streak_start');
+  const saved = $('goal-saved');
+  saved.hidden = !g.freeze_saved_streak_recently || g.streak_days === 0;
+  if (!saved.hidden) saved.textContent = t('goal.saved');
+}
+
+/** Goal reached: the ring pulses and Tapomo throws stars. */
+function goalReached() {
+  renderGoal().then(() => {
+    const ring = $('goal-ring');
+    if (ring.offsetParent && !Mascot.reduced()) {
+      ring.classList.remove('pop');
+      void ring.offsetWidth;
+      ring.classList.add('pop');
+    }
+  }).catch(showError);
+  Mascot.jump($('mascot'), { big: true }); // the big hop throws the star burst
+}
+
 /** Long weekday name (0 = Monday) in the current language. */
 function longDay(d) {
   const name = new Date(2024, 0, 1 + d).toLocaleDateString(document.documentElement.lang, { weekday: 'long' });
@@ -217,6 +263,8 @@ function renderSettings() {
   $('s-fullscreen').checked = settings.ignore_fullscreen;
   $('s-paused').checked = settings.paused;
   $('s-pet').checked = settings.show_pet;
+  $('s-goal').value = String(settings.daily_goal_min);
+  $('s-weekend').checked = settings.weekend_rest;
   $('s-updates').checked = settings.check_updates;
   $('paused-banner').hidden = !settings.paused;
 }
@@ -237,6 +285,7 @@ async function refreshAll() {
   renderTabs();
   try {
     renderYesterday().catch(showError);
+    renderGoal().catch(showError);
     const s = await renderSummary();
     if (s.bursts > 0) await Promise.all([renderHeatmap(s.reference), renderApps()]);
   } catch (e) {
@@ -268,6 +317,7 @@ async function onLanguageChange() {
   renderLanguageSelect();
   renderSettings();
   renderGlossary();
+  renderGoal().catch(showError);
   paintLive(lastLive || {});
   renderPetState();
   renderVersion();
@@ -291,6 +341,8 @@ function bindControls() {
   $('s-language').addEventListener('change', onLanguageChange);
   $('s-autostart').addEventListener('change', () => saveSettings({ autostart: $('s-autostart').checked }));
   $('s-fullscreen').addEventListener('change', () => saveSettings({ ignore_fullscreen: $('s-fullscreen').checked }));
+  $('s-goal').addEventListener('change', () => saveSettings({ daily_goal_min: Number($('s-goal').value) }).then(() => renderGoal()).catch(showError));
+  $('s-weekend').addEventListener('change', () => saveSettings({ weekend_rest: $('s-weekend').checked }).then(() => renderGoal()).catch(showError));
   $('s-pet').addEventListener('change', () => saveSettings({ show_pet: $('s-pet').checked }));
   $('s-updates').addEventListener('change', async () => {
     await saveSettings({ check_updates: $('s-updates').checked });
@@ -593,20 +645,23 @@ async function bindEvents() {
     if (now - lastKeyRefresh > 700) {
       lastKeyRefresh = now;
       renderSummary().catch(showError);
+      renderGoal().catch(showError);
     }
   });
   await listen('tapomo://live', (e) => renderLive(e.payload));
   await listen('tapomo://burst', scheduleRefresh);
   await listen('tapomo://record', blush);
+  await listen('tapomo://goal', goalReached);
   await listen('tapomo://settings', async () => {
     settings = await invoke('get_settings');
     renderSettings();
+    renderGoal().catch(showError);
   });
 }
 
 // ----------------------------------------------------------------- glossary
 
-const GLOSSARY = ['pet', 'wpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net'];
+const GLOSSARY = ['pet', 'wpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak'];
 
 function renderGlossary() {
   const dl = $('glossary-list');

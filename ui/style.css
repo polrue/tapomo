@@ -322,3 +322,41 @@ a.pill { display: inline-block; text-decoration: none; padding: 2px 12px; }
   .welcome, .welcome-card { animation: none; }
   .welcome-dots i { transition: none; }
 }
+
+/* ------------------------------------------------------------ daily goal */
+.goal { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 24px; padding: 14px 20px; --arc: var(--accent); }
+.goal[data-met] { --arc: var(--zone-beating); }
+.goal-ring { position: relative; width: 84px; height: 84px; flex: none; }
+.goal-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.goal-ring circle { fill: none; stroke-width: 10; }
+.goal-track { stroke: var(--cell-empty); }
+.goal-arc {
+  stroke: var(--arc); stroke-linecap: round;
+  stroke-dasharray: 263.89; stroke-dashoffset: 263.89; /* 2 * pi * 42: empty until the first paint sets the value */
+  transition: stroke-dashoffset 900ms cubic-bezier(.3, .7, .2, 1), stroke 300ms ease-out;
+}
+.goal-ring strong { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+.goal-ring.pop { animation: goal-pop 700ms cubic-bezier(.34, 1.5, .64, 1); }
+.goal[data-met] .goal-ring { filter: drop-shadow(0 0 6px rgba(255, 201, 60, .55)); }
+.goal[data-met] .goal-ring strong { font-size: 0.95rem; }
+.goal-text { flex: 1 1 180px; min-width: 0; }
+.goal-text p, .goal-streak p { margin: 0; }
+.goal-progress { font-size: 1.35rem; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.goal-sub { color: var(--muted); font-size: 0.85rem; }
+.goal[data-met] .goal-sub { color: var(--ink); font-weight: 800; } /* gold stays on the ring; gold text is too faint */
+.goal-streak { display: flex; align-items: center; gap: 8px; flex: none; margin-left: auto; min-width: 0; }
+.flame { width: 28px; height: 28px; flex: none; fill: var(--zone-fire); }
+.flame-core { fill: var(--zone-beating); }
+.goal-streak[data-zero] .flame { fill: var(--muted-fill); }
+.goal-streak[data-zero] .flame-core { fill: var(--cell-empty); }
+.goal-days { font-weight: 800; }
+.goal-saved { color: var(--ink); font-size: 0.85rem; font-weight: 700; }
+@keyframes goal-pop { 0% { transform: scale(1); } 40% { transform: scale(1.14); } 100% { transform: scale(1); } }
+@media (max-width: 560px) {
+  .goal { gap: 10px 16px; }
+  .goal-ring { width: 72px; height: 72px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .goal-arc { transition: none; }
+  .goal-ring.pop { animation: none; }
+}

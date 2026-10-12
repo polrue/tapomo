@@ -28,8 +28,8 @@
 
   // Opened from disk, fetch('locales/..') is blocked: fall back to the few strings the pet uses.
   const fallback = {
-    es: { 'pet.record': '¡Nuevo récord!', 'pet.oops': '¡ups!', 'pet.oops_big': '¡uuups!', 'pet.hi': '¡hola!', 'pet.here': '¡aquí estoy!', 'pet.hide.setting': 'Estoy escondido 🙈', 'pet.hide.setting.btn': '¡Sal!', 'pet.hide.hour': 'Vuelvo en {m} min', 'pet.hide.hour.btn': '¡Sal ya!', 'pet.hide.fullscreen': 'Me he escondido mientras ves algo a pantalla completa' },
-    en: { 'pet.record': 'New record!', 'pet.oops': 'oops!', 'pet.oops_big': 'ooooops!', 'pet.hi': 'hi!', 'pet.here': 'here I am!', 'pet.hide.setting': "I'm hiding 🙈", 'pet.hide.setting.btn': 'Come out!', 'pet.hide.hour': 'Back in {m} min', 'pet.hide.hour.btn': 'Come out now!', 'pet.hide.fullscreen': "I'm hiding while you watch something fullscreen" },
+    es: { 'pet.record': '¡Nuevo récord!', 'pet.oops': '¡ups!', 'pet.oops_big': '¡uuups!', 'pet.hi': '¡hola!', 'pet.here': '¡aquí estoy!', 'goal.done': '¡Objetivo cumplido!', 'pet.hide.setting': 'Estoy escondido 🙈', 'pet.hide.setting.btn': '¡Sal!', 'pet.hide.hour': 'Vuelvo en {m} min', 'pet.hide.hour.btn': '¡Sal ya!', 'pet.hide.fullscreen': 'Me he escondido mientras ves algo a pantalla completa' },
+    en: { 'pet.record': 'New record!', 'pet.oops': 'oops!', 'pet.oops_big': 'ooooops!', 'pet.hi': 'hi!', 'pet.here': 'here I am!', 'goal.done': 'Goal reached!', 'pet.hide.setting': "I'm hiding 🙈", 'pet.hide.setting.btn': 'Come out!', 'pet.hide.hour': 'Back in {m} min', 'pet.hide.hour.btn': 'Come out now!', 'pet.hide.fullscreen': "I'm hiding while you watch something fullscreen" },
   };
   const realLoadAll = loadAll; // eslint-disable-line no-undef
   loadAll = async () => { // eslint-disable-line no-global-assign, no-undef
@@ -43,7 +43,7 @@
     ['tip.low_corrections', { p: '0,8' }], ['tip.near_record', { w: '86', d: '7', u: 'ppm' }],
     ['tip.record_today', { w: '94', u: 'ppm' }], ['tip.best_hour', { h: '10' }],
     ['tip.volume_today', { n: '5.400', pages: '3' }], ['tip.top_app', { app: 'WINWORD' }],
-    ['tip.calibrating', { have: '7', need: '20' }], ['tip.generic_1', {}], ['tip.generic_2', {}], ['tip.generic_3', {}],
+    ['tip.calibrating', { have: '7', need: '20' }], ['tip.goal_left', { n: '4' }], ['tip.goal_left_one', { n: '1' }], ['tip.goal_streak', { n: '6' }], ['tip.goal_met', {}], ['tip.generic_1', {}], ['tip.generic_2', {}], ['tip.generic_3', {}],
   ];
   let tipIndex = 0;
   let hintOn = false;
