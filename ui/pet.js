@@ -237,6 +237,16 @@ function onRecord() {
   say('pet.record', 2200, true);
 }
 
+/** Today's goal reached: a hop, a full burst (even if a smaller one was just thrown) and a big bubble. */
+function onGoal() {
+  if (state.paused || state.asleep) return;
+  const wait = BURST_GAP_MS - (Date.now() - lastBurstAt);
+  if (wait > 0) setTimeout(() => celebrate(3, true), wait); // respects the gap between bursts
+  else celebrate(3);
+  Mascot.jump(svg, { big: false });
+  say('goal.done', 3500, true);
+}
+
 function goToSleep() {
   if (state.asleep || state.paused) return;
   state.asleep = true;
@@ -424,6 +434,7 @@ async function init() {
     listen('tapomo://key', (e) => onKey(e.payload)),
     listen('tapomo://live', (e) => onLive(e.payload)),
     listen('tapomo://record', onRecord),
+    listen('tapomo://goal', onGoal),
     listen('tapomo://settings', () => loadSettings().catch(console.error)),
     listen('tapomo://pet-say', () => onClick()),
     listen('tapomo://pet-state', (e) => onPetState(e.payload)),

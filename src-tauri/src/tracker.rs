@@ -52,12 +52,21 @@ pub struct Shared {
     pub snooze_gen: AtomicU32,
     /// When the running snooze ends, in ms since the Unix epoch (0 = none).
     pub snooze_until_ms: AtomicU64,
+    /// Length of the burst being typed (0 when none): it counts towards today's goal before it is stored.
+    pub open_burst_ms: AtomicU64,
 }
 
 impl Shared {
     fn ui_visible(&self) -> bool {
         self.window_visible.load(Ordering::Relaxed) || self.pet_visible.load(Ordering::Relaxed)
     }
+}
+
+/// Payload of `tapomo://goal`: today's goal has just been reached.
+#[derive(Serialize, Clone)]
+struct GoalReached {
+    goal_min: u32,
+    today_ms: u64,
 }
 
 /// Payload of `tapomo://live`. `wpm` is `null` when no burst is open (or it is too young).
@@ -122,6 +131,13 @@ struct Tracker {
     /// Time of the last accepted key of the open burst; `None` once it is closed.
     last_key_ms: Option<u64>,
     live_active: bool,
+    /// Daily goal in ms (0 = off) and the stored active time of `goal_day`.
+    goal_ms: u64,
+    goal_day: i64,
+    goal_stored_ms: u64,
+    /// Local day for which `tapomo://goal` has fired (or the goal was already met), so it fires once.
+    goal_fired_day: Option<i64>,
+    goal_refreshed: Instant,
 }
 
 impl Tracker {
@@ -147,6 +163,11 @@ impl Tracker {
             max_peak: None,
             last_key_ms: None,
             live_active: false,
+            goal_ms: 0,
+            goal_day: 0,
+            goal_stored_ms: 0,
+            goal_fired_day: None,
+            goal_refreshed: Instant::now(),
         };
         t.refresh_reference();
         t.reload();
@@ -163,6 +184,7 @@ impl Tracker {
                     self.last_key_ms = None;
                     let burst = self.engine.flush();
                     self.finish_burst(burst);
+                    self.sync_goal();
                 }
                 Ok(Msg::Shutdown(ack)) => {
                     self.last_key_ms = None;
@@ -183,6 +205,7 @@ impl Tracker {
                     self.last_key_ms = None;
                 }
                 self.finish_burst(burst);
+                self.sync_goal();
                 self.shared.streak.store(self.engine.current_streak(), Ordering::Relaxed);
                 self.emit_live(now);
                 self.watch_fullscreen();
@@ -206,6 +229,8 @@ impl Tracker {
             Ok(list) => self.excluded = list.into_iter().map(|e| e.to_lowercase()).collect(),
             Err(e) => log::error!("could not read exclusions: {e}"),
         }
+        self.refresh_goal();
+        self.sync_goal();
     }
 
     fn on_key(&mut self, key: RawKey) {
@@ -236,6 +261,7 @@ impl Tracker {
             let _ = self.app.emit("tapomo://record", ());
         }
         self.finish_burst(burst);
+        self.sync_goal();
     }
 
     fn finish_burst(&mut self, burst: Option<Burst>) {
@@ -246,7 +272,49 @@ impl Tracker {
         }
         self.persist_best();
         self.refresh_reference();
+        self.goal_stored_ms += burst.duration_ms();
         let _ = self.app.emit("tapomo://burst", ());
+    }
+
+    /// Re-reads the goal setting and the stored active time of today. A goal that is already met
+    /// (before a restart, or after lowering the goal) is marked as fired without a celebration;
+    /// raising it above today's time re-arms the event.
+    fn refresh_goal(&mut self) {
+        self.goal_refreshed = Instant::now();
+        let read = || -> rusqlite::Result<(u64, i64, u64)> {
+            let goal_ms = u64::from(db::get_settings(&self.conn)?.daily_goal_min) * 60_000;
+            Ok((goal_ms, db::today_day(&self.conn)?, db::today_active_ms(&self.conn)?))
+        };
+        match read() {
+            Ok((goal_ms, day, stored)) => {
+                (self.goal_ms, self.goal_day, self.goal_stored_ms) = (goal_ms, day, stored);
+                self.goal_fired_day = (goal_ms > 0 && stored + self.engine.open_burst_ms() >= goal_ms).then_some(day);
+            }
+            Err(e) => log::error!("could not read the daily goal: {e}"),
+        }
+    }
+
+    /// Publishes the open burst's length and fires `tapomo://goal` the moment today's goal is reached.
+    fn sync_goal(&mut self) {
+        let open = self.engine.open_burst_ms();
+        self.shared.open_burst_ms.store(open, Ordering::Relaxed);
+        if self.goal_ms == 0 {
+            return;
+        }
+        // The day rolls over (or the clock moved): start from the stored time of the new day. Checked once a minute.
+        if self.goal_refreshed.elapsed() >= Duration::from_secs(60) {
+            let day = db::today_day(&self.conn).unwrap_or(self.goal_day);
+            if day != self.goal_day {
+                self.refresh_goal();
+            } else {
+                self.goal_refreshed = Instant::now();
+            }
+        }
+        if self.goal_fired_day == Some(self.goal_day) || self.goal_stored_ms + open < self.goal_ms {
+            return;
+        }
+        self.goal_fired_day = Some(self.goal_day);
+        let _ = self.app.emit("tapomo://goal", GoalReached { goal_min: (self.goal_ms / 60_000) as u32, today_ms: self.goal_stored_ms + open });
     }
 
     /// Rebuilds the personal 100 % from the stored peaks (cheap: a few thousand rows at most).

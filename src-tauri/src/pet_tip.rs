@@ -47,6 +47,16 @@ pub struct Facts {
     pub top_app: Option<String>,
     /// `(have, need)` while the live bar is still calibrating.
     pub calibrating: Option<(usize, usize)>,
+    /// Daily goal progress; `None` when the goal is off.
+    pub goal: Option<GoalFacts>,
+}
+
+#[derive(Default, Debug)]
+pub struct GoalFacts {
+    pub goal_ms: u64,
+    pub today_ms: u64,
+    pub met: bool,
+    pub streak_days: u32,
 }
 
 fn period(conn: &Connection, range: &str) -> rusqlite::Result<Period> {
@@ -72,7 +82,7 @@ fn period(conn: &Connection, range: &str) -> rusqlite::Result<Period> {
     )
 }
 
-pub fn gather(conn: &Connection) -> rusqlite::Result<Facts> {
+pub fn gather(conn: &Connection, open_ms: u64) -> rusqlite::Result<Facts> {
     let today = period(conn, "today")?;
     let month = period(conn, "30d")?;
     let today_start = db::range_start_ms(conn, "today")?;
@@ -108,7 +118,15 @@ pub fn gather(conn: &Connection) -> rusqlite::Result<Facts> {
     let apps: Vec<String> = stmt.query_map([since], |r| r.get::<_, String>(0))?.collect::<rusqlite::Result<_>>()?;
     let top_app = (apps.len() >= 2).then(|| apps[0].trim_end_matches(".exe").trim_end_matches(".EXE").to_string());
 
-    Ok(Facts { today, month, all_time_max, prev_max, best_hour, top_app, calibrating })
+    let g = db::daily_goal(conn, open_ms)?;
+    let goal = (g.goal_min > 0).then(|| GoalFacts {
+        goal_ms: u64::from(g.goal_min) * 60_000,
+        today_ms: g.today_ms,
+        met: g.met_today,
+        streak_days: g.streak_days,
+    });
+
+    Ok(Facts { today, month, all_time_max, prev_max, best_hour, top_app, calibrating, goal })
 }
 
 /// Decimal and thousands separators follow the language.
@@ -184,6 +202,21 @@ pub fn candidates(f: &Facts, lang: &str) -> Vec<Candidate> {
     if let Some((have, need)) = f.calibrating {
         c.push(("tip.calibrating", vec![("have", have.to_string()), ("need", need.to_string())], 4));
     }
+    if let Some(g) = &f.goal {
+        if g.met {
+            c.push(("tip.goal_met", vec![], 4));
+        } else {
+            let left = g.goal_ms.saturating_sub(g.today_ms).div_ceil(60_000);
+            if (1..=5).contains(&left) {
+                // One minute reads "1 minute": the singular wording has its own key.
+                let key = if left == 1 { "tip.goal_left_one" } else { "tip.goal_left" };
+                c.push((key, vec![("n", left.to_string())], 5));
+            }
+        }
+        if g.streak_days >= 2 {
+            c.push(("tip.goal_streak", vec![("n", num(f64::from(g.streak_days), 0, lang))], 3));
+        }
+    }
     for key in ["tip.generic_1", "tip.generic_2", "tip.generic_3"] {
         c.push((key, vec![], 1));
     }
@@ -217,8 +250,8 @@ pub fn pick(cands: Vec<Candidate>, recent: &mut VecDeque<&'static str>, seed: u6
     None
 }
 
-pub fn next_tip(conn: &Connection, lang: &str) -> rusqlite::Result<Option<PetTip>> {
-    let facts = gather(conn)?;
+pub fn next_tip(conn: &Connection, lang: &str, open_ms: u64) -> rusqlite::Result<Option<PetTip>> {
+    let facts = gather(conn, open_ms)?;
     let seed = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_nanos() as u64).unwrap_or(0);
     let mut recent = RECENT.lock().unwrap_or_else(|e| e.into_inner());
     Ok(pick(candidates(&facts, lang), &mut recent, seed))
@@ -251,6 +284,23 @@ mod tests {
         f.today.peak = 95.0;
         let k = keys(&f);
         assert!(k.contains(&"tip.near_record") && !k.contains(&"tip.record_today"));
+    }
+
+    #[test]
+    fn goal_tips_are_positive_and_only_when_relevant() {
+        const MIN: u64 = 60_000;
+        let goal = |today_min: u64, met: bool, streak: u32| Facts {
+            goal: Some(GoalFacts { goal_ms: 20 * MIN, today_ms: today_min * MIN, met, streak_days: streak }),
+            ..Default::default()
+        };
+        assert!(!keys(&Facts::default()).iter().any(|k| k.starts_with("tip.goal")));
+        // Far from the goal: nothing about it; a streak of 1 is not worth a mention.
+        assert!(!keys(&goal(5, false, 1)).iter().any(|k| k.starts_with("tip.goal")));
+        let k = keys(&goal(16, false, 3));
+        assert!(k.contains(&"tip.goal_left") && k.contains(&"tip.goal_streak"));
+        assert!(keys(&goal(19, false, 0)).contains(&"tip.goal_left_one"));
+        let k = keys(&goal(20, true, 2));
+        assert!(k.contains(&"tip.goal_met") && !k.contains(&"tip.goal_left"));
     }
 
     #[test]
