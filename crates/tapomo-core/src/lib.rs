@@ -181,6 +181,16 @@ impl Engine {
         Some((keys as f64 / 5.0) / minutes)
     }
 
+    /// Duration of the open burst (first to last typed key), or 0 when none is open or it is
+    /// still too short to be stored. This is what the burst will add to the day's active time.
+    pub fn open_burst_ms(&self) -> u64 {
+        let Some(open) = &self.current else { return 0 };
+        match (open.typed_times.first(), open.typed_times.last()) {
+            (Some(first), Some(last)) if open.typed_times.len() as u32 >= self.config.min_chars => last - first,
+            _ => 0,
+        }
+    }
+
     /// Processes one keystroke. Returns a burst if this keystroke closed one.
     pub fn push(&mut self, ev: KeyEvent) -> Option<Burst> {
         if ev.class == KeyClass::Ignored {
@@ -302,6 +312,80 @@ impl Zone {
             p if p >= 60.0 => Zone::Good,
             _ => Zone::WarmingUp,
         }
+    }
+}
+
+/// Daily goal and day streak. Days are whole local days counted from 1970-01-01 (day 0,
+/// a Thursday), so the maths needs no calendar and no time zone: the caller maps dates to
+/// these numbers. Weeks are ISO weeks (Monday to Sunday).
+pub fn weekday(day: i64) -> u8 {
+    (day + 3).rem_euclid(7) as u8 // 0 = Monday … 6 = Sunday
+}
+
+/// The Monday of the week `day` belongs to; it identifies the week.
+fn week_start(day: i64) -> i64 {
+    day - i64::from(weekday(day))
+}
+
+/// Where the daily goal stands, as computed by [`goal_status`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct GoalStatus {
+    pub today_ms: u64,
+    pub met_today: bool,
+    /// Consecutive days with the goal met, today included once it is met.
+    pub streak_days: u32,
+    /// The weekly "comodín" (one free miss per ISO week) has already been spent this week.
+    pub freeze_used_this_week: bool,
+    /// The last scheduled day before today was a miss that the comodín covered.
+    pub freeze_saved_streak_recently: bool,
+}
+
+/// Progress of the daily goal from `(day, active_ms)` pairs (one per day; repeats add up).
+///
+/// The streak is replayed forward from the first day the goal was met: a met day adds one;
+/// a missed day is covered by the week's comodín if it is still unspent (the streak neither
+/// grows nor breaks), otherwise the streak restarts. With `weekend_rest`, Saturdays and
+/// Sundays only count when met and are never misses. Today never breaks anything: while it
+/// is unmet it is simply still in progress. `goal_ms == 0` means the goal is off.
+pub fn goal_status(days: &[(i64, u64)], today: i64, goal_ms: u64, weekend_rest: bool) -> GoalStatus {
+    let mut by_day: std::collections::HashMap<i64, u64> = std::collections::HashMap::new();
+    for &(d, ms) in days.iter().filter(|(d, _)| *d <= today) {
+        *by_day.entry(d).or_insert(0) += ms;
+    }
+    let today_ms = by_day.get(&today).copied().unwrap_or(0);
+    if goal_ms == 0 {
+        return GoalStatus { today_ms, ..GoalStatus::default() };
+    }
+    let met = |d: i64| by_day.get(&d).is_some_and(|&ms| ms >= goal_ms);
+
+    let mut streak = 0u32;
+    let mut spent: std::collections::HashSet<i64> = std::collections::HashSet::new();
+    let mut last_covered = false;
+    if let Some(first) = by_day.keys().copied().filter(|&d| d < today && met(d)).min() {
+        for d in first..today {
+            if met(d) {
+                streak += 1;
+                last_covered = false;
+            } else if weekend_rest && weekday(d) >= 5 {
+                continue;
+            } else if spent.insert(week_start(d)) {
+                last_covered = true;
+            } else {
+                streak = 0;
+                last_covered = false;
+            }
+        }
+    }
+    let met_today = met(today);
+    if met_today {
+        streak += 1;
+    }
+    GoalStatus {
+        today_ms,
+        met_today,
+        streak_days: streak,
+        freeze_used_this_week: spent.contains(&week_start(today)),
+        freeze_saved_streak_recently: last_covered && streak > 0,
     }
 }
 
@@ -511,5 +595,103 @@ mod tests {
     fn pause_setting_is_clamped() {
         assert_eq!(Config::default().with_pause_ms(200).pause_ms, 1_000);
         assert_eq!(Config::default().with_pause_ms(9_000).pause_ms, 5_000);
+    }
+
+    // ---- daily goal
+    const MIN: u64 = 60_000;
+    /// A Monday (day 4 is 1970-01-05).
+    const MON: i64 = 4 + 7 * 100;
+
+    fn met(d: i64) -> (i64, u64) {
+        (d, 20 * MIN)
+    }
+
+    #[test]
+    fn goal_weekday_is_monday_based() {
+        assert_eq!(weekday(MON), 0);
+        assert_eq!(weekday(MON + 6), 6);
+        assert_eq!(weekday(0), 3); // 1970-01-01 was a Thursday
+        assert_eq!(weekday(-1), 2);
+    }
+
+    #[test]
+    fn goal_empty_and_off() {
+        assert_eq!(goal_status(&[], MON, 20 * MIN, false), GoalStatus::default());
+        let off = goal_status(&[met(MON - 1), met(MON)], MON, 0, false);
+        assert_eq!((off.streak_days, off.met_today), (0, false));
+        assert_eq!(off.today_ms, 20 * MIN);
+    }
+
+    #[test]
+    fn goal_today_in_progress_does_not_break_the_streak() {
+        let s = goal_status(&[met(MON - 2), met(MON - 1), (MON, 5 * MIN)], MON, 20 * MIN, false);
+        assert_eq!((s.streak_days, s.met_today, s.today_ms), (2, false, 5 * MIN));
+        let s = goal_status(&[met(MON - 2), met(MON - 1), met(MON)], MON, 20 * MIN, false);
+        assert_eq!((s.streak_days, s.met_today), (3, true));
+    }
+
+    #[test]
+    fn goal_one_miss_is_covered() {
+        // Mon met, Tue missed, Wed met; today Thursday in progress.
+        let s = goal_status(&[met(MON), met(MON + 2)], MON + 3, 20 * MIN, false);
+        assert_eq!(s.streak_days, 2);
+        assert!(s.freeze_used_this_week && !s.freeze_saved_streak_recently);
+        // Same, but yesterday was the miss: the comodín just saved the streak.
+        let s = goal_status(&[met(MON)], MON + 2, 20 * MIN, false);
+        assert_eq!(s.streak_days, 1);
+        assert!(s.freeze_saved_streak_recently);
+    }
+
+    #[test]
+    fn goal_two_misses_in_one_week_break() {
+        // Mon met, Tue covered, Wed met, Thu missed (breaks), Fri met; today Saturday in progress.
+        let s = goal_status(&[met(MON), met(MON + 2), met(MON + 4)], MON + 5, 20 * MIN, false);
+        assert_eq!(s.streak_days, 1);
+        assert!(!s.freeze_saved_streak_recently);
+    }
+
+    #[test]
+    fn goal_new_week_gives_a_new_comodin() {
+        // Fri, Sat met; Sun missed (covered, previous week); Mon met; Tue missed (covered, new week); Wed met.
+        let days = [met(MON - 3), met(MON - 2), met(MON), met(MON + 2)];
+        let s = goal_status(&days, MON + 3, 20 * MIN, false);
+        assert_eq!(s.streak_days, 4);
+        assert!(s.freeze_used_this_week);
+        // The Sunday miss belongs to the previous ISO week, so it does not use this week's comodín.
+        let s = goal_status(&[met(MON - 2), met(MON)], MON + 1, 20 * MIN, false);
+        assert_eq!(s.streak_days, 2);
+        assert!(!s.freeze_used_this_week);
+    }
+
+    #[test]
+    fn goal_weekend_rest_skips_saturday_and_sunday() {
+        // Fri met, weekend untouched, Mon met; today Tuesday in progress.
+        let days = [met(MON - 3), met(MON)];
+        assert_eq!(goal_status(&days, MON + 1, 20 * MIN, true).streak_days, 2);
+        // Without the rest option Sat is covered and Sun breaks the streak.
+        assert_eq!(goal_status(&days, MON + 1, 20 * MIN, false).streak_days, 1);
+        // A weekend day that is met still counts.
+        assert_eq!(goal_status(&[met(MON - 3), met(MON - 2), met(MON)], MON + 1, 20 * MIN, true).streak_days, 3);
+    }
+
+    #[test]
+    fn goal_misses_after_a_long_gap_and_future_days_are_ignored() {
+        let s = goal_status(&[met(MON - 30), met(MON - 29)], MON, 20 * MIN, false);
+        assert_eq!(s.streak_days, 0);
+        let s = goal_status(&[met(MON), met(MON + 1)], MON, 20 * MIN, false);
+        assert_eq!(s.streak_days, 1);
+        // Pieces of the same day add up.
+        let s = goal_status(&[(MON, 12 * MIN), (MON, 9 * MIN)], MON, 20 * MIN, false);
+        assert!(s.met_today);
+    }
+
+    #[test]
+    fn open_burst_counts_only_once_it_is_long_enough() {
+        let mut e = Engine::new(Config::default());
+        let mut out = Vec::new();
+        type_chars(&mut e, &mut out, 1_000, 10, 100);
+        assert_eq!(e.open_burst_ms(), 0);
+        type_chars(&mut e, &mut out, 2_000, 10, 100);
+        assert_eq!(e.open_burst_ms(), 2_000 + 9 * 100 - 1_000);
     }
 }
