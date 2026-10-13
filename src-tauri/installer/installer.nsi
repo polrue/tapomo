@@ -179,6 +179,8 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 
 ; Installer pages, must be ordered as they appear
 ; 1. Welcome Page
+; TAPOMO: privacy summary on the welcome page (SignPath Foundation requires showing the privacy policy during install)
+!define MUI_WELCOMEPAGE_TEXT "$(tapomoWelcomeText)"
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
 !insertmacro MUI_PAGE_WELCOME
 
@@ -433,6 +435,9 @@ Var AppStartMenuFolder
 ; Show run app after installation.
 !define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_FUNCTION RunMainBinary
+; TAPOMO: link to the privacy policy on the finish page
+!define MUI_FINISHPAGE_LINK "$(tapomoPrivacyLink)"
+!define MUI_FINISHPAGE_LINK_LOCATION "https://github.com/polrue/tapomo/blob/main/PRIVACY.md"
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
 ; TAPOMO: celebrating pose on the finish page (the welcome page keeps sidebar.bmp)
 !ifdef TAPOMO_FINISHIMAGE
@@ -505,6 +510,11 @@ FunctionEnd
 {{#each language_files}}
   !include "{{this}}"
 {{/each}}
+; TAPOMO: privacy texts for the welcome and finish pages
+LangString tapomoWelcomeText ${LANG_SPANISH} "Este asistente instalará Tapomo, que mide a qué velocidad escribes.$\r$\n$\r$\nTapomo nunca guarda lo que escribes: solo cuenta pulsaciones y tiempos, ignora los campos de contraseña y todo se queda en tu equipo. La única conexión es comprobar en GitHub si hay versiones nuevas, y se puede desactivar.$\r$\n$\r$\nSe iniciará con Windows; puedes cambiarlo en Ajustes.$\r$\n$\r$\nPolítica de privacidad: github.com/polrue/tapomo/blob/main/PRIVACY.md"
+LangString tapomoWelcomeText ${LANG_ENGLISH} "This wizard will install Tapomo, which measures how fast you type.$\r$\n$\r$\nTapomo never stores what you type: it only counts keystrokes and timings, ignores password fields and everything stays on your computer. Its only connection is checking GitHub for new versions, and you can turn that off.$\r$\n$\r$\nIt will start with Windows; you can change this in Settings.$\r$\n$\r$\nPrivacy policy: github.com/polrue/tapomo/blob/main/PRIVACY.md"
+LangString tapomoPrivacyLink ${LANG_SPANISH} "Política de privacidad"
+LangString tapomoPrivacyLink ${LANG_ENGLISH} "Privacy policy"
 
 Function .onInit
   ; TAPOMO: unpack the extra step bitmaps (paths are absolute at build time, see TAPOMO_* defines above)
