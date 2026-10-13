@@ -80,7 +80,9 @@ jobs:
           - SHA-256 (\`$(basename "$exe")\`): \`$sha\`
           - Compilado por GitHub Actions desde el commit $GITHUB_SHA ([certificación de procedencia / provenance attestation](${{ needs.build.outputs.attestation-url }})). Comprobar / verify: \`gh attestation verify $(basename "$exe") -R $GITHUB_REPOSITORY\`
           EOF
-          gh release create "$TAG" "$exe" --title "Tapomo ${TAG#v}" --notes-file notes.md --verify-tag
+          # Same file under a fixed name, so releases/latest/download/Tapomo-setup.exe always works
+          cp "$exe" dist/Tapomo-setup.exe
+          gh release create "$TAG" "$exe" dist/Tapomo-setup.exe --title "Tapomo ${TAG#v}" --notes-file notes.md --verify-tag
       - name: Scan with VirusTotal
         env:
           VT_API_KEY: ${{ secrets.VT_API_KEY }}
