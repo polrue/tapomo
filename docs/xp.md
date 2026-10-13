@@ -1,7 +1,7 @@
 # Tapomo — Diseño de XP, retos, logros y atajos
 
 > Propuesta del 13-10-2026, **pendiente de revisión por Pol** antes de implementar la 0.3.2.
-> Sustituye a los números provisionales de `roadmap.md` §0.3.1 en cuanto se apruebe.
+> Sustituye a los números provisionales de `roadmap.md` §0.3.2 en cuanto se apruebe.
 
 ## Principios
 
