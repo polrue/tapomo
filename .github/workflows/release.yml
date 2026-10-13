@@ -37,6 +37,19 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: npm ci
       - run: npx tauri build
+      # Updater signature (minisign, made with the Tauri updater key): the installed app verifies it against
+      # the public key in tauri.conf.json before running a downloaded update. It signs the exact bytes of the
+      # .exe, so any future Authenticode signing (SignPath) must happen BEFORE this step, never after.
+      - name: Sign the installer for the updater
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          for exe in target/release/bundle/nsis/*.exe; do
+            npx tauri signer sign "$exe"
+            test -s "$exe.sig"
+          done
       - id: attest
         uses: actions/attest-build-provenance@v2
         with:
@@ -44,7 +57,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: tapomo-windows
-          path: target/release/bundle/nsis/*.exe
+          path: |
+            target/release/bundle/nsis/*.exe
+            target/release/bundle/nsis/*.exe.sig
           if-no-files-found: error
 
   publish:
@@ -82,7 +97,17 @@ jobs:
           EOF
           # Same file under a fixed name, so releases/latest/download/Tapomo-setup.exe always works
           cp "$exe" dist/Tapomo-setup.exe
-          gh release create "$TAG" "$exe" dist/Tapomo-setup.exe --title "Tapomo ${TAG#v}" --notes-file notes.md --verify-tag
+          # latest.json is what the installed apps read (releases/latest/download/latest.json) to find the update.
+          first_paragraph=$(awk 'BEGIN { RS = "" } !/^#/ { print; exit }' "$notes" 2>/dev/null || true)
+          jq -n \
+            --arg version "${TAG#v}" \
+            --arg notes "${first_paragraph:-Tapomo $TAG}" \
+            --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg signature "$(cat "$exe.sig")" \
+            --arg url "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$(basename "$exe")" \
+            '{version: $version, notes: $notes, pub_date: $pub_date, platforms: {"windows-x86_64": {signature: $signature, url: $url}}}' > dist/latest.json
+          cat dist/latest.json
+          gh release create "$TAG" "$exe" "$exe.sig" dist/latest.json dist/Tapomo-setup.exe --title "Tapomo ${TAG#v}" --notes-file notes.md --verify-tag
       - name: Scan with VirusTotal
         env:
           VT_API_KEY: ${{ secrets.VT_API_KEY }}

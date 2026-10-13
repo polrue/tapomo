@@ -54,6 +54,9 @@ pub struct Shared {
     pub snooze_until_ms: AtomicU64,
     /// Length of the burst being typed (0 when none): it counts towards today's goal before it is stored.
     pub open_burst_ms: AtomicU64,
+    /// When the last key of any kind arrived, in ms since the Unix epoch (0 = none yet). Only a
+    /// time: the updater uses it to install while nobody is typing.
+    pub last_key_ms: AtomicU64,
 }
 
 impl Shared {
@@ -178,9 +181,13 @@ impl Tracker {
         let mut next_tick = Instant::now() + TICK;
         loop {
             match rx.recv_timeout(next_tick.saturating_duration_since(Instant::now())) {
-                Ok(Msg::Key(key)) => self.on_key(key),
+                Ok(Msg::Key(key)) => {
+                    self.shared.last_key_ms.store(key.t_ms, Ordering::Relaxed);
+                    self.on_key(key);
+                }
                 Ok(Msg::Reload) => self.reload(),
                 Ok(Msg::PasswordFocus) => {
+                    self.shared.last_key_ms.store(now_ms(), Ordering::Relaxed);
                     self.last_key_ms = None;
                     let burst = self.engine.flush();
                     self.finish_burst(burst);

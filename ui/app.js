@@ -266,6 +266,8 @@ function renderSettings() {
   $('s-goal').value = String(settings.daily_goal_min);
   $('s-weekend').checked = settings.weekend_rest;
   $('s-updates').checked = settings.check_updates;
+  $('s-auto-update').checked = settings.auto_update;
+  $('s-auto-update').disabled = !settings.check_updates;
   $('paused-banner').hidden = !settings.paused;
 }
 
@@ -346,8 +348,11 @@ function bindControls() {
   $('s-pet').addEventListener('change', () => saveSettings({ show_pet: $('s-pet').checked }));
   $('s-updates').addEventListener('change', async () => {
     await saveSettings({ check_updates: $('s-updates').checked });
+    renderSettings();
     checkForUpdate();
   });
+  $('s-auto-update').addEventListener('change', () => saveSettings({ auto_update: $('s-auto-update').checked }));
+  $('update-pill').addEventListener('click', () => UpdateDialog.open());
   $('welcome-again').addEventListener('click', () => Welcome.open());
   $('s-paused').addEventListener('change', async () => {
     await saveSettings({ paused: $('s-paused').checked });
@@ -521,12 +526,12 @@ function glueInfo() {
 
 // ------------------------------------------------------- version & updates
 
-const RELEASES_API = 'https://api.github.com/repos/polrue/tapomo/releases?per_page=10';
 const RELEASE_PAGE = 'https://github.com/polrue/tapomo/releases/tag/v';
 const UPDATE_EVERY_MS = 24 * 60 * 60 * 1000;
 const UPDATE_CACHE_KEY = 'tapomo.update';
+const NOTES_MAX = 300;
 let installed = null; // e.g. "0.2.3"
-let latest = null; // { v, url } of the newest release, once known
+let latest = null; // { v, notes } of the newer version, once known (null: none)
 
 /** "v1.2.3" -> [1, 2, 3]; anything else (pre-release suffixes included) -> null. */
 function parseSemver(tag) {
@@ -549,27 +554,15 @@ function renderVersion() {
     link.href = RELEASE_PAGE + installed;
   }
   const mine = installed && parseSemver(installed);
-  const newer = settings && settings.check_updates && latest && mine && compareSemver(parseSemver(latest.v), mine) > 0;
+  const theirs = latest && parseSemver(latest.v);
+  const newer = settings && settings.check_updates && mine && theirs && compareSemver(theirs, mine) > 0;
   pill.hidden = !newer;
-  if (newer) {
-    pill.textContent = t('update.available', { v: latest.v });
-    pill.href = latest.url;
-  }
-}
-
-/** The newest non-draft release of the list, as { v, url }, or null. */
-function newestRelease(list) {
-  let best = null;
-  for (const r of Array.isArray(list) ? list : []) {
-    const sv = !r.draft && parseSemver(r.tag_name);
-    if (sv && (!best || compareSemver(sv, best.sv) > 0)) best = { sv, v: sv.join('.'), url: r.html_url };
-  }
-  return best && /^https:\/\/github\.com\//.test(best.url) ? { v: best.v, url: best.url } : null;
+  if (newer) pill.textContent = t('update.available', { v: latest.v });
 }
 
 /**
- * At most one request per 24 h (the answer is cached in localStorage), and none at all when the
- * setting is off. Releases are pre-releases, so /releases/latest would never answer. Fails silently.
+ * Asks the app (not the network from here) for a newer version: at most once per 24 h (the answer is
+ * cached in localStorage), and none at all when the setting is off. Fails silently.
  */
 async function checkForUpdate() {
   if (!settings || !settings.check_updates) {
@@ -585,13 +578,95 @@ async function checkForUpdate() {
     return;
   }
   try {
-    const res = await fetch(RELEASES_API, { headers: { Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(10000) });
-    if (!res.ok) return;
-    latest = newestRelease(await res.json());
+    const info = await invoke('check_update');
+    latest = info && parseSemver(info.version) ? { v: info.version, notes: info.notes || '' } : null;
     try { localStorage.setItem(UPDATE_CACHE_KEY, JSON.stringify({ at: Date.now(), latest })); } catch (_) { /* optional */ }
     renderVersion();
-  } catch (_) { /* offline, rate-limited or blocked: stay quiet */ }
+  } catch (_) { /* offline or blocked: stay quiet */ }
 }
+
+/** Friendly confirm for the update: release notes, "update now" (download + install) or "later". */
+const UpdateDialog = (() => {
+  let busy = false;
+  let opener = null;
+  let mounted = false;
+  const el = (id) => document.getElementById(id);
+
+  function setStatus(key, vars) {
+    const s = el('update-status');
+    s.hidden = !key;
+    if (key) s.textContent = t(key, vars);
+  }
+
+  function close() {
+    if (busy) return;
+    el('update-dialog').hidden = true;
+    document.querySelectorAll('.top, main').forEach((n) => (n.inert = false));
+    if (opener && opener.isConnected) opener.focus({ preventScroll: true });
+  }
+
+  function onKey(e) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      close();
+    } else if (e.key === 'Tab') {
+      const items = [el('update-notes-link'), el('update-later'), el('update-now')].filter((b) => !b.disabled);
+      const i = items.indexOf(document.activeElement);
+      const next = e.shiftKey ? (i <= 0 ? items.length - 1 : i - 1) : (i === items.length - 1 ? 0 : i + 1);
+      e.preventDefault();
+      items[next].focus();
+    }
+  }
+
+  async function install() {
+    busy = true;
+    el('update-now').disabled = true;
+    el('update-later').disabled = true;
+    setStatus('update.downloading_plain');
+    const unlisten = await listen('tapomo://update-progress', (e) => {
+      const { downloaded, total } = e.payload;
+      if (!total) return;
+      const p = Math.min(100, Math.floor((downloaded / total) * 100));
+      setStatus(p >= 100 ? 'update.installing' : 'update.downloading', { p });
+    });
+    try {
+      await invoke('install_update');
+      setStatus('update.installing'); // the installer closes Tapomo and starts the new one
+    } catch (_) {
+      busy = false;
+      el('update-now').disabled = false;
+      el('update-later').disabled = false;
+      setStatus('update.failed');
+    } finally {
+      unlisten();
+    }
+  }
+
+  function open() {
+    if (!latest) return;
+    opener = document.activeElement;
+    if (!mounted) {
+      mounted = true;
+      el('update-dialog').addEventListener('keydown', onKey);
+      el('update-later').addEventListener('click', close);
+      el('update-now').addEventListener('click', install);
+    }
+    el('update-title').textContent = t('update.title', { v: latest.v });
+    el('update-text').textContent = t('update.text');
+    const notes = (latest.notes || '').trim();
+    el('update-notes').hidden = !notes;
+    el('update-notes').textContent = notes.length > NOTES_MAX ? `${notes.slice(0, NOTES_MAX).trimEnd()}…` : notes;
+    el('update-notes-link').href = RELEASE_PAGE + latest.v;
+    setStatus(null);
+    el('update-now').disabled = false;
+    el('update-later').disabled = false;
+    el('update-dialog').hidden = false;
+    document.querySelectorAll('.top, main').forEach((n) => (n.inert = true));
+    el('update-now').focus();
+  }
+
+  return { open };
+})();
 
 // ----------------------------------------------------------- hiding header
 

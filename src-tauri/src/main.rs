@@ -9,6 +9,7 @@ mod pet;
 mod pet_tip;
 mod platform;
 mod tracker;
+mod updater;
 
 use std::sync::atomic::Ordering;
 use std::sync::mpsc;
@@ -54,6 +55,7 @@ fn main() {
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| show_main(app)))
         .plugin(log_plugin())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, Some(vec!["--minimized"])))
         .invoke_handler(tauri::generate_handler![
             commands::get_summary,
@@ -68,6 +70,8 @@ fn main() {
             commands::remove_exclusion,
             commands::open_logs_dir,
             commands::get_pet_tip,
+            updater::check_update,
+            updater::install_update,
             pet::pet_set_hit,
             pet::pet_drag_start,
             pet::pet_drag_move,
@@ -152,6 +156,8 @@ fn main() {
                 tray = tray.icon(icon.clone());
             }
             tray.build(app)?;
+
+            updater::spawn(app.handle().clone());
 
             // Autostart launches with --minimized and stays in the tray; opening
             // Tapomo by hand (Start menu, installer) shows the window.
