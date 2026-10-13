@@ -155,6 +155,30 @@ Cada unidad tiene 3–5 lecciones de unos 5 minutos: primero ejercicios con las 
 
 ---
 
+## Web tapomo.app (pista aparte, no depende de ninguna versión)
+
+Idea de Pol, 13-10-2026. Es una página estática y divertida, llena de animaciones (sobre todo de Tapomo), con un estilo limpio tipo Apple: mucho blanco, tipografía grande y una idea por pantalla. También es la página de descarga y de privacidad que exigen SignPath y la Store.
+
+- **Primera visita: el origen de Tapomo.** Una animación corta (5–8 s) que se puede saltar y cuenta cómo nació Tapomo. Ideas a elegir:
+  - **Mochitsuki** (favorita): granos de arroz que se machacan a golpe de teclas, «tap, tap, tap», hasta formar una bola de mochi que cae en el hueco vacío de un teclado y se convierte en tecla. Le salen los ojos y parpadea. Une el mochi con el teclear, que es todo el concepto.
+  - **Huevo-tecla:** en un teclado hay una tecla con forma de huevo; un dedo la pulsa varias veces, se agrieta y sale Tapomo.
+  - **Meteorito:** una tecla brillante cae del cielo estrellado sobre un teclado, deja un cráter y de él asoma Tapomo.
+- **Visitas siguientes:** una entrada rápida (~1 s). Tapomo entra botando, saluda («¡Hola otra vez!») y aparece la página.
+- **Tapomo viaja con el scroll** a lo largo de un camino y reacciona en cada sección:
+  - teclea a toda velocidad en «qué mide»;
+  - se tapa los ojos o se pone gafas de sol en «privacidad»;
+  - enseña el anillo del objetivo en «hábitos»;
+  - lo celebra junto al botón de descarga.
+- **Secciones:** portada con descarga, qué mide, privacidad, hábitos y logros, código abierto con la política de firma, preguntas frecuentes y pie con la política de privacidad.
+- **Técnica:**
+  - HTML, CSS y JS estáticos, sin frameworks;
+  - SVG de Tapomo animado;
+  - animaciones ligadas al scroll con CSS (`animation-timeline`) y una alternativa en JS para navegadores sin soporte;
+  - `localStorage` para saber si es la primera visita;
+  - respeta `prefers-reduced-motion`;
+  - ES y EN.
+- **Alojamiento gratis** en Cloudflare Pages o GitHub Pages, con el dominio tapomo.app; ahora mismo no tiene DNS. Cuando esté publicada, la web del repositorio, el enlace de privacidad y la página de descarga de SignPath apuntarán a ella.
+
 ## 0.5 — Web, estadísticas anónimas y ligas entre amigos
 
 ### Infraestructura (coste 0 €)
