@@ -6,6 +6,7 @@ Reglas que valen para todo el plan:
 
 - **Siempre en positivo.** Tapomo nunca regaña, nunca enseña que vas «peor» y nunca te baja de nivel. Si un dato no es favorable, se muestra tu progreso en su lugar.
 - **Privacidad.** De la escritura normal nunca se guarda qué escribes ni qué tecla pulsas. Los campos de contraseña no se miden. Del ordenador solo salen resúmenes, y solo si el usuario lo activa.
+- **Atajos (decidido 13-10-2026).** Se cuentan combinaciones Ctrl/Win/Alt + tecla (AltGr no, Shift + letra no). Solo se guardan contadores diarios de los atajos que están en el **catálogo cerrado** de Tapomo; cualquier otra combinación suma a «otros» sin registrar cuál fue. Los atajos marcados como **sensibles** (p. ej. `Ctrl+Mayús+N`, ventana de incógnito) nunca se registran: cuentan como «otros». Nunca letras sueltas. Se puede desactivar.
 - **Gratis.** Nada de esto debe costar dinero mantener más allá del dominio. Las donaciones son voluntarias.
 - **Nada de ranking mundial abierto.** Se puede falsear (el código es abierto y la medición es local), compara cosas que no son comparables (programar no es chatear) y haría que casi todos se vieran abajo. La competición es **contigo mismo** y **entre amigos**.
 
@@ -15,8 +16,8 @@ Reglas que valen para todo el plan:
 |---|---|---|
 | 0.1 | Medición pasiva por ráfagas, estadísticas, calendario, apps | Hecho |
 | 0.2 | Barra de velocidad personal, Tapomo flotante, caras de racha, estrellitas, bienvenida, instalador con Tapomo, aviso de versión nueva | Hecho |
-| 0.3 | Gamificación personal: objetivo diario, días seguidos, XP y niveles, insignias, liga contigo mismo, carta semanal | En curso (0.3.0 hecho: objetivo diario y días seguidos) |
-| 0.4 | Lecciones de mecanografía (ES + US) | Pendiente |
+| 0.3 | Gamificación personal: objetivo diario, días seguidos, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (0.3.0 hecho: objetivo diario y días seguidos) |
+| 0.4 | Lecciones de mecanografía (ES + US) y entrenador de atajos | Pendiente |
 | 0.5 | Web tapomo.app, estadísticas anónimas opcionales, ligas entre amigos | Pendiente |
 | Más tarde | Cifrado de la base de datos, firma de código, más idiomas | Pendiente |
 
@@ -74,6 +75,15 @@ Pantalla de insignias con las conseguidas en color y las pendientes en silueta s
 
 - Cada lunes, una tarjeta con lo mejor de la semana: hora más rápida, récord, días cumplidos, app donde más escribiste, insignias nuevas. Solo hechos positivos.
 
+### 0.3.5 Atajos: contar por tipos (Fase A)
+
+- Cinco contadores por día: copiar/pegar/cortar, deshacer/rehacer, guardar, ventanas y escritorio (`Alt+Tab`, `Win+…`), otros. Sin catálogo todavía y sin guardar la tecla.
+- Clasificación en el hilo de trabajo (no en el hook, que debe responder rápido); la combinación solo vive en memoria un instante.
+- Tarjeta «Atajos hoy» y elogios de Tapomo («Hoy has usado 50 atajos, ¡eres rápido de verdad!»).
+- XP por atajos con **tope diario** (no se puede farmear con `Ctrl+C` en bucle).
+- Ajuste «Contar atajos» (activado por defecto) y texto de privacidad actualizado en la app y el README.
+- Insignias: «Maestro de atajos» (1.000), «Ni tocas el ratón» (100 en un día).
+
 ### Criterios para cerrar la 0.3
 
 - Usuarios existentes: el historial cuenta (se calcula XP retroactiva de las ráfagas ya guardadas, sin inflar).
@@ -123,6 +133,19 @@ Cada unidad tiene 3–5 lecciones de unos 5 minutos: primero ejercicios con las 
 - Después de unas lecciones, «Práctica de tus teclas difíciles»: ejercicios generados con las teclas de más errores o más lentas (estilo keybr).
 - Esto sustituye a los **bigramas pasivos**, que quedan **aparcados**: dan la misma información sin mirar la escritura real.
 
+### Entrenador de atajos (Fase B)
+
+- **Catálogo v1** (~30 atajos), archivo de datos abierto en el repositorio (`data/shortcuts.json`), con nivel básico / medio / avanzado:
+  - Windows: `Win+E`, `Win+D`, `Win+V` (historial del portapapeles), `Win+Mayús+S`, `Alt+Tab`, `Win+←/→`, `Win+L`.
+  - Edición universal: `Ctrl+Z/Y/A/F/C/V/X/S`.
+  - Navegadores (Chrome, Edge, Firefox, Brave, Opera): `Ctrl+T/W`, `Ctrl+Mayús+T`, `Ctrl+L`, `Ctrl+Tab`, `Ctrl+F`.
+- Formato de cada entrada: `id`, `apps` (`*` o lista de exe), combinación en teclas virtuales (VK, así funciona en AZERTY/QWERTZ), `category`, `level`, `sensitive`, `tip` ES/EN y **excepciones por idioma** (`overrides: { "es": … }`, p. ej. Word en español: Guardar `Ctrl+G`, Negrita `Ctrl+N`).
+- **Idioma del programa**: por defecto el de Windows; ajustable; y Tapomo lo deduce por uso (si en Word usas `Ctrl+G` y nunca `Ctrl+S`, tu Word está en español).
+- **Consejo del día** según el programa en primer plano: como mucho 1 al día, en una pausa (nunca a mitad de ráfaga), con botón «Ya lo sé» y opción de desactivar. Se basa en ausencia («2 h en Chrome sin atajos de pestañas»), nunca en espiar el ratón; siempre en tono de curiosidad.
+- **Se adapta a tu nivel**: si ya usas muchos atajos de un tipo, no te enseña lo básico de ese tipo.
+- **Álbum de atajos aprendidos**: un atajo sugerido que empiezas a usar en los días siguientes se celebra («¡Ya usas Ctrl+Mayús+T!») y da XP; repetirlo no.
+- Unidad de atajos en las lecciones para practicarlos.
+
 ### Contenido
 
 - Listas de palabras frecuentes ES/EN con licencia compatible con GPL (revisar fuente y licencia antes de incluirla) o generadas a partir de textos de dominio público.
@@ -154,6 +177,8 @@ Cada unidad tiene 3–5 lecciones de unos 5 minutos: primero ejercicios con las 
 ---
 
 ## Más tarde
+
+- **Atajos, Fase C**: más programas en el catálogo (Explorador, Office con excepciones por idioma, VS Code, Photoshop…), abierto a contribuciones de la comunidad.
 
 - Cifrado opcional de la base de datos (SQLCipher + clave DPAPI) antes del lanzamiento público.
 - Firma de código o Microsoft Store; con firma, actualización automática (Tauri updater).
