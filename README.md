@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/tapomo.svg" width="120" alt="Tapomo"></p>
+<p align="center"><img src="assets/tapomo-animated.svg" width="120" alt="Tapomo"></p>
 
 # Tapomo
 
