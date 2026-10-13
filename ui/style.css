@@ -284,7 +284,7 @@ a { color: var(--accent-strong); font-weight: 700; }
 .ver-line { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 0.85rem; }
 .ver { color: var(--muted); font-weight: 700; text-decoration: none; }
 .ver:hover, .ver:focus-visible { color: var(--accent-strong); text-decoration: underline; }
-a.pill { display: inline-block; text-decoration: none; padding: 2px 12px; }
+a.pill, button.pill { display: inline-block; text-decoration: none; padding: 2px 12px; font: inherit; font-weight: 700; }
 .yesterday { margin: 0 0 16px; padding: 0 4px; font-size: 0.9rem; }
 .sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -322,6 +322,13 @@ a.pill { display: inline-block; text-decoration: none; padding: 2px 12px; }
   .welcome, .welcome-card { animation: none; }
   .welcome-dots i { transition: none; }
 }
+
+/* The update confirm reuses the welcome overlay and card. */
+.update-card .welcome-body { min-height: 0; }
+.update-card .welcome-body p { margin: 0 0 10px; }
+.update-notes { white-space: pre-line; }
+.update-status { color: var(--ink); font-weight: 700; }
+.update-card .welcome-nav { margin-top: 14px; }
 
 /* ------------------------------------------------------------ daily goal */
 .goal { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 24px; padding: 14px 20px; --arc: var(--accent); }
