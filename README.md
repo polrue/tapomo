@@ -15,7 +15,7 @@ Qué se guarda, en una base de datos SQLite local en tu equipo:
 - Para cada ráfaga de escritura: hora de inicio y fin, número de pulsaciones, número de borrados y la mejor velocidad de 10 s.
 - El **nombre del ejecutable** de la aplicación en primer plano (por ejemplo `WINWORD.EXE`), al que puedes poner un nombre propio («Word»).
 
-Qué **no** se guarda nunca: el texto, las teclas concretas, los títulos de ventana, capturas ni nada que salga de tu equipo. No hay telemetría: la única conexión es, una vez al día, preguntar a GitHub si hay una versión nueva (se puede desactivar en Ajustes y no envía nada sobre ti).
+Qué **no** se guarda nunca: el texto, las teclas concretas, los títulos de ventana, capturas ni nada que salga de tu equipo. No hay telemetría ([política de privacidad](PRIVACY.md)): la única conexión es, una vez al día, preguntar a GitHub si hay una versión nueva (se puede desactivar en Ajustes y no envía nada sobre ti).
 
 Además: las pulsaciones inyectadas por macros o autotypers se ignoran, los atajos (Ctrl/Alt/Win + tecla) no cuentan, hay una lista de aplicaciones excluidas (gestores de contraseñas por defecto: KeePass, KeePassXC, 1Password, Bitwarden), los juegos y presentaciones a pantalla completa se ignoran (se puede desactivar) y puedes pausar la medición en cualquier momento desde la bandeja.
 
@@ -32,7 +32,24 @@ Los campos de contraseña se ignoran por completo: ni se cuentan ni se cronometr
 
 ## Descarga
 
-Todavía no hay versiones publicadas. Mientras tanto, descarga el instalador (`.exe`) del artefacto `tapomo-windows` de la última ejecución correcta de [Actions](https://github.com/polrue/tapomo/actions). El instalador aún **no está firmado**: Windows SmartScreen mostrará un aviso; pulsa «Más información → Ejecutar de todas formas».
+Descarga el instalador (`.exe`) de la [última versión](https://github.com/polrue/tapomo/releases/latest). Se instala solo para tu usuario, sin permisos de administrador.
+
+El instalador aún **no está firmado**, así que Windows SmartScreen puede mostrar un aviso («Más información → Ejecutar de todas formas») y el Control inteligente de aplicaciones de Windows 11 puede bloquearlo. Estamos tramitando una firma gratuita para proyectos de código abierto.
+
+### Cómo comprobar que el instalador es auténtico
+
+Cada versión se compila en GitHub Actions a partir del código público, y sus notas incluyen:
+
+- La **huella SHA-256** del instalador. En PowerShell: `Get-FileHash .\Tapomo_X.Y.Z_x64-setup.exe`.
+- Una **certificación de procedencia** firmada por GitHub, que demuestra de qué commit y de qué ejecución de Actions sale el archivo. Con la [CLI de GitHub](https://cli.github.com): `gh attestation verify Tapomo_X.Y.Z_x64-setup.exe -R polrue/tapomo`.
+- El enlace al **análisis de VirusTotal**, con unos 70 antivirus.
+
+## Política de firma de código
+
+- Los binarios se compilan solo desde este repositorio, de forma automática y verificable, con GitHub Actions.
+- Autor, revisor y aprobador de cada versión: [Pol Rué](https://github.com/polrue). Ninguna versión se publica sin su aprobación manual.
+- Tapomo no envía datos sin tu permiso: consulta la [política de privacidad](PRIVACY.md).
+<!-- Cuando SignPath apruebe la solicitud, añadir: «Firma de código gratuita proporcionada por SignPath.io, certificado de SignPath Foundation.» -->
 
 ## Compilar desde el código
 
@@ -65,7 +82,7 @@ What is stored, in a local SQLite database on your machine:
 - For each typing burst: start and end time, keystroke count, delete count and the best 10 s speed.
 - The foreground application's **executable name** (e.g. `WINWORD.EXE`), which you can rename to something friendly ("Word").
 
-What is **never** stored: text, individual keys, window titles, screenshots, or anything that leaves your computer. There is no telemetry: the only connection is a once-a-day check with GitHub for a new version (can be turned off in Settings; it sends nothing about you).
+What is **never** stored: text, individual keys, window titles, screenshots, or anything that leaves your computer. There is no telemetry ([privacy policy](PRIVACY.md)): the only connection is a once-a-day check with GitHub for a new version (can be turned off in Settings; it sends nothing about you).
 
 Also: keystrokes injected by macros or auto-typers are ignored, shortcuts (Ctrl/Alt/Win + key) don't count, there is an excluded-apps list (password managers by default: KeePass, KeePassXC, 1Password, Bitwarden), fullscreen games and presentations are ignored (can be turned off), and you can pause measuring at any time from the tray.
 
@@ -82,7 +99,24 @@ Password fields are ignored entirely: not counted, not timed (detected via UI Au
 
 ### Download
 
-There are no releases yet. For now, grab the installer (`.exe`) from the `tapomo-windows` artifact of the latest successful [Actions](https://github.com/polrue/tapomo/actions) run. The installer is **unsigned**, so Windows SmartScreen will warn you: click "More info → Run anyway".
+Download the installer (`.exe`) from the [latest release](https://github.com/polrue/tapomo/releases/latest). It installs for your user only, without administrator rights.
+
+The installer is **not signed yet**, so Windows SmartScreen may warn you ("More info → Run anyway") and Windows 11 Smart App Control may block it. We are applying for free open-source code signing.
+
+#### How to check the installer is genuine
+
+Every release is built by GitHub Actions from the public source, and its notes include:
+
+- The installer's **SHA-256 hash**. In PowerShell: `Get-FileHash .\Tapomo_X.Y.Z_x64-setup.exe`.
+- A **build provenance attestation** signed by GitHub, proving which commit and which Actions run produced the file. With the [GitHub CLI](https://cli.github.com): `gh attestation verify Tapomo_X.Y.Z_x64-setup.exe -R polrue/tapomo`.
+- A link to the **VirusTotal scan**, with about 70 antivirus engines.
+
+### Code signing policy
+
+- Binaries are built only from this repository, automatically and verifiably, by GitHub Actions.
+- Author, reviewer and approver of every release: [Pol Rué](https://github.com/polrue). No release is published without their manual approval.
+- Tapomo sends no data without your permission: see the [privacy policy](PRIVACY.md).
+<!-- Once SignPath approves the application, add: "Free code signing provided by SignPath.io, certificate by SignPath Foundation." -->
 
 ### Build from source
 
