@@ -38,6 +38,8 @@ Todo es local, sin servidor. Se calcula a partir de las ráfagas que ya se guard
 
 ### 0.3.1 XP y niveles
 
+> Diseño detallado (fuentes, topes, retos del día, logros, curva, simulación y niveles de atajos) en [`xp.md`](xp.md), pendiente de revisión. Los números de abajo son el borrador anterior.
+
 - **XP por constancia, no solo por velocidad**, para que cualquiera pueda subir:
   - 1 XP por cada 100 caracteres escritos en ráfagas;
   - +20 XP al cumplir el objetivo diario;
