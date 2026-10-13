@@ -1,6 +1,6 @@
 # Tapomo — Diseño de XP, retos, logros y atajos
 
-> Propuesta del 13-10-2026, **pendiente de revisión por Pol** antes de implementar la 0.3.1.
+> Propuesta del 13-10-2026, **pendiente de revisión por Pol** antes de implementar la 0.3.2.
 > Sustituye a los números provisionales de `roadmap.md` §0.3.1 en cuanto se apruebe.
 
 ## Principios
@@ -51,7 +51,7 @@ Un día normal da unos **200 XP**: algo más de la mitad viene de escribir y el 
 
 ## Logros (insignias)
 
-Se amplía la lista de la 0.3.2 con niveles de rareza:
+Se amplía la lista de la 0.3.3 con niveles de rareza:
 
 | Logro | Rareza |
 |---|---|

@@ -16,10 +16,11 @@ Reglas que valen para todo el plan:
 |---|---|---|
 | 0.1 | Medición pasiva por ráfagas, estadísticas, calendario, apps | Hecho |
 | 0.2 | Barra de velocidad personal, Tapomo flotante, caras de racha, estrellitas, bienvenida, instalador con Tapomo, aviso de versión nueva | Hecho |
-| 0.3 | Gamificación personal: objetivo diario, días seguidos, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (0.3.0 hecho: objetivo diario y días seguidos) |
+| 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (0.3.0 hecho: objetivo diario y días seguidos) |
 | 0.4 | Lecciones de mecanografía (ES + US) y entrenador de atajos | Pendiente |
 | 0.5 | Web tapomo.app, estadísticas anónimas opcionales, ligas entre amigos | Pendiente |
-| Más tarde | Cifrado de la base de datos, firma de código, más idiomas | Pendiente |
+| Más tarde | Cifrado de la base de datos, más idiomas | Pendiente |
+| Aparte | Firma de código (SignPath), web tapomo.app, Microsoft Store y winget. Ver [`distribution.md`](distribution.md) | En curso |
 
 ---
 
@@ -36,7 +37,20 @@ Todo es local, sin servidor. Se calcula a partir de las ráfagas que ya se guard
 - Datos: sin tabla nueva; los minutos activos de cada día se suman de `bursts` (`end_ms - start_ms`, por día local de inicio). Ajustes `daily_goal_min` y `weekend_rest`. Cálculo puro en `tapomo-core::goal_status`; evento `tapomo://goal` una vez al día.
 - Frases nuevas para el globo de Tapomo (`pet_tip.rs`): «Te faltan 5 minutos para tu objetivo», «Llevas 6 días seguidos».
 
-### 0.3.1 XP y niveles
+### 0.3.1 Actualizador automático y caracteres por minuto *(decidido 13-10-2026)*
+
+- **Actualizador** con `tauri-plugin-updater`:
+  - **Tapomo pregunta antes de actualizar** («Hay una versión nueva. ¿Actualizar ahora?»).
+  - Ajuste opcional **«Actualizar automáticamente»**.
+  - Las actualizaciones están firmadas con una clave propia. La clave privada solo vive en un secreto de GitHub, y Pol guarda una copia de seguridad.
+  - El flujo de publicación genera `latest.json`, y las versiones se publican como normales, no prerelease.
+  - **La 0.3.1 se instala a mano por última vez.** A partir de ella, Tapomo se actualiza solo.
+- **Caracteres por minuto (cpm).**
+  - Se muestran junto a las ppm.
+  - Públicamente se llaman «caracteres por minuto», nunca «pulsaciones por minuto», para no confundirlas con las palabras por minuto.
+  - El glosario explica que **es lo mismo que las pulsaciones por minuto** de las academias, la medida más usada en España.
+
+### 0.3.2 XP y niveles
 
 > Diseño detallado (fuentes, topes, retos del día, logros, curva, simulación y niveles de atajos) en [`xp.md`](xp.md), pendiente de revisión. Los números de abajo son el borrador anterior.
 
@@ -51,7 +65,7 @@ Todo es local, sin servidor. Se calcula a partir de las ráfagas que ya se guard
 - Datos: tabla `xp_events(ts, kind, amount)` (sin nada de texto ni teclas); el nivel se deriva sumando.
 - Sin pérdida de XP nunca.
 
-### 0.3.2 Insignias
+### 0.3.3 Insignias
 
 Se calculan con datos locales. Primera tanda (unas 15):
 
@@ -66,18 +80,18 @@ Se calculan con datos locales. Primera tanda (unas 15):
 
 Pantalla de insignias con las conseguidas en color y las pendientes en silueta suave con una pista amable («Escribe 1.000 caracteres sin borrar»). Nunca un «0 de 15» frío: se muestra lo conseguido.
 
-### 0.3.3 Liga contigo mismo
+### 0.3.4 Liga contigo mismo
 
 - Cada semana (lunes a domingo) cuenta tu XP semanal.
 - Ligas: Bronce → Plata → Oro → Diamante → Mochi legendario.
 - **Subes** si tu XP de la semana supera la media de tus 4 semanas anteriores. **Nunca bajas**: como mucho «te mantienes».
 - El lunes, Tapomo anuncia el resultado con animación (subida = estrellitas y corona; mantener = «¡Buena semana, sigues en Oro!»).
 
-### 0.3.4 Carta semanal
+### 0.3.5 Carta semanal
 
 - Cada lunes, una tarjeta con lo mejor de la semana: hora más rápida, récord, días cumplidos, app donde más escribiste, insignias nuevas. Solo hechos positivos.
 
-### 0.3.5 Atajos: contar por tipos (Fase A)
+### 0.3.6 Atajos: contar por tipos (Fase A)
 
 - Cinco contadores por día: copiar/pegar/cortar, deshacer/rehacer, guardar, ventanas y escritorio (`Alt+Tab`, `Win+…`), otros. Sin catálogo todavía y sin guardar la tecla.
 - Clasificación en el hilo de trabajo (no en el hook, que debe responder rápido); la combinación solo vive en memoria un instante.
@@ -85,6 +99,15 @@ Pantalla de insignias con las conseguidas en color y las pendientes en silueta s
 - XP por atajos con **tope diario** (no se puede farmear con `Ctrl+C` en bucle).
 - Ajuste «Contar atajos» (activado por defecto) y texto de privacidad actualizado en la app y el README.
 - Insignias: «Maestro de atajos» (1.000), «Ni tocas el ratón» (100 en un día).
+
+### Ver tus récords *(idea de Pol, 13-10-2026)*
+
+- Que se pueda ver **cuál fue** la mejor racha o el récord, no solo la cifra.
+- Del texto no hay nada que enseñar, porque nunca se guarda. Pero sí hay contexto: el día y la hora, la app, cuánto duró, la velocidad y equivalencias («unas 3 páginas de libro sin borrar»).
+- Sugerencias para hacerlo entretenido, en el chat del 13-10-2026; queda pendiente elegir:
+  - un sobre que se revela con un clic;
+  - una tarjeta de récord;
+  - Tapomo que lo cuenta.
 
 ### Criterios para cerrar la 0.3
 
@@ -160,7 +183,7 @@ Cada unidad tiene 3–5 lecciones de unos 5 minutos: primero ejercicios con las 
 Idea de Pol, 13-10-2026. Es una página estática y divertida, llena de animaciones (sobre todo de Tapomo), con un estilo limpio tipo Apple: mucho blanco, tipografía grande y una idea por pantalla. También es la página de descarga y de privacidad que exigen SignPath y la Store.
 
 - **Primera visita: el origen de Tapomo.** Una animación corta (5–8 s) que se puede saltar y cuenta cómo nació Tapomo. Ideas a elegir:
-  - **Mochitsuki** (favorita): granos de arroz que se machacan a golpe de teclas, «tap, tap, tap», hasta formar una bola de mochi que cae en el hueco vacío de un teclado y se convierte en tecla. Le salen los ojos y parpadea. Une el mochi con el teclear, que es todo el concepto.
+  - **Mochitsuki** (**elegida por Pol**, 13-10-2026): granos de arroz que se machacan a golpe de teclas, «tap, tap, tap», hasta formar una bola de mochi que cae en el hueco vacío de un teclado y se convierte en tecla. Le salen los ojos y parpadea. Une el mochi con el teclear, que es todo el concepto.
   - **Huevo-tecla:** en un teclado hay una tecla con forma de huevo; un dedo la pulsa varias veces, se agrieta y sale Tapomo.
   - **Meteorito:** una tecla brillante cae del cielo estrellado sobre un teclado, deja un cráter y de él asoma Tapomo.
 - **Visitas siguientes:** una entrada rápida (~1 s). Tapomo entra botando, saluda («¡Hola otra vez!») y aparece la página.
