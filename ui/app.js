@@ -21,6 +21,11 @@ function withUnit(value, unitKey) {
   return `${value}<span class="unit">${t(unitKey)}</span>`;
 }
 
+/** Characters per minute: a "word" is 5 characters, so cpm = wpm × 5 (gross). */
+function cpm(wpm) {
+  return Math.round(wpm * 5);
+}
+
 function formatMinutes(min) {
   if (min < 1) return withUnit('<1', 'unit.min');
   if (min < 60) return withUnit(fmt(Math.round(min)), 'unit.min');
@@ -43,8 +48,10 @@ async function renderSummary() {
   speeds.avg = s.avg_wpm;
   speeds.peak = s.peak_wpm;
   $('t-avg').innerHTML = withUnit(fmt(s.avg_wpm), 'unit.wpm');
+  $('t-cpm').textContent = t('tile.cpm', { n: fmt(cpm(s.avg_wpm)) });
   $('t-net').textContent = t('tile.net', { n: fmt(s.avg_net_wpm) });
   $('t-peak').innerHTML = s.peak_wpm > 0 ? withUnit(fmt(s.peak_wpm), 'unit.wpm') : '–';
+  $('t-peak-cpm').textContent = s.peak_wpm > 0 ? t('tile.cpm', { n: fmt(cpm(s.peak_wpm)) }) : '';
   $('t-best').innerHTML = withUnit(fmt(s.best_streak), 'unit.chars');
   $('t-current').innerHTML = withUnit(fmt(s.current_streak), 'unit.chars');
   $('t-time').innerHTML = formatMinutes(s.active_minutes);
@@ -736,7 +743,7 @@ async function bindEvents() {
 
 // ----------------------------------------------------------------- glossary
 
-const GLOSSARY = ['pet', 'wpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak'];
+const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak'];
 
 function renderGlossary() {
   const dl = $('glossary-list');
