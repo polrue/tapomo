@@ -72,8 +72,10 @@ pub struct Settings {
     pub paused: bool,
     /// Floating Tapomo on the desktop.
     pub show_pet: bool,
-    /// Ask GitHub (and only GitHub) for the list of releases, at most once a day.
+    /// Ask GitHub (and only GitHub) whether there is a newer release, at most once a day.
     pub check_updates: bool,
+    /// Install new versions by itself, once the user has stopped typing for a while.
+    pub auto_update: bool,
     /// The first-run welcome has been seen or skipped.
     pub welcome_done: bool,
     /// Daily goal in active minutes: 0 (off), 10, 20 or 30.
@@ -116,6 +118,7 @@ pub fn get_settings(conn: &Connection) -> rusqlite::Result<Settings> {
         paused: flag("paused", false)?,
         show_pet: flag("show_pet", true)?,
         check_updates: flag("check_updates", true)?,
+        auto_update: flag("auto_update", false)?,
         welcome_done: flag("welcome_done", false)?,
         daily_goal_min: valid_goal(get_raw(conn, "daily_goal_min")?.and_then(|v| v.parse().ok()).unwrap_or(DEFAULT_GOAL_MIN)),
         weekend_rest: flag("weekend_rest", false)?,
@@ -131,6 +134,7 @@ pub fn set_settings(conn: &Connection, s: &Settings) -> rusqlite::Result<()> {
     set_raw(conn, "paused", b(s.paused))?;
     set_raw(conn, "show_pet", b(s.show_pet))?;
     set_raw(conn, "check_updates", b(s.check_updates))?;
+    set_raw(conn, "auto_update", b(s.auto_update))?;
     set_raw(conn, "welcome_done", b(s.welcome_done))?;
     set_raw(conn, "daily_goal_min", &valid_goal(s.daily_goal_min).to_string())?;
     set_raw(conn, "weekend_rest", b(s.weekend_rest))

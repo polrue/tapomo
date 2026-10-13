@@ -35,8 +35,8 @@ Tapomo **no tiene telemetría, ni analítica, ni publicidad, ni cuentas de usuar
 
 | Para qué | Con quién | Qué se envía | Cómo desactivarla |
 |---|---|---|---|
-| Comprobar si hay una versión nueva, como mucho una vez al día | GitHub (`api.github.com`) | Una petición normal de la web, sin ningún dato tuyo ni de tu uso | Ajustes → «Comprobar si hay versiones nuevas» |
-| Descargar una versión nueva, solo si aceptas instalarla | GitHub (`github.com`) | Una descarga normal | No aceptando la actualización, o desactivando la comprobación |
+| Comprobar si hay una versión nueva, como mucho una vez al día | GitHub (`github.com`, el archivo `latest.json` de la última versión) | Una petición normal de la web, sin ningún dato tuyo ni de tu uso | Ajustes → «Comprobar si hay versiones nuevas» |
+| Descargar una versión nueva: solo si aceptas instalarla o si activas la actualización automática | GitHub (`github.com`) | Una descarga normal | No aceptando la actualización, o desactivando la comprobación; la actualización automática está desactivada por defecto (Ajustes → «Actualizar automáticamente») |
 
 Como en cualquier conexión, GitHub ve tu dirección IP. Consulta la [declaración de privacidad de GitHub](https://docs.github.com/es/site-policy/privacy-policies/github-general-privacy-statement).
 
@@ -89,8 +89,8 @@ Tapomo has **no telemetry, analytics, ads or user accounts**. The only connectio
 
 | What for | With whom | What is sent | How to turn it off |
 |---|---|---|---|
-| Checking for a new version, at most once a day | GitHub (`api.github.com`) | A plain web request, with no data about you or your usage | Settings → "Check for new versions" |
-| Downloading a new version, only if you accept it | GitHub (`github.com`) | A plain download | Don't accept the update, or turn off the check |
+| Checking for a new version, at most once a day | GitHub (`github.com`, the `latest.json` file of the latest release) | A plain web request, with no data about you or your usage | Settings → "Check for new versions" |
+| Downloading a new version: only if you accept it or if you turn on automatic updates | GitHub (`github.com`) | A plain download | Don't accept the update, or turn off the check; automatic updates are off by default (Settings → "Update automatically") |
 
 As with any connection, GitHub sees your IP address. See [GitHub's privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 

@@ -12,7 +12,7 @@
     <div class="mascot-wrap" id="mascot-wrap"><svg id="mascot" viewBox="0 0 160 160" role="img" aria-label="Tapomo"></svg></div>
     <div class="brand">
       <h1>Tapomo</h1>
-      <p class="ver-line"><a id="version-link" class="ver" href="#" target="_blank" rel="noopener" data-i18n-title="version.title" hidden></a><a id="update-pill" class="pill" href="#" target="_blank" rel="noopener" hidden></a></p>
+      <p class="ver-line"><a id="version-link" class="ver" href="#" target="_blank" rel="noopener" data-i18n-title="version.title" hidden></a><button type="button" id="update-pill" class="pill" hidden></button></p>
       <p class="hide-note" id="hide-note" aria-live="polite" hidden><span id="hide-text"></span><button type="button" class="pill" id="hide-btn" hidden></button></p>
       <p class="tagline" id="paused-banner" hidden data-i18n="paused.banner"></p>
     </div>
@@ -163,6 +163,8 @@
       <p class="hint" data-i18n="settings.show_pet.hint"></p>
       <label class="check"><input id="s-updates" type="checkbox"><span data-i18n="settings.check_updates"></span></label>
       <p class="hint" data-i18n="settings.check_updates.hint"></p>
+      <label class="check"><input id="s-auto-update" type="checkbox"><span data-i18n="settings.auto_update"></span></label>
+      <p class="hint" data-i18n="settings.auto_update.hint"></p>
 
       <h3 data-i18n="settings.logs"></h3>
       <p class="hint" data-i18n="settings.logs.hint"></p>
@@ -209,6 +211,22 @@
       <div class="welcome-nav">
         <button type="button" class="ghost" id="welcome-back" data-i18n="welcome.back"></button>
         <button type="button" id="welcome-next"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="update-dialog" class="welcome" hidden>
+    <div class="welcome-card update-card" role="dialog" aria-modal="true" aria-labelledby="update-title" aria-describedby="update-text" tabindex="-1">
+      <div class="welcome-body">
+        <h2 id="update-title"></h2>
+        <p id="update-text"></p>
+        <p id="update-notes" class="update-notes" hidden></p>
+        <p><a id="update-notes-link" href="#" target="_blank" rel="noopener" data-i18n="update.notes_link"></a></p>
+        <p id="update-status" class="update-status" aria-live="polite" hidden></p>
+      </div>
+      <div class="welcome-nav">
+        <button type="button" class="ghost" id="update-later" data-i18n="update.later"></button>
+        <button type="button" id="update-now" data-i18n="update.now"></button>
       </div>
     </div>
   </div>

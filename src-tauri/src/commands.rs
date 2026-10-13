@@ -28,10 +28,10 @@ pub struct AppState {
     pub shared: Arc<Shared>,
 }
 
-type CmdResult<T> = Result<T, String>;
+pub type CmdResult<T> = Result<T, String>;
 
 impl AppState {
-    fn with_db<T>(&self, f: impl FnOnce(&Connection) -> rusqlite::Result<T>) -> CmdResult<T> {
+    pub fn with_db<T>(&self, f: impl FnOnce(&Connection) -> rusqlite::Result<T>) -> CmdResult<T> {
         let conn = self.db.lock().map_err(|_| "database lock poisoned".to_string())?;
         f(&conn).map_err(|e| {
             log::error!("database error: {e}");
@@ -141,6 +141,7 @@ fn changed_settings(old: &Settings, new: &Settings) -> Vec<&'static str> {
         ("paused", old.paused != new.paused),
         ("show_pet", old.show_pet != new.show_pet),
         ("check_updates", old.check_updates != new.check_updates),
+        ("auto_update", old.auto_update != new.auto_update),
         ("welcome_done", old.welcome_done != new.welcome_done),
         ("daily_goal_min", old.daily_goal_min != new.daily_goal_min),
         ("weekend_rest", old.weekend_rest != new.weekend_rest),
