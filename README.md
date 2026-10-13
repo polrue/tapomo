@@ -15,7 +15,7 @@ Qué se guarda, en una base de datos SQLite local en tu equipo:
 - Para cada ráfaga de escritura: hora de inicio y fin, número de pulsaciones, número de borrados y la mejor velocidad de 10 s.
 - El **nombre del ejecutable** de la aplicación en primer plano (por ejemplo `WINWORD.EXE`), al que puedes poner un nombre propio («Word»).
 
-Qué **no** se guarda nunca: el texto, las teclas concretas, los títulos de ventana, capturas ni nada que salga de tu equipo. Tapomo no tiene red ni telemetría.
+Qué **no** se guarda nunca: el texto, las teclas concretas, los títulos de ventana, capturas ni nada que salga de tu equipo. No hay telemetría: la única conexión es, una vez al día, preguntar a GitHub si hay una versión nueva (se puede desactivar en Ajustes y no envía nada sobre ti).
 
 Además: las pulsaciones inyectadas por macros o autotypers se ignoran, los atajos (Ctrl/Alt/Win + tecla) no cuentan, hay una lista de aplicaciones excluidas (gestores de contraseñas por defecto: KeePass, KeePassXC, 1Password, Bitwarden), los juegos y presentaciones a pantalla completa se ignoran (se puede desactivar) y puedes pausar la medición en cualquier momento desde la bandeja.
 
@@ -65,7 +65,7 @@ What is stored, in a local SQLite database on your machine:
 - For each typing burst: start and end time, keystroke count, delete count and the best 10 s speed.
 - The foreground application's **executable name** (e.g. `WINWORD.EXE`), which you can rename to something friendly ("Word").
 
-What is **never** stored: text, individual keys, window titles, screenshots, or anything that leaves your computer. Tapomo has no networking and no telemetry.
+What is **never** stored: text, individual keys, window titles, screenshots, or anything that leaves your computer. There is no telemetry: the only connection is a once-a-day check with GitHub for a new version (can be turned off in Settings; it sends nothing about you).
 
 Also: keystrokes injected by macros or auto-typers are ignored, shortcuts (Ctrl/Alt/Win + key) don't count, there is an excluded-apps list (password managers by default: KeePass, KeePassXC, 1Password, Bitwarden), fullscreen games and presentations are ignored (can be turned off), and you can pause measuring at any time from the tray.
 
