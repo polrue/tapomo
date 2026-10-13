@@ -64,6 +64,7 @@
   "about.privacy": "Tapomo never stores what you type: it only counts keystrokes and timings.",
   "about.privacy_passwords": "Password fields are ignored entirely: not counted, not timed.",
   "about.source": "Source code on GitHub",
+  "about.privacy_policy": "Privacy policy",
   "about.coffee": "Buy Tapomo a coffee ☕",
   "paused.banner": "Measuring is paused",
   "tray.show_pet": "Show Tapomo",
