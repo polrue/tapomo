@@ -32,9 +32,9 @@ Los campos de contraseña se ignoran por completo: ni se cuentan ni se cronometr
 
 ## Descarga
 
-Descarga el instalador (`.exe`) de la [última versión](https://github.com/polrue/tapomo/releases/latest). Se instala solo para tu usuario, sin permisos de administrador.
+**[⬇ Descargar Tapomo para Windows](https://github.com/polrue/tapomo/releases/latest/download/Tapomo-setup.exe)** (siempre la última versión; también en [todas las versiones](https://github.com/polrue/tapomo/releases)). Se instala solo para tu usuario, sin permisos de administrador.
 
-El instalador aún **no está firmado**, así que Windows SmartScreen puede mostrar un aviso («Más información → Ejecutar de todas formas») y el Control inteligente de aplicaciones de Windows 11 puede bloquearlo. Estamos tramitando una firma gratuita para proyectos de código abierto.
+El instalador aún **no está firmado**, así que Windows SmartScreen puede mostrar un aviso («Más información → Ejecutar de todas formas») y el Control inteligente de aplicaciones de Windows 11 puede bloquearlo. Estamos tramitando la firma gratuita para proyectos de código abierto: Tapomo usará **SignPath Foundation** para firmar el instalador (firma de código gratuita de [SignPath.io](https://signpath.io), certificado de [SignPath Foundation](https://signpath.org)).
 
 ### Cómo comprobar que el instalador es auténtico
 
@@ -99,9 +99,9 @@ Password fields are ignored entirely: not counted, not timed (detected via UI Au
 
 ### Download
 
-Download the installer (`.exe`) from the [latest release](https://github.com/polrue/tapomo/releases/latest). It installs for your user only, without administrator rights.
+**[⬇ Download Tapomo for Windows](https://github.com/polrue/tapomo/releases/latest/download/Tapomo-setup.exe)** (always the latest version; see also [all releases](https://github.com/polrue/tapomo/releases)). It installs for your user only, without administrator rights.
 
-The installer is **not signed yet**, so Windows SmartScreen may warn you ("More info → Run anyway") and Windows 11 Smart App Control may block it. We are applying for free open-source code signing.
+The installer is **not signed yet**, so Windows SmartScreen may warn you ("More info → Run anyway") and Windows 11 Smart App Control may block it. We are applying for free open-source code signing: Tapomo will use **SignPath Foundation** to sign the installer (free code signing provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org)).
 
 #### How to check the installer is genuine
 
