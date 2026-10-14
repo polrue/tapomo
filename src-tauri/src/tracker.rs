@@ -35,7 +35,7 @@ pub enum Msg {
     /// XP changed outside the tracker (a lesson): re-read the total so no level-up is announced twice.
     XpRefresh,
     /// A shortcut of this kind was used in the window with this handle (the key itself is never sent).
-    Shortcut(tapomo_core::shortcuts::ShortcutKind, isize),
+    Shortcut(tapomo_core::shortcuts::ShortcutKind, Option<u32>, isize),
     /// Flush the open burst, save and stop. The sender is acknowledged when done.
     Shutdown(SyncSender<()>),
 }
@@ -226,7 +226,7 @@ impl Tracker {
                     self.on_key(key);
                 }
                 Ok(Msg::Reload) => self.reload(),
-                Ok(Msg::Shortcut(kind, hwnd)) => self.on_shortcut(kind, hwnd),
+                Ok(Msg::Shortcut(kind, combo, hwnd)) => self.on_shortcut(kind, combo, hwnd),
                 Ok(Msg::XpRefresh) => {
                     if let Ok(total) = xp::total(&self.conn) {
                         self.xp_total = total;
@@ -332,7 +332,7 @@ impl Tracker {
 
     /// Counts a shortcut under the same rules as typing: not while paused, in a fullscreen game or in an
     /// excluded app. Only its kind is stored, as a daily count.
-    fn on_shortcut(&mut self, kind: tapomo_core::shortcuts::ShortcutKind, hwnd: isize) {
+    fn on_shortcut(&mut self, kind: tapomo_core::shortcuts::ShortcutKind, combo: Option<u32>, hwnd: isize) {
         if self.paused || !self.count_shortcuts || (self.ignore_fullscreen && self.fullscreen_busy()) {
             return;
         }
@@ -347,6 +347,16 @@ impl Tracker {
         self.shortcuts_pending = true;
         if self.shared.ui_visible() {
             let _ = self.app.emit("tapomo://shortcut", kind.id());
+        }
+        // Phase B: a catalogue shortcut moves up its own level (once a day).
+        for id in combo.map(|c| crate::catalog::resolve(c, &exe)).unwrap_or_default() {
+            match crate::catalog::record_use(&self.conn, id) {
+                Ok(Some(used)) if used.tip_learnt || (used.level_up && used.level == 4) => {
+                    let _ = self.app.emit("tapomo://shortcut-learnt", used);
+                }
+                Ok(_) => {}
+                Err(e) => log::error!("could not record a shortcut level: {e}"),
+            }
         }
     }
 

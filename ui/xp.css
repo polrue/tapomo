@@ -39,11 +39,11 @@
 .ch-full { margin: 10px 0 0; font-weight: 800; color: var(--accent-strong); }
 
 /* --------------------------------------------------------------- wardrobe */
-.wardrobe summary { cursor: pointer; list-style: none; }
-.wardrobe summary::-webkit-details-marker { display: none; }
-.wardrobe summary h2 { display: inline; }
-.wardrobe summary::after { content: "▾"; margin-left: 8px; color: var(--muted); }
-.wardrobe[open] summary::after { content: "▴"; }
+.wardrobe summary, .album summary { cursor: pointer; list-style: none; }
+.wardrobe summary::-webkit-details-marker, .album summary::-webkit-details-marker { display: none; }
+.wardrobe summary h2, .album summary h2 { display: inline; }
+.wardrobe summary::after, .album summary::after { content: "▾"; margin-left: 8px; color: var(--muted); }
+.wardrobe[open] summary::after, .album[open] summary::after { content: "▴"; }
 .wd-style { border: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
 .wd-style legend { float: left; font-weight: 700; margin-right: 8px; padding: 0; }
 .wd-style label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }

@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod badges;
+mod catalog;
 mod commands;
 mod db;
 mod hook;
@@ -79,6 +80,9 @@ fn main() {
             commands::save_lesson,
             commands::get_lessons_progress,
             commands::get_hard_keys,
+            commands::get_shortcut_tip,
+            commands::mark_shortcut_known,
+            commands::get_shortcut_album,
             commands::get_heatmap,
             commands::get_apps,
             commands::set_alias,
@@ -138,6 +142,8 @@ fn main() {
             let (tx, rx) = mpsc::channel();
             let shared = Arc::new(Shared::default());
             tracker::spawn(app.handle().clone(), db_path, rx, shared.clone());
+            // Parse the shortcut catalogue now, not on the first shortcut inside the keyboard hook.
+            let _ = catalog::known_combo(0, 0);
             hook::start(tx.clone());
             password::start();
             shared.show_pet.store(settings.show_pet, Ordering::Relaxed);

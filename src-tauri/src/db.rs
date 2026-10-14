@@ -129,6 +129,22 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
              COMMIT;",
         )?;
     }
+    if version < 7 {
+        // Shortcut trainer (0.4.3): per catalogue shortcut, days used and a few days. Additive only.
+        conn.execute_batch(
+            "BEGIN;
+             CREATE TABLE shortcut_levels (
+                 id TEXT PRIMARY KEY,
+                 days_used INTEGER NOT NULL DEFAULT 0,
+                 first_day INTEGER,
+                 last_day INTEGER,
+                 suggested_day INTEGER,
+                 known INTEGER NOT NULL DEFAULT 0
+             );
+             PRAGMA user_version = 7;
+             COMMIT;",
+        )?;
+    }
     Ok(())
 }
 
@@ -163,6 +179,8 @@ pub struct Settings {
     pub count_shortcuts: bool,
     /// Time spent in lessons counts towards the daily goal.
     pub lessons_in_goal: bool,
+    /// One shortcut tip a day (only with `count_shortcuts`).
+    pub shortcut_tips: bool,
 }
 
 /// Goal choices offered in the settings; anything else falls back to the default.
@@ -210,6 +228,7 @@ pub fn get_settings(conn: &Connection) -> rusqlite::Result<Settings> {
         wear_style: get_raw(conn, "wear_style")?.filter(|v| v == "subtle").unwrap_or_else(|| "bold".into()),
         count_shortcuts: flag("count_shortcuts", true)?,
         lessons_in_goal: flag("lessons_in_goal", true)?,
+        shortcut_tips: flag("shortcut_tips", true)?,
     })
 }
 
@@ -231,7 +250,8 @@ pub fn set_settings(conn: &Connection, s: &Settings) -> rusqlite::Result<()> {
     set_raw(conn, "accessories", &s.accessories.iter().map(|a| id(a)).filter(|a| !a.is_empty()).take(16).collect::<Vec<_>>().join(","))?;
     set_raw(conn, "wear_style", if s.wear_style == "subtle" { "subtle" } else { "bold" })?;
     set_raw(conn, "count_shortcuts", b(s.count_shortcuts))?;
-    set_raw(conn, "lessons_in_goal", b(s.lessons_in_goal))
+    set_raw(conn, "lessons_in_goal", b(s.lessons_in_goal))?;
+    set_raw(conn, "shortcut_tips", b(s.shortcut_tips))
 }
 
 /// Saved position of the floating Tapomo (physical px). Kept out of [`Settings`]

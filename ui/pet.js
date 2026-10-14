@@ -299,6 +299,13 @@ async function applyLook(settings) {
   });
 }
 
+/** A suggested shortcut used for the first time, or one just mastered. */
+function onShortcutLearnt(u) {
+  if (state.paused || state.asleep) return;
+  Mascot.jump(svg, { big: false });
+  say(u.tip_learnt ? 'pet.shortcut_learnt' : 'pet.shortcut_mastered', 3500, true);
+}
+
 /** `tapomo://xp`: a level-up gets the big celebration, a finished challenge a small one. */
 function onXp(p) {
   if (p.level > p.prev_level) {
@@ -498,6 +505,7 @@ async function init() {
     listen('tapomo://record', onRecord),
     listen('tapomo://goal', onGoal),
     listen('tapomo://xp', (e) => onXp(e.payload)),
+    listen('tapomo://shortcut-learnt', (e) => onShortcutLearnt(e.payload)),
     listen('tapomo://settings', () => loadSettings().catch(console.error)),
     listen('tapomo://pet-say', () => onClick()),
     listen('tapomo://pet-state', (e) => onPetState(e.payload)),
