@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="xp.css">
   <link rel="stylesheet" href="badges.css">
   <link rel="stylesheet" href="league.css">
+  <link rel="stylesheet" href="records.css">
 </head>
 <body>
   <header class="top">
@@ -174,6 +175,11 @@
       <h2><span id="bd-title" data-i18n="badges.title"></span><button type="button" class="info" data-tip="tip.badges" data-i18n-aria="tip.more">i</button></h2>
       <p class="bd-count" id="bd-count"></p>
       <ul class="bd-grid" id="bd-grid"></ul>
+    </section>
+
+    <section class="card records" id="records" aria-labelledby="rc-title" hidden>
+      <h2><span id="rc-title" data-i18n="records.title"></span><button type="button" class="info" data-tip="tip.records" data-i18n-aria="tip.more">i</button></h2>
+      <ul class="rc-grid" id="rc-grid"></ul>
     </section>
 
     <details class="card wardrobe" id="wardrobe">
@@ -358,6 +364,7 @@
   <script src="welcome.js"></script>
   <script src="badges-art.js"></script>
   <script src="badges.js"></script>
+  <script src="records.js"></script>
   <script src="shortcuts.js"></script>
   <script src="weekly.js"></script>
   <script src="league.js"></script>

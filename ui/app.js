@@ -304,6 +304,7 @@ async function refreshAll() {
     renderGoal().catch(showError);
     Progress.refresh(range).then(() => Badges.refresh()).then(() => League.refresh()).catch(showError);
     Shortcuts.refresh(range).catch(showError);
+    Records.refresh().catch(showError);
     const s = await renderSummary();
     if (s.bursts > 0) await Promise.all([renderHeatmap(s.reference), renderApps()]);
   } catch (e) {
@@ -339,6 +340,7 @@ async function onLanguageChange() {
   Progress.relabel();
   Badges.render();
   League.render();
+  Records.render();
   paintLive(lastLive || {});
   renderPetState();
   renderVersion();
@@ -763,7 +765,7 @@ async function bindEvents() {
 
 // ----------------------------------------------------------------- glossary
 
-const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak', 'xp', 'challenges', 'wardrobe', 'badges', 'league', 'shortcuts'];
+const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak', 'xp', 'challenges', 'wardrobe', 'badges', 'league', 'shortcuts', 'records'];
 
 function renderGlossary() {
   const dl = $('glossary-list');
