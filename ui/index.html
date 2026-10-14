@@ -86,6 +86,7 @@
         <div class="lg-head"><h2 class="lg-name" id="lg-name"></h2><span class="lg-days" id="lg-days"></span></div>
         <p class="lg-text" id="lg-text"></p>
         <div class="lg-bar" id="lg-bar" role="progressbar" aria-valuemin="0" data-i18n-aria="league.bar" hidden><i id="lg-fill"></i></div>
+        <button type="button" class="link lg-letter" id="lg-letter" data-i18n="weekly.open"></button>
       </div>
     </section>
 
@@ -328,6 +329,16 @@
     </div>
   </div>
 
+  <div id="weekly-dialog" class="welcome" hidden>
+    <div class="welcome-card lvup-card" role="dialog" aria-modal="true" aria-labelledby="wk-title" tabindex="-1">
+      <div class="welcome-body">
+        <h2 id="wk-title" data-i18n="weekly.dialog"></h2>
+        <div class="lgup-letter" id="wk-dialog-body"></div>
+      </div>
+      <div class="welcome-nav lvup-nav"><button type="button" id="wk-ok" data-i18n="weekly.close"></button></div>
+    </div>
+  </div>
+
   <script src="i18n.js"></script>
   <script src="mascot.js"></script>
   <script src="wardrobe.js"></script>
@@ -335,6 +346,7 @@
   <script src="welcome.js"></script>
   <script src="badges-art.js"></script>
   <script src="badges.js"></script>
+  <script src="weekly.js"></script>
   <script src="league.js"></script>
   <script src="xp.js"></script>
   <script src="app.js"></script>

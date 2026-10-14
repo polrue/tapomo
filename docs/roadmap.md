@@ -16,7 +16,7 @@ Reglas que valen para todo el plan:
 |---|---|---|
 | 0.1 | Medición pasiva por ráfagas, estadísticas, calendario, apps | Hecho |
 | 0.2 | Barra de velocidad personal, Tapomo flotante, caras de racha, estrellitas, bienvenida, instalador con Tapomo, aviso de versión nueva | Hecho |
-| 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (hechas: 0.3.0 objetivo diario y días seguidos; 0.3.1 actualizador y caracteres por minuto; 0.3.2 XP, niveles, retos, armario y zonas nuevas; 0.3.3 insignias; 0.3.4 liga contigo mismo) |
+| 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (hechas: 0.3.0 objetivo diario y días seguidos; 0.3.1 actualizador y caracteres por minuto; 0.3.2 XP, niveles, retos, armario y zonas nuevas; 0.3.3 insignias; 0.3.4 liga contigo mismo; 0.3.5 carta semanal) |
 | 0.4 | Lecciones de mecanografía (ES + US) y entrenador de atajos | Pendiente |
 | 0.5 | Web tapomo.app, estadísticas anónimas opcionales, ligas entre amigos | Pendiente |
 | Más tarde | Cifrado de la base de datos, más idiomas | Pendiente |
@@ -83,7 +83,9 @@ Pantalla de insignias con las conseguidas en color y las pendientes en silueta s
 - **Subes** si tu XP de la semana supera la media de tus 4 semanas anteriores. **Nunca bajas**: como mucho «te mantienes».
 - El lunes, Tapomo anuncia el resultado con animación (subida = estrellitas y corona; mantener = «¡Buena semana, sigues en Oro!»).
 
-### 0.3.5 Carta semanal
+### 0.3.5 Carta semanal *(hecho, 15-10-2026)*
+
+- Va dentro del aviso del lunes de la liga y se puede reabrir desde su tarjeta. Datos en `src-tauri/src/weekly.rs`; solo se muestran los datos que no son cero.
 
 - Cada lunes, una tarjeta con lo mejor de la semana: hora más rápida, récord, días cumplidos, app donde más escribiste, insignias nuevas. Solo hechos positivos.
 
