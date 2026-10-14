@@ -5,7 +5,8 @@ const Album = (() => {
   const LEVELS = ['undiscovered', 'learning', 'getting', 'almost', 'mastered'];
   let built = false;
 
-  const lang = () => (document.documentElement.lang === 'es' ? 'es' : 'en');
+  // The catalogue only has Spanish and English text; Catalan users get Spanish (same keyboard and Office labels).
+  const lang = () => (['es', 'ca'].includes(document.documentElement.lang) ? 'es' : 'en');
 
   async function refreshTip(range = 'today') {
     const card = $('sc-tip');

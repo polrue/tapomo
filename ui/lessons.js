@@ -8,30 +8,52 @@ const Lessons = (() => {
 
   // ------------------------------------------------------------ catalogue
   // Units unlock letters progressively. `keys`: letters this unit adds (per layout); `base`: target wpm.
+  // `perLayout`: lessons for layouts whose letters sit elsewhere (AZERTY, QWERTZ); others use `lessons`.
   const UNITS = [
-    { id: 'home', base: 12, keys: { es: 'asdfghjklñ', us: 'asdfghjkl;' },
-      lessons: [['fj', 'dk'], ['sl', 'añ'], ['gh'], 'words'] },
-    { id: 'top', base: 15, keys: { es: 'qwertyuiop', us: 'qwertyuiop' },
-      lessons: [['ei'], ['ru', 'ty'], ['wo', 'qp'], 'words'] },
-    { id: 'bottom', base: 18, keys: { es: 'zxcvbnm,.', us: 'zxcvbnm,.' },
-      lessons: [['vm'], ['cn', ',.'], ['bxz'], 'words'] },
+    { id: 'home', base: 12, keys: { es: 'asdfghjklñ', us: 'asdfghjkl;', fr: 'qsdfghjklm', de: 'asdfghjklö' },
+      lessons: [['fj', 'dk'], ['sl', 'añ'], ['gh'], 'words'],
+      perLayout: { fr: [['fj', 'dk'], ['sl', 'qm'], ['gh'], 'words'], de: [['fj', 'dk'], ['sl', 'aö'], ['gh'], 'words'] } },
+    { id: 'top', base: 15, keys: { es: 'qwertyuiop', us: 'qwertyuiop', fr: 'azertyuiop', de: 'qwertzuiop' },
+      lessons: [['ei'], ['ru', 'ty'], ['wo', 'qp'], 'words'],
+      perLayout: { fr: [['ei'], ['ru', 'ty'], ['zo', 'ap'], 'words'], de: [['ei'], ['ru', 'tz'], ['wo', 'qp'], 'words'] } },
+    { id: 'bottom', base: 18, keys: { es: 'zxcvbnm,.', us: 'zxcvbnm,.', fr: 'wxcvbn,;:', de: 'yxcvbnm,.' },
+      lessons: [['vm'], ['cn', ',.'], ['bxz'], 'words'],
+      perLayout: { fr: [['vn'], ['c,', ';:'], ['bxw'], 'words'], de: [['vm'], ['cn', ',.'], ['bxy'], 'words'] } },
     // From here on every letter is known; each unit practises one more skill (0.4.1).
-    { id: 'caps', base: 18, keys: { es: '⇧', us: '⇧' }, lessons: ['caps-left', 'caps-right', 'names'] },
-    { id: 'numbers', base: 15, keys: { es: '1234567890', us: '1234567890' }, lessons: ['num-left', 'num-right', 'num-words'] },
-    { id: 'punct', base: 16, keys: { es: ',.;:¿?¡!-()', us: ",.;:?!-()'" }, lessons: ['punct-drill', 'punct-phrases'] },
-    { id: 'accents', base: 16, keys: { es: 'á é í ó ú ü', us: '' }, only: 'es', lessons: ['accent-vowels', 'accent-words'] },
-    { id: 'common', base: 22, keys: { es: 'a–z', us: 'a–z' }, lessons: ['common-1', 'common-2'] },
-    { id: 'sentences', base: 22, keys: { es: 'Aa.', us: 'Aa.' }, lessons: ['sentences-1', 'sentences-2', 'sentences-3'] },
+    { id: 'caps', base: 18, keys: { es: '⇧', us: '⇧', fr: '⇧', de: '⇧' }, lessons: ['caps-left', 'caps-right', 'names'] },
+    { id: 'numbers', base: 15, keys: { es: '1234567890', us: '1234567890', fr: '1234567890', de: '1234567890' }, lessons: ['num-left', 'num-right', 'num-words'] },
+    { id: 'punct', base: 16, keys: { es: ',.;:¿?¡!-()', us: ",.;:?!-()'", fr: ",.;:?!-()'", de: ',.;:?!-()' }, lessons: ['punct-drill', 'punct-phrases'] },
+    { id: 'accents', base: 16, keys: { es: 'á é í ó ú ü', us: '', fr: 'é è à ç ù ê â î ô û ë ï', de: 'ä ö ü ß Ä Ö Ü é' },
+      only: ['es', 'fr', 'de'], lessons: ['accent-vowels', 'accent-words'] },
+    { id: 'common', base: 22, keys: { es: 'a–z', us: 'a–z', fr: 'a–z', de: 'a–z' }, lessons: ['common-1', 'common-2'] },
+    { id: 'sentences', base: 22, keys: { es: 'Aa.', us: 'Aa.', fr: 'Aa.', de: 'Aa.' }, lessons: ['sentences-1', 'sentences-2', 'sentences-3'] },
   ];
-  // US layout swaps the ES-only home key.
+  // US layout swaps the ES-only home key (fr/de have their own drills in `perLayout`).
   const swap = (layout, s) => (layout === 'us' ? s.replace(/ñ/g, ';') : s);
+  const lessonsOf = (u, layout) => (u.perLayout && u.perLayout[layout]) || u.lessons;
+
+  // Per-layout language data. `letters`: every letter key of the three rows; `left`: left-hand ones
+  // (capitals of those use the right Shift); `plain`: words with no letters beyond the three rows.
+  const LANG = {
+    es: { lang: 'es', letters: 'asdfghjklñqwertyuiopzxcvbnm', left: 'qwertasdfgzxcvb', plain: /^[a-zñ]+$/ },
+    us: { lang: 'en', letters: 'asdfghjklqwertyuiopzxcvbnm', left: 'qwertasdfgzxcvb', plain: /^[a-z]+$/ },
+    fr: { lang: 'fr', letters: 'qsdfghjklmazertyuiopwxcvbn', left: 'azertqsdfgwxcvb', plain: /^[a-z]+$/ },
+    de: { lang: 'de', letters: 'asdfghjklöqwertzuiopyxcvbnm', left: 'qwertasdfgyxcvb', plain: /^[a-zö]+$/ },
+  };
+  const langOf = (layout) => LANG[layout] || LANG.us;
+  // First lesson of the accents unit: the layout's accented letters alone, then in pairs.
+  const ACCENT_DRILL = {
+    es: ['á', 'é', 'í', 'ó', 'ú', 'ü', 'á é', 'í ó', 'ú á', 'Á', 'É'],
+    fr: ['é', 'è', 'à', 'ç', 'ù', 'ê', 'â', 'î', 'ô', 'û', 'ë', 'ï', 'é è', 'à ç', 'ê ô', 'û ù', 'â î'],
+    de: ['ä', 'ö', 'ü', 'ß', 'Ä', 'Ö', 'Ü', 'é', 'ä ö', 'ü ß', 'Ä Ö', 'ö ü'],
+  };
 
   /** Every lesson in order: `{ id, unit, index, newKeys, known, kind }`. Units marked `only` skip other layouts. */
   function catalogue(layout) {
     const out = [];
     let known = '';
     for (const u of unitsFor(layout)) {
-      u.lessons.forEach((l, i) => {
+      lessonsOf(u, layout).forEach((l, i) => {
         const drillKeys = Array.isArray(l) ? swap(layout, l.join('')) : '';
         known += drillKeys;
         const kind = Array.isArray(l) ? 'drill' : l;
@@ -41,7 +63,7 @@ const Lessons = (() => {
     return out;
   }
   function unitsFor(layout) {
-    return UNITS.filter((x) => !x.only || x.only === layout);
+    return UNITS.filter((x) => !x.only || x.only.includes(layout));
   }
 
   // ----------------------------------------------------------- generators
@@ -70,7 +92,7 @@ const Lessons = (() => {
       let w = '';
       for (let i = 0; i < n; i++) w += r() < 0.55 && fresh.length ? pick(r, fresh) : pick(r, known);
       // Punctuation never starts a group.
-      w = w.replace(/^[,.]+/, '') || pick(r, fresh.length ? fresh : known);
+      w = w.replace(/^[,.:]+/, '') || pick(r, fresh.length ? fresh : known);
       words.push(w);
       size += w.length + 1;
     }
@@ -81,7 +103,7 @@ const Lessons = (() => {
   function wordsText(lesson, layout, seed, len = 170) {
     const r = rng(seed);
     const ok = new Set(lesson.known);
-    const pool = (LessonWords[layout === 'us' ? 'en' : 'es'] || []).filter((w) => [...w].every((c) => ok.has(c)));
+    const pool = (LessonWords[langOf(layout).lang] || []).filter((w) => [...w].every((c) => ok.has(c)));
     if (pool.length < 8) return drill({ ...lesson, newKeys: lesson.known }, seed, len);
     const out = [];
     let size = 0;
@@ -111,37 +133,37 @@ const Lessons = (() => {
   function practiceText(lesson, layout, seed) {
     const r = rng(seed);
     const hard = [...lesson.newKeys];
-    const lang = layout === 'us' ? 'en' : 'es';
-    const pool = (LessonWords[lang] || []).filter((w) => hard.some((k) => w.includes(k)));
-    const all = layout === 'us' ? 'asdfghjklqwertyuiopzxcvbnm' : 'asdfghjklñqwertyuiopzxcvbnm';
+    const pool = (LessonWords[langOf(layout).lang] || []).filter((w) => hard.some((k) => w.includes(k)));
+    const all = langOf(layout).letters;
     const half = drill({ newKeys: lesson.newKeys, known: all }, seed, 90);
     return pool.length >= 5 ? `${half} ${fill(r, pool, 100)}` : drill({ newKeys: lesson.newKeys, known: all }, seed, 180);
   }
 
-  const LEFT = 'qwertasdfgzxcvb';
   // Capitalised, very short or interjection-like words look odd ("Ja", "Mas"): capitals use longer words.
   const capWords = (words) => words.filter((w) => w.length >= 4 && !['hala', 'jaja', 'lass', 'lads', 'gals', 'fads'].includes(w));
   const cap = (w) => w.charAt(0).toUpperCase() + w.slice(1);
 
   function textFor(lesson, layout, seed) {
     const r = rng(seed);
-    const lang = layout === 'us' ? 'en' : 'es';
-    const words = (LessonWords[lang] || []).filter((w) => /^[a-zñ]+$/.test(w));
+    const { lang, left, plain } = langOf(layout);
+    const words = (LessonWords[lang] || []).filter((w) => plain.test(w));
     const T = LessonTexts[lang];
     switch (lesson.kind) {
       case 'drill': return drill(lesson, seed);
       case 'practice': return practiceText(lesson, layout, seed);
       case 'words': return wordsText(lesson, layout, seed);
       // Shift with the other hand: capitals of left-hand letters use the right Shift and vice versa.
-      case 'caps-left': return fill(r, capWords(words).filter((w) => LEFT.includes(w[0])).map(cap), 150);
-      case 'caps-right': return fill(r, capWords(words).filter((w) => !LEFT.includes(w[0])).map(cap), 150);
+      case 'caps-left': return fill(r, capWords(words).filter((w) => left.includes(w[0])).map(cap), 150);
+      case 'caps-right': return fill(r, capWords(words).filter((w) => !left.includes(w[0])).map(cap), 150);
       case 'names': return fill(r, T.names, 160);
       case 'num-left': return fill(r, ['1', '2', '3', '4', '5', '12', '21', '345', '54', '123', '2025', '15'], 120);
       case 'num-right': return fill(r, ['6', '7', '8', '9', '0', '67', '89', '90', '678', '1990', '80', '70'], 120);
       case 'num-words': return fill(r, words.slice(0, 120).map((w) => `${1 + Math.floor(r() * 99)} ${w}`), 160);
-      case 'punct-drill': return fill(r, layout === 'us' ? ['a,', 'b.', 'c;', 'd:', 'e?', 'f!', '(g)', 'h-i', "j's"] : ['a,', 'b.', 'c;', 'd:', '¿e?', '¡f!', '(g)', 'h-i'], 120);
+      case 'punct-drill': return fill(r, layout === 'us' || layout === 'fr' ? ['a,', 'b.', 'c;', 'd:', 'e?', 'f!', '(g)', 'h-i', "j's"]
+        : layout === 'de' ? ['a,', 'b.', 'c;', 'd:', 'e?', 'f!', '(g)', 'h-i']
+          : ['a,', 'b.', 'c;', 'd:', '¿e?', '¡f!', '(g)', 'h-i'], 120);
       case 'punct-phrases': return fill(r, T.punct, 170);
-      case 'accent-vowels': return fill(r, ['á', 'é', 'í', 'ó', 'ú', 'ü', 'á é', 'í ó', 'ú á', 'Á', 'É'], 100);
+      case 'accent-vowels': return fill(r, ACCENT_DRILL[layout] || ACCENT_DRILL.es, 100);
       case 'accent-words': return fill(r, T.accents, 170);
       case 'common-1': return fill(r, words.filter((w) => w.length <= 4), 180);
       case 'common-2': return fill(r, words.filter((w) => w.length >= 5), 200);
@@ -164,7 +186,13 @@ const Lessons = (() => {
     try { return localStorage.getItem(STORE); } catch (_) { return null; }
   }
   function defaultLayout() {
-    return savedLayout() || (document.documentElement.lang === 'es' ? 'es' : 'us');
+    // Catalan typists use the Spanish keyboard (and the Spanish lesson texts: there is no Catalan set).
+    if (savedLayout()) return savedLayout();
+    // French and German speakers usually have AZERTY / QWERTZ keyboards even with the UI in English.
+    const nav = (navigator.language || '').toLowerCase();
+    if (nav.startsWith('fr')) return 'fr';
+    if (nav.startsWith('de')) return 'de';
+    return ['es', 'ca'].includes(document.documentElement.lang) ? 'es' : 'us';
   }
   const bestOf = (id) => (progress.lessons.find((l) => l[0] === id) || [id, 0, 0])[1];
   const targetFor = (lesson) => {

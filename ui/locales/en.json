@@ -475,7 +475,7 @@
   "lessons.unit.caps": "Capitals",
   "lessons.unit.numbers": "Numbers",
   "lessons.unit.punct": "Punctuation",
-  "lessons.unit.accents": "Accents",
+  "lessons.unit.accents": "Accents and special letters",
   "lessons.unit.common": "Common words",
   "lessons.unit.sentences": "Sentences",
   "lessons.kind.caps-left": "Capitals with the left hand",
@@ -486,8 +486,8 @@
   "lessons.kind.num-words": "Numbers and words",
   "lessons.kind.punct-drill": "Symbols",
   "lessons.kind.punct-phrases": "Short phrases with symbols",
-  "lessons.kind.accent-vowels": "Accented vowels",
-  "lessons.kind.accent-words": "Accented words",
+  "lessons.kind.accent-vowels": "Accented letters",
+  "lessons.kind.accent-words": "Words with accents",
   "lessons.kind.common-1": "Short words",
   "lessons.kind.common-2": "Long words",
   "lessons.kind.sentences": "Sentences {n}",
@@ -553,5 +553,7 @@
   "album.cat.files": "File Explorer",
   "album.cat.code": "VS Code",
   "album.cat.design": "Photoshop",
-  "album.cat.chat": "Slack and Discord"
+  "album.cat.chat": "Slack and Discord",
+  "lessons.layout.fr": "French (AZERTY)",
+  "lessons.layout.de": "German (QWERTZ)"
 }

@@ -119,7 +119,7 @@
   // `live` payload every 250 ms like the Rust tracker. "Stop" sends the final null live event.
   let typeTimer = null;
   let liveTimer = null;
-  const wpmOut = () => ($('wpm-out').textContent = `${$('wpm').value} ${settings.language === 'es' ? 'ppm' : 'WPM'}`);
+  const wpmOut = () => ($('wpm-out').textContent = `${$('wpm').value} ${settings.language === 'en' ? 'WPM' : 'ppm'}`);
   $('wpm').addEventListener('input', () => { wpmOut(); if (typeTimer) startTyping(); });
   wpmOut();
   function stopTyping(sendNull = true) {

@@ -237,5 +237,5 @@ Idea de Pol, 13-10-2026. Es una página estática y divertida, llena de animacio
 - Cifrado opcional de la base de datos (SQLCipher + clave DPAPI) antes del lanzamiento público.
 - Firma de código o Microsoft Store; con firma, actualización automática (Tauri updater).
 - Licencia de arte separada del código GPL (Tapomo y el nombre como marca).
-- Más idiomas de interfaz y más distribuciones de teclado (francés, alemán, catalán…).
+- Más idiomas de interfaz y más distribuciones de teclado *(0.6.0, 15-10-2026: interfaz en catalán; teclados francés AZERTY y alemán QWERTZ en las lecciones. Pendiente: interfaz en francés y alemán)*.
 - Cuentas GitHub Sponsors / Ko-fi (pendiente de crear por Pol).

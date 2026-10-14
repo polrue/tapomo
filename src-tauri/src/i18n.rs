@@ -6,6 +6,7 @@ use std::collections::HashMap;
 
 const LOCALES: &[(&str, &str)] = &[
     ("es", include_str!("../../ui/locales/es.json")),
+    ("ca", include_str!("../../ui/locales/ca.json")),
     ("en", include_str!("../../ui/locales/en.json")),
 ];
 
