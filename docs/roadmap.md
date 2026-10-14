@@ -16,7 +16,7 @@ Reglas que valen para todo el plan:
 |---|---|---|
 | 0.1 | Medición pasiva por ráfagas, estadísticas, calendario, apps | Hecho |
 | 0.2 | Barra de velocidad personal, Tapomo flotante, caras de racha, estrellitas, bienvenida, instalador con Tapomo, aviso de versión nueva | Hecho |
-| 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (hechas: 0.3.0 objetivo diario y días seguidos; 0.3.1 actualizador y caracteres por minuto; 0.3.2 XP, niveles, retos, armario y zonas nuevas) |
+| 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (hechas: 0.3.0 objetivo diario y días seguidos; 0.3.1 actualizador y caracteres por minuto; 0.3.2 XP, niveles, retos, armario y zonas nuevas; 0.3.3 insignias) |
 | 0.4 | Lecciones de mecanografía (ES + US) y entrenador de atajos | Pendiente |
 | 0.5 | Web tapomo.app, estadísticas anónimas opcionales, ligas entre amigos | Pendiente |
 | Más tarde | Cifrado de la base de datos, más idiomas | Pendiente |
@@ -57,7 +57,9 @@ Todo es local, sin servidor. Se calcula a partir de las ráfagas que ya se guard
 - La barra de velocidad pasa a 6 zonas (Calentando <40, Cogiendo ritmo 40–60, Buen ritmo 60–80, ¡En racha! 80–95, ¡Superándote! 95–108, ¡Modo Supermochi! ≥108 %), con líneas de velocidad. El Supermochi dura al menos 35 s y mientras dura Tapomo no dice «¡ups!».
 - Datos: tabla `xp_events(ts, day, kind, amount)`, una fila por día y tipo de premio; sin texto ni teclas.
 
-### 0.3.3 Insignias
+### 0.3.3 Insignias *(hecho, 15-10-2026)*
+
+- Implementadas 18 (las de atajos llegan con la 0.3.6). Catálogo y reglas en `crates/tapomo-core/src/badges.rs`; tabla `badges(id, ts, retro, seen)`; XP una sola vez por rareza (25/50/100). Las ganadas con el historial se revelan juntas.
 
 Se calculan con datos locales. Primera tanda (unas 15):
 

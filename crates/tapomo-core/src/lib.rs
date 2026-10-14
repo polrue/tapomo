@@ -8,6 +8,7 @@
 //! towards speed, and bursts shorter than [`Config::min_chars`] ("ok", a search,
 //! a file rename) are discarded so they don't pollute the stats.
 
+pub mod badges;
 pub mod xp;
 
 /// What kind of key was pressed. The keyboard hook maps every key to one of these.

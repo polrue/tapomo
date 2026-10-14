@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="wardrobe.css">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="xp.css">
+  <link rel="stylesheet" href="badges.css">
 </head>
 <body>
   <header class="top">
@@ -149,6 +150,12 @@
       </section>
     </div>
 
+    <section class="card badges" id="badges" aria-labelledby="bd-title">
+      <h2><span id="bd-title" data-i18n="badges.title"></span><button type="button" class="info" data-tip="tip.badges" data-i18n-aria="tip.more">i</button></h2>
+      <p class="bd-count" id="bd-count"></p>
+      <ul class="bd-grid" id="bd-grid"></ul>
+    </section>
+
     <details class="card wardrobe" id="wardrobe">
       <summary><h2 data-i18n="wd.title"></h2></summary>
       <p class="hint" data-i18n="wd.hint"></p>
@@ -283,11 +290,27 @@
     </div>
   </div>
 
+  <div id="badge-dialog" class="welcome" hidden>
+    <div class="welcome-card lvup-card" role="dialog" aria-modal="true" aria-labelledby="bdup-title" tabindex="-1">
+      <div class="welcome-body">
+        <h2 id="bdup-title"></h2>
+        <p id="bdup-text" hidden></p>
+        <div class="lvup-items" id="bdup-items"></div>
+        <p class="muted" id="bdup-more" hidden></p>
+      </div>
+      <div class="welcome-nav lvup-nav">
+        <button type="button" id="bdup-ok" data-i18n="lvup.ok"></button>
+      </div>
+    </div>
+  </div>
+
   <script src="i18n.js"></script>
   <script src="mascot.js"></script>
   <script src="wardrobe.js"></script>
   <script src="tips.js"></script>
   <script src="welcome.js"></script>
+  <script src="badges-art.js"></script>
+  <script src="badges.js"></script>
   <script src="xp.js"></script>
   <script src="app.js"></script>
 </body>

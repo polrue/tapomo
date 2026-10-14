@@ -201,7 +201,7 @@ const Progress = (() => {
     $('level-dialog').hidden = true;
     document.querySelectorAll('.top, main').forEach((n) => (n.inert = false));
     revealing = false;
-    invoke('ack_xp', { level }).then(() => { st.seen_level = Math.max(st.seen_level, level); }).catch(showError);
+    invoke('ack_xp', { level }).then(() => { st.seen_level = Math.max(st.seen_level, level); Badges.maybeReveal(); }).catch(showError);
   }
 
   /** Shows the level reached (or the history message) once, with its rewards and "put it on" buttons. */
@@ -272,6 +272,7 @@ const Progress = (() => {
     renderLevel();
     renderChallenges(p.challenges || []);
     paintWardrobe();
+    if ((p.badges || []).length) await Badges.refresh();
     if (p.level > p.prev_level) maybeReveal();
     else if ((p.challenges || []).length) Mascot.jump($('mascot'));
   }

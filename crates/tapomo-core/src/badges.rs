@@ -98,7 +98,7 @@ pub fn find(id: &str) -> Option<&'static Badge> {
 }
 
 /// Ids of the badges `facts` earns that are not in `have` yet, in catalogue order.
-pub fn newly_earned<'a>(facts: &Facts, have: &[String]) -> Vec<&'static str> {
+pub fn newly_earned(facts: &Facts, have: &[String]) -> Vec<&'static str> {
     BADGES.iter().filter(|b| b.earned(facts) && !have.iter().any(|h| h == b.id)).map(|b| b.id).collect()
 }
 

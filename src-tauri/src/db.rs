@@ -73,6 +73,20 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
              COMMIT;",
         )?;
     }
+    if version < 4 {
+        // Badges (0.3.3): when each one was earned. Additive only.
+        conn.execute_batch(
+            "BEGIN;
+             CREATE TABLE badges (
+                 id TEXT PRIMARY KEY,
+                 ts INTEGER NOT NULL,
+                 retro INTEGER NOT NULL DEFAULT 0,
+                 seen INTEGER NOT NULL DEFAULT 0
+             );
+             PRAGMA user_version = 4;
+             COMMIT;",
+        )?;
+    }
     Ok(())
 }
 
