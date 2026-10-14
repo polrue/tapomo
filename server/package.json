@@ -1,0 +1,10 @@
+{
+  "name": "tapomo-server",
+  "private": true,
+  "description": "Opt-in anonymous stats and friends leagues for Tapomo (Cloudflare Workers + D1)",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\""
+  }
+}

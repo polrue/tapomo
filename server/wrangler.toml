@@ -1,0 +1,38 @@
+# Tapomo API — Cloudflare Workers + D1 (plan gratuito).
+# Pasos completos en server/README.md. Todo lo marcado con «TODO(Pol)» hay que rellenarlo.
+
+name = "tapomo-api"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# TODO(Pol): ID de la cuenta de Cloudflare (Dashboard → Workers & Pages → panel derecho «Account ID»).
+# También se puede omitir y exportar CLOUDFLARE_ACCOUNT_ID antes de usar wrangler.
+account_id = "REPLACE_WITH_ACCOUNT_ID"
+
+# Mientras no haya dominio, el Worker responde en https://tapomo-api.<subdominio>.workers.dev
+# Cuando api.tapomo.app funcione, poner workers_dev = false.
+workers_dev = true
+
+# TODO(Pol): descomentar cuando la zona tapomo.app esté en Cloudflare (crea el DNS y el certificado solo).
+# routes = [
+#   { pattern = "api.tapomo.app", custom_domain = true }
+# ]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tapomo"
+# TODO(Pol): el UUID que imprime `npx wrangler d1 create tapomo`.
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+# Limpieza (retención) y reconstrucción del histograma de percentiles: cada hora, al minuto 17.
+[triggers]
+crons = ["17 * * * *"]
+
+# Límites de peticiones por IP (la IP nunca se guarda; ver README). Opcionales: estos son los valores por defecto.
+[vars]
+RATE_WINDOW_SEC = "600"
+RATE_MAX = "120"
+RATE_MAX_LEAGUE_WRITES = "20"
+
+# Secreto (no va aquí): `npx wrangler secret put RATE_LIMIT_SALT` con un valor aleatorio largo.
+# Sin él, el Worker usa una sal fija de desarrollo y los hashes de IP serían más fáciles de revertir.
