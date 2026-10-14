@@ -85,7 +85,7 @@ main { padding: 8px 24px 32px; max-width: 960px; margin: 0 auto; }
 @media (min-width: 940px) {
   .tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .tile { padding: 12px 12px; }
-  .tile strong { font-size: 1.5rem; }
+  .tile strong { font-size: 1.35rem; }
 }
 .tile {
   background: var(--card);
@@ -99,7 +99,7 @@ main { padding: 8px 24px 32px; max-width: 960px; margin: 0 auto; }
 .tile.big { background: var(--accent); border-color: var(--accent); color: #23202b; }
 .tile .label { font-size: 0.8rem; font-weight: 700; color: var(--muted); }
 .tile.big .label, .tile.big small { color: rgba(35, 32, 43, 0.75); }
-.tile strong { font-size: 1.8rem; overflow-wrap: anywhere; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tile strong { font-size: 1.8rem; overflow-wrap: normal; white-space: nowrap; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .tile small { font-size: 0.8rem; color: var(--muted); min-height: 1em; }
 .tile .unit { font-size: 0.85rem; font-weight: 700; margin-left: 4px; opacity: 0.7; }
 
