@@ -14,6 +14,7 @@ function fmt(n, digits = 0) {
   return Number(n).toLocaleString(document.documentElement.lang, {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
+    useGrouping: 'always', // "1.000" in Spanish too, like the texts
   });
 }
 
@@ -55,7 +56,12 @@ async function renderSummary() {
   $('t-best').innerHTML = withUnit(fmt(s.best_streak), 'unit.chars');
   $('t-current').innerHTML = withUnit(fmt(s.current_streak), 'unit.chars');
   $('t-time').innerHTML = formatMinutes(s.active_minutes);
-  $('t-chars').textContent = fmt(s.chars_total);
+  // Big totals go compact ("1,2 M") so they fit a tile; the exact figure stays in the tooltip.
+  const chars = s.chars_total >= 100000
+    ? Number(s.chars_total).toLocaleString(document.documentElement.lang, { notation: 'compact', maximumFractionDigits: 1 })
+    : fmt(s.chars_total);
+  $('t-chars').textContent = chars;
+  $('t-chars').title = fmt(s.chars_total);
   return s;
 }
 
@@ -295,7 +301,7 @@ async function refreshAll() {
   try {
     renderYesterday().catch(showError);
     renderGoal().catch(showError);
-    Progress.refresh(range).catch(showError);
+    Progress.refresh(range).then(() => Badges.refresh()).catch(showError);
     const s = await renderSummary();
     if (s.bursts > 0) await Promise.all([renderHeatmap(s.reference), renderApps()]);
   } catch (e) {
@@ -329,6 +335,7 @@ async function onLanguageChange() {
   renderGlossary();
   renderGoal().catch(showError);
   Progress.relabel();
+  Badges.render();
   paintLive(lastLive || {});
   renderPetState();
   renderVersion();
@@ -751,7 +758,7 @@ async function bindEvents() {
 
 // ----------------------------------------------------------------- glossary
 
-const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak', 'xp', 'challenges', 'wardrobe'];
+const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak', 'xp', 'challenges', 'wardrobe', 'badges'];
 
 function renderGlossary() {
   const dl = $('glossary-list');
@@ -823,7 +830,7 @@ async function init() {
   // A window that stays open for days asks again once the cache is a day old.
   setInterval(checkForUpdate, 60 * 60 * 1000);
   // The level reveal waits for the welcome to close.
-  if (!settings.welcome_done) Welcome.open(() => saveSettings({ welcome_done: true }).then(Progress.maybeReveal));
+  if (!settings.welcome_done) Welcome.open(() => saveSettings({ welcome_done: true }).then(() => { Progress.maybeReveal(); Badges.maybeReveal(); }));
   renderExclusions().catch(showError);
   refreshAll();
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { refreshAll(); refreshPetState(); } });

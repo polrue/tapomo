@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod badges;
 mod commands;
 mod db;
 mod hook;
@@ -63,6 +64,8 @@ fn main() {
             commands::get_daily_goal,
             commands::get_xp,
             commands::ack_xp,
+            commands::get_badges,
+            commands::mark_badges_seen,
             commands::get_heatmap,
             commands::get_apps,
             commands::set_alias,

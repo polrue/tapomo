@@ -16,7 +16,7 @@ use tapomo_core::{personal_reference, Burst, Config, Engine, KeyClass, KeyEvent,
 use tauri::{AppHandle, Emitter};
 
 use crate::hook::RawKey;
-use crate::{db, pet, platform, xp};
+use crate::{badges, db, pet, platform, xp};
 
 /// Worker tick: closes finished bursts and drives the live bar.
 const TICK: Duration = Duration::from_millis(250);
@@ -80,6 +80,8 @@ struct XpChanged {
     prev_level: u32,
     /// Challenges of the day completed just now.
     challenges: Vec<&'static str>,
+    /// Badges earned just now.
+    badges: Vec<&'static str>,
 }
 
 /// Payload of `tapomo://live`. `wpm` is `null` when no burst is open (or it is too young).
@@ -191,6 +193,11 @@ impl Tracker {
             Ok(s) => t.xp_total = s.total,
             Err(e) => log::error!("could not settle XP: {e}"),
         }
+        // Badges the history already earned (or earned while closed); their XP joins the total.
+        match badges::check(&t.conn).and_then(|_| xp::total(&t.conn)) {
+            Ok(total) => t.xp_total = total,
+            Err(e) => log::error!("could not check badges: {e}"),
+        }
         t.refresh_reference();
         t.reload();
         t
@@ -299,6 +306,11 @@ impl Tracker {
         // Records against the values from before this burst (the first peak or run is not a record).
         let peak_record = burst.peak_wpm.zip(self.max_peak).is_some_and(|(p, max)| p > max);
         let streak_record = self.saved_best > 0 && burst.best_streak > self.saved_best;
+        if burst.peak_wpm.zip(self.reference).is_some_and(|(p, r)| p >= r * badges::BEATING_SHARE) {
+            if let Err(e) = badges::add_beating_burst(&self.conn) {
+                log::error!("could not count the beating burst: {e}");
+            }
+        }
         self.persist_best();
         self.refresh_reference();
         self.goal_stored_ms += burst.duration_ms();
@@ -313,14 +325,24 @@ impl Tracker {
 
     /// Updates the XP ledger and tells the windows when it changed.
     fn settle_xp(&mut self) {
-        let settled = match xp::settle(&self.conn) {
+        let mut settled = match xp::settle(&self.conn) {
             Ok(s) => s,
             Err(e) => {
                 log::error!("could not settle XP: {e}");
                 return;
             }
         };
-        if settled.total == self.xp_total && settled.new_challenges.is_empty() {
+        let new_badges = match badges::check(&self.conn) {
+            Ok(b) => b,
+            Err(e) => {
+                log::error!("could not check badges: {e}");
+                Vec::new()
+            }
+        };
+        if !new_badges.is_empty() {
+            settled.total = xp::total(&self.conn).unwrap_or(settled.total);
+        }
+        if settled.total == self.xp_total && settled.new_challenges.is_empty() && new_badges.is_empty() {
             return;
         }
         let prev_level = tapomo_core::xp::level_for_xp(self.xp_total);
@@ -330,6 +352,7 @@ impl Tracker {
             level: tapomo_core::xp::level_for_xp(settled.total),
             prev_level,
             challenges: settled.new_challenges,
+            badges: new_badges,
         };
         if payload.level > prev_level {
             log::info!("level up: {} -> {}", prev_level, payload.level);

@@ -65,6 +65,17 @@ pub fn ack_xp(state: State<AppState>, level: u32) -> CmdResult<()> {
     state.with_db(|c| crate::xp::ack(c, level))
 }
 
+/// Every badge, earned or pending (with its progress).
+#[tauri::command]
+pub fn get_badges(state: State<AppState>) -> CmdResult<Vec<crate::badges::BadgeOut>> {
+    state.with_db(crate::badges::list)
+}
+
+#[tauri::command]
+pub fn mark_badges_seen(state: State<AppState>) -> CmdResult<()> {
+    state.with_db(crate::badges::mark_seen)
+}
+
 #[tauri::command]
 pub fn get_heatmap(state: State<AppState>, range: String) -> CmdResult<Vec<HeatCell>> {
     state.with_db(|c| db::heatmap(c, &range))

@@ -307,6 +307,10 @@ function onXp(p) {
     celebrate(3, true);
     Mascot.jump(svg, { big: true });
     sayText(t('pet.levelup', { lv: p.level }), 4000, true);
+  } else if ((p.badges || []).length && !state.paused && !state.asleep) {
+    celebrate(2, true);
+    Mascot.jump(svg, { big: true });
+    sayText(t('pet.badge', { name: t(`badge.${p.badges[0]}`) }), 3500, true);
   } else if ((p.challenges || []).length && !state.paused && !state.asleep) {
     Mascot.jump(svg, { big: false });
     say('pet.challenge', 2500);
