@@ -80,36 +80,59 @@ Se amplía la lista de la 0.3.3 con niveles de rareza:
 
 ## Niveles
 
-XP **acumulada** para llegar al nivel *n*: `100 × (n − 1)^1.8`.
+> Aprobado por Pol el 14-10-2026: curva y premios.
 
-| Nivel | XP | Recompensa (accesorio de Tapomo) |
+XP **acumulada** para llegar al nivel *n*: `47 × (n − 1)^1.8`.
+
+- **Ritmo:**
+  - Al principio se sube rápido: el primer día, 2 niveles.
+  - Después se espacia.
+  - Un usuario normal llega al nivel 50 en un año.
+  - No hay tope: se puede seguir subiendo después del 50.
+- **Premios:**
+  - Hay uno cada 3 niveles y otro final en el 50.
+  - En la primera semana, un usuario normal recibe como mucho un premio, y uno intenso, dos.
+
+| Nivel | XP | Premio |
 |---|---|---|
-| 2 | 100 | Lacito |
-| 3 | 348 | Gafas redondas |
-| 5 | 1.213 | Bufanda |
-| 8 | 3.320 | Auriculares |
-| 10 | 5.220 | Gorrito de lana |
-| 15 | 11.562 | Pajarita |
-| 20 | 20.033 | Capa |
-| 25 | 30.506 | Gorro de chef |
-| 30 | 42.886 | Corona de flores |
-| 40 | 73.100 | Aureola de estrellitas |
-| 50 | 110.243 | Tapomo dorado (solo color del brillo, no la forma) |
+| 4 | 340 | Lacito |
+| 7 | 1.182 | Gafas redondas |
+| 10 | 2.453 | Skin fresa |
+| 13 | 4.117 | Bufanda |
+| 16 | 6.153 | Auriculares |
+| 19 | 8.543 | Skin matcha |
+| 22 | 11.274 | Gorrito de lana |
+| 25 | 14.338 | Pajarita |
+| 28 | 17.724 | Skin mango |
+| 31 | 21.425 | Capa |
+| 34 | 25.434 | Gorro de chef |
+| 37 | 29.747 | Skin arándano |
+| 40 | 34.357 | Corona de flores |
+| 43 | 39.260 | Skin sésamo negro |
+| 46 | 44.451 | Aureola de estrellitas |
+| 50 | 51.814 | Skin Tapomo dorado |
 
-Los niveles intermedios no dan accesorio, pero sí la celebración de Tapomo. Los accesorios se eligen en Ajustes; regla del personaje: accesorios sí, cambiar la forma no.
+- **Reglas del personaje:**
+  - Los accesorios se añaden encima de Tapomo.
+  - Las skins solo cambian el color del mochi, nunca la forma.
+- **Ajustes:** ahí se eligen el accesorio y la skin.
+- **Niveles sin premio:** también tienen la celebración de Tapomo.
+- **Próximo premio:** siempre se ve, con su barra de progreso («Gafas redondas en el nivel 7»).
 
 ### Simulación (días naturales hasta cada nivel)
 
-Modelo con medias y sin azar (script en el scratchpad, `sim.py`):
+Es un modelo con medias y sin azar:
 
-| Perfil | Uso | XP por día activo | Nv 2 | Nv 3 | Nv 5 | Nv 10 | Nv 20 | Nv 30 |
-|---|---|---|---|---|---|---|---|---|
-| Ligero | 3 días/sem, 4.000 car., objetivo 60 %, 1,5 retos | ~90 | 2 | 9 | 36 | 150 (5 meses) | 590 | 3,5 años |
-| Normal | 5 días/sem, 15.000 car., objetivo 90 %, 2,3 retos | ~195 | 1 | 2 | 9 | 37 (5 sem.) | 143 (5 meses) | 10 meses |
-| Intenso | 6 días/sem, 40.000 car., objetivo siempre, 2,8 retos | ~260 | 1 | 2 | 5 | 24 | 89 | 6 meses |
+| Perfil | Uso | XP por día activo | Nv 4 | Nv 7 | Nv 10 | Nv 20 | Nv 30 | Nv 40 | Nv 50 |
+|---|---|---|---|---|---|---|---|---|---|
+| Ligero | 3 días/sem., 4.000 car., objetivo 60 %, 1,5 retos | ~90 | 8 | 30 | 64 | 241 | 520 | 890 | 1.340 (3,7 años) |
+| Normal | 5 días/sem., 15.000 car., objetivo 90 %, 2,3 retos | ~195 | 2 | 9 | 17 | 67 | 144 | 247 | 372 (1 año) |
+| Intenso | 6 días/sem., 40.000 car., objetivo siempre, 2,8 retos | ~260 | 2 | 5 | 11 | 43 | 90 | 155 | 233 (8 meses) |
 
-- Un usuario intenso solo va 1,5 veces más rápido que uno normal, aunque escribe casi 3 veces más.
-- El ligero tarda más porque usa la app menos días, no porque escriba despacio. Aun así, tiene su primer accesorio en la primera semana y la bufanda en el primer mes.
+- **Uso de la app:** un usuario intenso solo va 1,6 veces más rápido que uno normal, aunque escribe casi 3 veces más.
+- **Usuario ligero:**
+  - Tarda más porque abre la app menos días, no porque escriba despacio.
+  - Aun así, recibe su primer premio en la primera semana y el nivel 10 a los 2 meses.
 
 ## Atajos: niveles por días de uso (fase B)
 
@@ -145,5 +168,5 @@ Cada atajo del catálogo tiene su propio nivel, según los **días distintos** e
 
 1. ¿Los nombres «Retos del día» y «Masterizado» (o «Maestro»)?
 2. ¿Te parece bien el reparto, con un 55 % de escribir y un 45 % de hábitos?
-3. ¿El ritmo de los niveles: el nivel 10 en unas 5 semanas para un usuario normal?
-4. ¿Lista de accesorios y en qué niveles?
+3. ~~Ritmo de los niveles~~ Resuelto el 14-10-2026: nivel 50 en un año (ver «Niveles»).
+4. ~~Accesorios y niveles~~ Resuelto el 14-10-2026: premio cada 3 niveles, con accesorios y skins.
