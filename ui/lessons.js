@@ -15,22 +15,33 @@ const Lessons = (() => {
       lessons: [['ei'], ['ru', 'ty'], ['wo', 'qp'], 'words'] },
     { id: 'bottom', base: 18, keys: { es: 'zxcvbnm,.', us: 'zxcvbnm,.' },
       lessons: [['vm'], ['cn', ',.'], ['bxz'], 'words'] },
+    // From here on every letter is known; each unit practises one more skill (0.4.1).
+    { id: 'caps', base: 18, keys: { es: '⇧', us: '⇧' }, lessons: ['caps-left', 'caps-right', 'names'] },
+    { id: 'numbers', base: 15, keys: { es: '1234567890', us: '1234567890' }, lessons: ['num-left', 'num-right', 'num-words'] },
+    { id: 'punct', base: 16, keys: { es: ',.;:¿?¡!-()', us: ",.;:?!-()'" }, lessons: ['punct-drill', 'punct-phrases'] },
+    { id: 'accents', base: 16, keys: { es: 'á é í ó ú ü', us: '' }, only: 'es', lessons: ['accent-vowels', 'accent-words'] },
+    { id: 'common', base: 22, keys: { es: 'a–z', us: 'a–z' }, lessons: ['common-1', 'common-2'] },
+    { id: 'sentences', base: 22, keys: { es: 'Aa.', us: 'Aa.' }, lessons: ['sentences-1', 'sentences-2', 'sentences-3'] },
   ];
   // US layout swaps the ES-only home key.
   const swap = (layout, s) => (layout === 'us' ? s.replace(/ñ/g, ';') : s);
 
-  /** Every lesson in order: `{ id, unit, index, newKeys, known, kind }`. */
+  /** Every lesson in order: `{ id, unit, index, newKeys, known, kind }`. Units marked `only` skip other layouts. */
   function catalogue(layout) {
     const out = [];
     let known = '';
-    for (const u of UNITS) {
+    for (const u of unitsFor(layout)) {
       u.lessons.forEach((l, i) => {
-        const newKeys = l === 'words' ? '' : swap(layout, l.join(''));
-        known += newKeys;
-        out.push({ id: `${u.id}-${i + 1}`, unit: u.id, index: i, newKeys, known: known + (l === 'words' ? '' : ''), kind: l === 'words' ? 'words' : 'drill', base: u.base });
+        const drillKeys = Array.isArray(l) ? swap(layout, l.join('')) : '';
+        known += drillKeys;
+        const kind = Array.isArray(l) ? 'drill' : l;
+        out.push({ id: `${u.id}-${i + 1}`, unit: u.id, index: i, newKeys: drillKeys, known, kind, base: u.base });
       });
     }
     return out;
+  }
+  function unitsFor(layout) {
+    return UNITS.filter((x) => !x.only || x.only === layout);
   }
 
   // ----------------------------------------------------------- generators
@@ -83,8 +94,51 @@ const Lessons = (() => {
     return out.join(' ');
   }
 
+  /** Joins items picked at random until the text is about `len` long. */
+  function fill(r, items, len, sep = ' ') {
+    const out = [];
+    let size = 0;
+    while (size < len && items.length) {
+      const w = pick(r, items);
+      if (out[out.length - 1] === w && items.length > 1) continue;
+      out.push(w);
+      size += w.length + sep.length;
+    }
+    return out.join(sep);
+  }
+
+  const LEFT = 'qwertasdfgzxcvb';
+  // Capitalised, very short or interjection-like words look odd ("Ja", "Mas"): capitals use longer words.
+  const capWords = (words) => words.filter((w) => w.length >= 4 && !['hala', 'jaja', 'lass', 'lads', 'gals', 'fads'].includes(w));
+  const cap = (w) => w.charAt(0).toUpperCase() + w.slice(1);
+
   function textFor(lesson, layout, seed) {
-    return lesson.kind === 'words' ? wordsText(lesson, layout, seed) : drill(lesson, seed);
+    const r = rng(seed);
+    const lang = layout === 'us' ? 'en' : 'es';
+    const words = (LessonWords[lang] || []).filter((w) => /^[a-zñ]+$/.test(w));
+    const T = LessonTexts[lang];
+    switch (lesson.kind) {
+      case 'drill': return drill(lesson, seed);
+      case 'words': return wordsText(lesson, layout, seed);
+      // Shift with the other hand: capitals of left-hand letters use the right Shift and vice versa.
+      case 'caps-left': return fill(r, capWords(words).filter((w) => LEFT.includes(w[0])).map(cap), 150);
+      case 'caps-right': return fill(r, capWords(words).filter((w) => !LEFT.includes(w[0])).map(cap), 150);
+      case 'names': return fill(r, T.names, 160);
+      case 'num-left': return fill(r, ['1', '2', '3', '4', '5', '12', '21', '345', '54', '123', '2025', '15'], 120);
+      case 'num-right': return fill(r, ['6', '7', '8', '9', '0', '67', '89', '90', '678', '1990', '80', '70'], 120);
+      case 'num-words': return fill(r, words.slice(0, 120).map((w) => `${1 + Math.floor(r() * 99)} ${w}`), 160);
+      case 'punct-drill': return fill(r, layout === 'us' ? ['a,', 'b.', 'c;', 'd:', 'e?', 'f!', '(g)', 'h-i', "j's"] : ['a,', 'b.', 'c;', 'd:', '¿e?', '¡f!', '(g)', 'h-i'], 120);
+      case 'punct-phrases': return fill(r, T.punct, 170);
+      case 'accent-vowels': return fill(r, ['á', 'é', 'í', 'ó', 'ú', 'ü', 'á é', 'í ó', 'ú á', 'Á', 'É'], 100);
+      case 'accent-words': return fill(r, T.accents, 170);
+      case 'common-1': return fill(r, words.filter((w) => w.length <= 4), 180);
+      case 'common-2': return fill(r, words.filter((w) => w.length >= 5), 200);
+      default: {
+        // Sentences: a different third of the list for each of the three lessons.
+        const n = Number(lesson.kind.split('-')[1]) || 1;
+        return fill(r, T.sentences.filter((_, i) => i % 3 === n - 1), 180);
+      }
+    }
   }
 
   // ---------------------------------------------------------------- state
@@ -106,6 +160,13 @@ const Lessons = (() => {
     return Math.max(5, Math.round(Math.min(lesson.base, cap)));
   };
 
+  function lessonName(l) {
+    if (l.kind === 'drill') return t('lessons.keys', { keys: l.newKeys.split('').join(' ') });
+    if (l.kind === 'words') return t('lessons.words');
+    if (l.kind.startsWith('sentences')) return t('lessons.kind.sentences', { n: l.index + 1 });
+    return t(`lessons.kind.${l.kind}`);
+  }
+
   // ------------------------------------------------------------------ map
   function starIcons(n) {
     return [1, 2, 3].map((i) => `<span class="ls-star${i <= n ? ' on' : ''}" aria-hidden="true">★</span>`).join('');
@@ -124,14 +185,15 @@ const Lessons = (() => {
     const list = catalogue(layout);
     // A lesson opens once the previous one has been done at least once (never by stars: never blocked by skill).
     let open = true;
-    for (const u of UNITS) {
+    for (const u of unitsFor(layout)) {
       const sec = document.createElement('section');
       sec.className = 'ls-unit';
       const h = document.createElement('h3');
       h.textContent = t(`lessons.unit.${u.id}`);
       const keys = document.createElement('p');
       keys.className = 'ls-keys';
-      keys.textContent = swap(layout, u.keys[layout]).split('').join(' ');
+      const k = u.keys[layout];
+      keys.textContent = /[–⇧ ]/.test(k) || k.length <= 3 ? k : swap(layout, k).split('').join(' ');
       const ol = document.createElement('ol');
       ol.className = 'ls-list';
       for (const l of list.filter((x) => x.unit === u.id)) {
@@ -141,7 +203,7 @@ const Lessons = (() => {
         b.type = 'button';
         b.className = 'ls-lesson';
         b.disabled = !open;
-        const name = l.kind === 'words' ? t('lessons.words') : t('lessons.keys', { keys: l.newKeys.split('').join(' ') });
+        const name = lessonName(l);
         b.innerHTML = `<span class="ls-name"></span><span class="ls-stars">${starIcons(best)}</span>`;
         b.querySelector('.ls-name').textContent = name;
         b.setAttribute('aria-label', `${name}. ${t('lessons.stars_aria', { n: best })}`);
@@ -168,7 +230,7 @@ const Lessons = (() => {
     $('ls-map').hidden = true;
     $('ls-result').hidden = true;
     $('ls-run').hidden = false;
-    $('ls-run-title').textContent = lesson.kind === 'words' ? t('lessons.words') : t('lessons.keys', { keys: lesson.newKeys.split('').join(' ') });
+    $('ls-run-title').textContent = lessonName(lesson);
     const box = $('ls-text');
     box.replaceChildren(...[...text].map((c) => {
       const s = document.createElement('span');
