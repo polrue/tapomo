@@ -295,6 +295,7 @@ async function refreshAll() {
   try {
     renderYesterday().catch(showError);
     renderGoal().catch(showError);
+    Progress.refresh(range).catch(showError);
     const s = await renderSummary();
     if (s.bursts > 0) await Promise.all([renderHeatmap(s.reference), renderApps()]);
   } catch (e) {
@@ -327,6 +328,7 @@ async function onLanguageChange() {
   renderSettings();
   renderGlossary();
   renderGoal().catch(showError);
+  Progress.relabel();
   paintLive(lastLive || {});
   renderPetState();
   renderVersion();
@@ -390,7 +392,9 @@ let lastLive = null;
 const disp = { pct: 0, wpm: 0, tpct: 0, twpm: 0, mode: 'idle', raf: 0, last: 0 };
 const speeds = { avg: 0, peak: 0, live: 0 }; // for the keystroke equivalents in the tooltips
 
-const zoneOfPct = (p) => (p > 100 ? 'beating' : p >= 85 ? 'fire' : p >= 60 ? 'good' : 'warming');
+// Same thresholds as `Zone::of` in tapomo-core.
+const zoneOfPct = (p) =>
+  p >= 108 ? 'super' : p >= 95 ? 'beating' : p >= 80 ? 'fire' : p >= 60 ? 'good' : p >= 40 ? 'rhythm' : 'warming';
 
 /** A `tapomo://live` payload, or `null` when the burst ended (and as a watchdog). */
 function renderLive(p) {
@@ -513,7 +517,9 @@ function blush() {
  */
 function glueInfo() {
   document.querySelectorAll('.info').forEach((btn) => {
-    let sp = btn.previousElementSibling;
+    // Once glued, the button sits inside the .nw wrapper: the label span is the wrapper's sibling.
+    const wrapped = btn.parentElement.classList.contains('nw');
+    let sp = wrapped ? btn.parentElement.previousElementSibling : btn.previousElementSibling;
     if (sp && sp.classList.contains('nw')) sp = sp.previousElementSibling;
     if (!sp || !(sp.dataset.i18n || sp.dataset.i18nGlue)) return;
     if (sp.dataset.i18n) { sp.dataset.i18nGlue = sp.dataset.i18n; delete sp.dataset.i18n; }
@@ -734,16 +740,18 @@ async function bindEvents() {
   await listen('tapomo://burst', scheduleRefresh);
   await listen('tapomo://record', blush);
   await listen('tapomo://goal', goalReached);
+  await listen('tapomo://xp', (e) => Progress.onXp(e.payload).catch(showError));
   await listen('tapomo://settings', async () => {
     settings = await invoke('get_settings');
     renderSettings();
     renderGoal().catch(showError);
+    Progress.applyLook();
   });
 }
 
 // ----------------------------------------------------------------- glossary
 
-const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak'];
+const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak', 'xp', 'challenges', 'wardrobe'];
 
 function renderGlossary() {
   const dl = $('glossary-list');
@@ -778,6 +786,7 @@ async function init() {
   renderGlossary();
   paintLive({});
   bindControls();
+  Progress.bind();
   $('hide-btn').addEventListener('click', comeOut);
   Tips.init({
     vars: () => ({
@@ -813,10 +822,12 @@ async function init() {
   checkForUpdate();
   // A window that stays open for days asks again once the cache is a day old.
   setInterval(checkForUpdate, 60 * 60 * 1000);
-  if (!settings.welcome_done) Welcome.open(() => saveSettings({ welcome_done: true }));
+  // The level reveal waits for the welcome to close.
+  if (!settings.welcome_done) Welcome.open(() => saveSettings({ welcome_done: true }).then(Progress.maybeReveal));
   renderExclusions().catch(showError);
   refreshAll();
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { refreshAll(); refreshPetState(); } });
+  // XP changes while the window is closed are revealed when it opens (refreshAll -> Progress.refresh).
   window.addEventListener('focus', refreshPetState);
 }
 

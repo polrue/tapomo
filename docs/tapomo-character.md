@@ -62,7 +62,7 @@ Consejos al hacer clic (clave `tip.*`; todos positivos):
 - «Si te molesto, puedes esconderme desde la bandeja» / «If I get in the way, you can hide me from the tray»
 - «Nunca guardo lo que escribes, solo cuento teclas» / «I never save what you type, I only count keys»
 
-Etiquetas de zona (`zone.*`): «Calentando», «Buen ritmo», «¡En racha!», «¡Superándote!» / en EN las equivalentes del fichero `en.json`.
+Etiquetas de zona (`zone.*`): «Calentando», «Cogiendo ritmo», «Buen ritmo», «¡En racha!», «¡Superándote!», «¡Modo Supermochi!» / en EN las equivalentes del fichero `en.json`.
 
 Texto cuando está escondido (`pet.hide.*`): «Estoy escondido 🙈», «Vuelvo en {m} min», «Me he escondido mientras ves algo a pantalla completa»; botones «¡Sal!» y «¡Sal ya!».
 
@@ -90,12 +90,14 @@ Colores de zona (`ui/style.css` `--zone-*`, `ui/pet.css` barra viva, `ui/mascot.
 
 | Zona | Rango (% de tu referencia) | Barra / `--zone-*` | Texto (`--zone-text`) | Líneas de velocidad |
 |---|---|---|---|---|
-| `warming` Calentando | < 60 % | `#b7b0c4` | `--muted` (`#7b7589` claro, `#a39cb3` oscuro) | ninguna |
-| `good` Buen ritmo | 60 – < 85 % | `#ff9e7a` | `--accent-strong` `#f0764a` | ninguna |
-| `fire` ¡En racha! | 85 – 100 % | `#f0553a` | `#e0462c` | `#f0553a` |
-| `beating` ¡Superándote! | > 100 % | `#ffc93c` | `#b07d00` | `#ffc93c` (más resplandor y gafas) |
+| `warming` Calentando | < 40 % | `#b7b0c4` | `--muted` (`#7b7589` claro, `#a39cb3` oscuro) | ninguna |
+| `rhythm` Cogiendo ritmo | 40 – < 60 % | `#e7a29a` | `#c0675c` | ninguna |
+| `good` Buen ritmo | 60 – < 80 % | `#ff9e7a` | `--accent-strong` `#f0764a` | 4, `#ff9e7a` |
+| `fire` ¡En racha! | 80 – < 95 % | `#f0553a` | `#e0462c` | 7, `#f0553a` |
+| `beating` ¡Superándote! | 95 – < 108 % | `#ffc93c` | `#b07d00` | 10, `#ffb81c` (más resplandor, gafas y 1 estela) |
+| `super` ¡Modo Supermochi! | ≥ 108 % | `#ffb81c` → `#fff1a6` brillo dorado | `#b07d00` | 10, `#ffc93c` (aura y mechón dorados, rayos, 2 estelas) |
 
-Las líneas de velocidad de `fire` y `beating` tienen color propio en `mascot.css`; en `good` el trazo base sería `#ff9e7a`, pero el grupo está oculto (opacidad 0) fuera de `fire` y `beating`.
+Las líneas de velocidad son trazos afilados (gruesos junto a la espalda, punta fina detrás), sin llamas: en `beating` y `super` el color es más dorado que la barra para que se lean sobre el resplandor.
 
 Barra en calibración (`ui/pet.css`): fondo `#d9d3e3`, rayas `#8f87a1` / `#cfc8dd` (6 px cada una, ángulo −45°).
 
@@ -240,15 +242,19 @@ Reglas adicionales (`ui/pet.js`):
 | **Hover** | mira hacia arriba (`look(0,-1)`), mejillas fuertes, se eleva 3.5 px | cursor sobre el cuerpo |
 | **Agarrado** (`held`) | se eleva 7 px y gira −2°, sombra más pequeña | arrastrando |
 | **Escondido / asomando** (`setHiding`) | agachado tras el borde inferior de su caja, solo asoman cabeza y ojos; ojos `round`, boca `small` | ocultado por ajuste, 1 hora o pantalla completa; en la **ventana principal** (cabecera) |
-| **Zona `warming`** | sin efectos | < 60 % |
-| **Zona `good`** | destellos ocasionales (2 estrellitas pequeñas cada 2.5–5 s, solo si escribes a más de 1 tecla/s) | 60 – < 85 % |
-| **Zona `fire`** | líneas de velocidad `#f0553a` y se inclina hacia delante 2.5° | 85 – 100 % |
-| **Zona `beating`** | líneas `#ffc93c`, resplandor dorado pulsando, gafas de sol bajando, inclinación 2.5° | > 100 % |
+| **Zona `warming`** | sin efectos | < 40 % |
+| **Zona `rhythm`** | destellos ocasionales (2 estrellitas pequeñas cada 2.5–5 s, solo si escribes a más de 1 tecla/s); brillo que cruza la barra | 40 – < 60 % |
+| **Zona `good`** | 4 líneas de velocidad `#ff9e7a`, inclinación 2°; rayas que corren por la barra | 60 – < 80 % |
+| **Zona `fire`** | 7 líneas `#f0553a` más rápidas, inclinación 4.5°; rayas más rápidas y barra con brillo rojo | 80 – < 95 % |
+| **Zona `beating`** | 10 líneas `#ffb81c`, inclinación 7°, 1 estela, resplandor dorado pulsando, gafas de sol bajando | 95 – < 108 % |
+| **Modo Supermochi** (`super`) | 10 líneas muy rápidas `#ffc93c`, inclinación 8°, 2 estelas, aura dorada en picos, mechón dorado de lenguas finas (se oculta si lleva sombrero o casco), rayitos que parpadean, la barra brilla en oro y el pet vibra un poco; cara de destellos con boca abierta y burbuja «¡Modo Supermochi!»; sin gafas | ≥ 108 %; una vez dentro dura **al menos 35 s** (`SUPER_MIN_MS`) aunque baje el ritmo, y termina pasado ese tiempo en cuanto el ritmo está por debajo del 108 %, o al dejar de escribir (la barra llega a 0) o dormirse |
+| **Escudo de Supermochi** | mientras dura el modo, borrar **no** muestra «¡ups!», ni ladea, ni quita la corona: el aura late una vez (`superAbsorb`). Solo es la reacción del pet: la racha sin borrar y demás estadísticas cuentan el borrado igual | borrar en `super` |
 
 Notas:
 
 - La barra mini del pet llena el 100 % de su ancho a `BAR_MAX` = 130 % de tu referencia (`ui/pet.js`).
-- Las zonas se calculan igual en Rust (`Zone::of` en `crates/tapomo-core/src/lib.rs`) y en JS (`zoneOfPct`): `> 100` → `beating`, `>= 85` → `fire`, `>= 60` → `good`, resto → `warming`.
+- Las zonas se calculan igual en Rust (`Zone::of` en `crates/tapomo-core/src/lib.rs`) y en JS (`zoneOfPct`): `>= 108` → `super`, `>= 95` → `beating`, `>= 80` → `fire`, `>= 60` → `good`, `>= 40` → `rhythm`, resto → `warming`. La permanencia mínima de Supermochi solo existe en el pet (`ui/pet.js`); la ventana principal muestra siempre la zona del ritmo real.
+- La barra mini del pet marca los umbrales (40, 60, 80, 95 y 108 %) con rayitas finas.
 - La referencia (100 %) es el percentil 90 (rango más cercano) de los picos de 10 s de los últimos 30 días, a partir de 20 picos (`personal_reference`).
 - Los datos «en vivo» solo se calculan con ráfagas de ≥ `LIVE_MIN_MS` = 2000 ms.
 
@@ -270,7 +276,7 @@ Capas, de fuera adentro: `.m-hop` (salto / ladeo, Web Animations) → `.m-bob` (
 | **Ojos siguen al cursor** `lookAtPoint` / `look` | evento `tapomo://cursor` (Rust, como máximo cada 50 ms) | transición 110 ms | `ease-out`; alcance de ojos 3.4 px en X, 2.6 px en Y (`REACH_X`, `REACH_Y`); la boca se mueve ×0.3 y las mejillas ×0.5 (paralaje); `k = min(1, dist / (ancho·0.7))` | sigue funcionando (sin transición) |
 | **Rebote por velocidad** `keyTick` + `motionStep` | cada tecla alimenta la tasa suavizada | continuo | tasa: decae con τ = `RATE_TAU` = 1.0 s; liveliness máxima a `MAX_RATE_FOR_BOUNCE` = 9 teclas/s; amplitud objetivo `0.9 + 3.4·A` px (A = tasa/9, tope 1; solo si la tasa > 0.3); frecuencia objetivo `0.7 + 1.9·A` Hz; resortes críticamente amortiguados con ω = 5 (amplitud y frecuencia) y ω = 8 (inclinación); balanceo `sin(fase/2)·(0.8 + 1.6·A)°`; paso máximo 0.05 s | `keyTick` sale sin hacer nada: no rebota |
 | **Empujoncito por tecla** (`nudge`) | cada tecla | resorte subamortiguado | `k = 700·speed²`, razón de amortiguamiento 0.6, impulso `0.55·√speed`, recorte ±0.04 de `scaleY` | nada |
-| **Inclinación hacia delante** | zonas `fire` y `beating` | transición por resorte ω = 8 | 2.5° y se queda al reposo | no se aplica por `motionKick` |
+| **Inclinación hacia delante** | zonas `good` (2°), `fire` (4.5°), `beating` (7°) y `super` (8°) (`LEAN` en `mascot.js`) | transición por resorte ω = 8 | se queda al reposo | no se aplica por `motionKick` |
 | **Aplastado** `squish` | disponible en `mascot.js` y el laboratorio; `pet.js` usa el empujoncito en su lugar | 180 ms | `cubic-bezier(.2,.8,.4,1)` → `scale(1.04,.93)` @30 % → `scale(.992,1.02)` @65 % → `scale(1,1)`; sombra `scale(1.05,.95)` | nada |
 | **Salto pequeño** `jump({big:false})` | clic en Tapomo; despertar; reaparecer; salir del escondite (330 ms después) | 560 ms, altura 12 px | agachada (anticipación) `scale(1.07,.88)` @12 %, impulso `scale(.96,1.06)` @20 %, estirado `scale(.93,1.1)` en el aire, aterrizaje `scale(1.1,.86)` @72 %, asentado `scale(.98,1.03)` @84 %; sombra se encoge a `.62` y opacidad `.45` en el aire | no salta |
 | **Salto grande** `jump({big:true})` | nuevo récord (`tapomo://record`) | 900 ms, altura 26 px | mismos pasos con agachada @9 % y impulso @16 %; lanza `burstStars` completo a los `T·0.16` = 144 ms | no salta |
@@ -283,8 +289,10 @@ Capas, de fuera adentro: `.m-hop` (salto / ladeo, Web Animations) → `.m-bob` (
 | **Corona: se va** `setCrown(false)` | dejar de estar en nivel 5 | 260 ms | fundido de opacidad, `ease-out` | desaparece |
 | **Corona: sale volando** `crownFlyOff` | borrar con la corona puesta | 800 ms | lado aleatorio (±1): `translate(±24px,−44px) rotate(±200°)` @55 % → `translate(±44px,−22px) rotate(±400°)`, `opacity 0`; `cubic-bezier(.2,.7,.4,1)` y luego `ease-in` | desaparece |
 | **Gafas de sol** `setShades` | zona `beating` y no dormido | entrada 480 ms, salida 260 ms | entrada: `translateY(−38px)` → `4px` @55 % → `−1.5px` @78 % → `0`; salida `ease-in` a `−38px` | aparecen / desaparecen sin animar |
-| **Líneas de velocidad** `.m-lines` | `fire` y `beating` | fundido 320 ms; cada línea un bucle de 0.38–0.52 s (`--d`: .46, .38, .52, .42 s) con retardos negativos | `linear`, `translateX(14px → −22px)`, `scaleX .4 → 1.15`, opacidad 0 → .95 → 0 | sin animación |
-| **Resplandor** `.m-glow` | `beating` | fundido 320 ms; pulso 1.6 s | `ease-in-out`, `scale .96 ↔ 1.05`, `opacity .55 ↔ 1` | sin animación |
+| **Líneas de velocidad** `.m-lines` | `good` (4), `fire` (7), `beating` y `super` (10) | fundido 320 ms; cada línea un bucle de 0.32–0.52 s (`--d`) multiplicado por `--zk` (1, .7, .55, .48: más rápidas por zona) con retardos negativos | `linear`, `translateX(12px → −26px)`, `scaleX .35 → 1.2`, opacidad 0 → .95 → 0 | ocultas |
+| **Estelas** `.m-ghost` | `beating` (1, opacidad .2), `super` (2, .24 y .11) | fundido 220 ms | copias (`<use>`) del cuerpo 13 y 26 px detrás; solo enlazan al cuerpo en esas zonas | ocultas |
+| **Resplandor** `.m-glow` | `beating` y `super` | fundido 320 ms; pulso 1.6 s | `ease-in-out`, `scale .96 ↔ 1.05`, `opacity .55 ↔ 1` | sin animación |
+| **Aura y mechón de Supermochi** `.sm-layer` | `super` | fundido 200 ms; aura 240 / 300 ms `steps(2)`, mechón 360 ms, rayitos 900 ms | aura `scale(1.03,1.07)`, mechón `scaleY(1.07) skewX(−1.5°)` | colores fijos, rayitos visibles |
 | **Temblor** `.tense` | nivel 4 | 332 ms en bucle, 4 pasos (≈ 12 Hz) | `step-end`; desplazamientos de menos de 1 px | sin animación |
 | **«Zzz»** | dormido | 3.4 s en bucle | `ease-in-out`, escalonadas 0 s, 1.1 s, 2.2 s; suben ~27 px y se desvanecen | fijas y visibles |
 | **Hover** | cursor sobre el cuerpo (Rust emite `tapomo://pet-hover`) | 170 ms | `cubic-bezier(.34,1.56,.64,1)` (rebote); sube 3.5 px, sombra `scale(.94)`, mejillas a `.95` en 300 ms | sin transición |

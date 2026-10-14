@@ -53,6 +53,18 @@ pub fn get_daily_goal(state: State<AppState>) -> CmdResult<DailyGoal> {
     state.with_db(|c| db::daily_goal(c, open_ms))
 }
 
+/// Level, XP and today's challenges.
+#[tauri::command]
+pub fn get_xp(state: State<AppState>) -> CmdResult<crate::xp::XpState> {
+    state.with_db(crate::xp::state)
+}
+
+/// The level-up celebration (or the history message) has been shown up to `level`.
+#[tauri::command]
+pub fn ack_xp(state: State<AppState>, level: u32) -> CmdResult<()> {
+    state.with_db(|c| crate::xp::ack(c, level))
+}
+
 #[tauri::command]
 pub fn get_heatmap(state: State<AppState>, range: String) -> CmdResult<Vec<HeatCell>> {
     state.with_db(|c| db::heatmap(c, &range))
@@ -145,6 +157,9 @@ fn changed_settings(old: &Settings, new: &Settings) -> Vec<&'static str> {
         ("welcome_done", old.welcome_done != new.welcome_done),
         ("daily_goal_min", old.daily_goal_min != new.daily_goal_min),
         ("weekend_rest", old.weekend_rest != new.weekend_rest),
+        ("skin", old.skin != new.skin),
+        ("accessories", old.accessories != new.accessories),
+        ("wear_style", old.wear_style != new.wear_style),
     ]
     .into_iter()
     .filter_map(|(name, changed)| changed.then_some(name))

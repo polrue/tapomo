@@ -54,9 +54,38 @@ html, body {
   background: rgba(255, 255, 255, .55); box-shadow: 0 0 0 1px rgba(35, 32, 43, .28); overflow: hidden; }
 .livebar i { position: relative; display: block; height: 100%; width: 0; border-radius: 999px; overflow: hidden;
   background: #b7b0c4; transition: background-color 250ms ease; }
+.pet[data-zone="rhythm"] .livebar i { background: #e7a29a; }
 .pet[data-zone="good"] .livebar i { background: #ff9e7a; }
 .pet[data-zone="fire"] .livebar i { background: #f0553a; }
 .pet[data-zone="beating"] .livebar i { background: #ffc93c; }
+.pet[data-zone="super"] .livebar i { background: linear-gradient(90deg, #ffb81c, #fff1a6, #ffb81c) 0 0 / 200% 100%;
+  animation: pet-shimmer calc(700ms / var(--speed, 1)) linear infinite; }
+@keyframes pet-shimmer { to { background-position: -200% 0; } }
+/* Zone thresholds as thin ticks on the bar (40, 60, 80, 95 and 108 % of a 130 % bar). */
+.livebar:not(.calibrating) { background-image:
+  linear-gradient(90deg, transparent calc(30.77% - .6px), rgba(35, 32, 43, .4) 0 calc(30.77% + .6px), transparent 0),
+  linear-gradient(90deg, transparent calc(46.15% - .6px), rgba(35, 32, 43, .4) 0 calc(46.15% + .6px), transparent 0),
+  linear-gradient(90deg, transparent calc(61.54% - .6px), rgba(35, 32, 43, .4) 0 calc(61.54% + .6px), transparent 0),
+  linear-gradient(90deg, transparent calc(73.08% - .6px), rgba(35, 32, 43, .4) 0 calc(73.08% + .6px), transparent 0),
+  linear-gradient(90deg, transparent calc(83.08% - .6px), rgba(35, 32, 43, .4) 0 calc(83.08% + .6px), transparent 0); }
+/* The bar livens up with the zone: a sheen, then flowing stripes that speed up, then a glow. */
+.livebar i::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; right: -20px; opacity: 0; transition: opacity 300ms ease; }
+.pet[data-zone="rhythm"] .livebar i::after { opacity: 1; right: auto; width: 45%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .6), transparent);
+  animation: pet-sheen calc(2.6s / var(--speed, 1)) ease-in-out infinite; }
+.pet[data-zone="good"] .livebar i::after { opacity: 1; background: repeating-linear-gradient(-45deg, rgba(255, 255, 255, .34) 0 5px, transparent 5px 10px);
+  animation: pet-flow calc(900ms / var(--speed, 1)) linear infinite; }
+.pet[data-zone="fire"] .livebar i::after { opacity: 1; background: repeating-linear-gradient(-45deg, rgba(255, 230, 160, .55) 0 5px, transparent 5px 10px);
+  animation: pet-flow calc(420ms / var(--speed, 1)) linear infinite; }
+.pet[data-zone="beating"] .livebar i::after { opacity: 1; background: repeating-linear-gradient(-45deg, rgba(255, 255, 255, .6) 0 5px, transparent 5px 10px);
+  animation: pet-flow calc(320ms / var(--speed, 1)) linear infinite; }
+.pet[data-zone="fire"] .livebar { box-shadow: 0 0 0 1px rgba(35, 32, 43, .28), 0 0 7px rgba(240, 85, 58, .65); }
+.pet[data-zone="beating"] .livebar { box-shadow: 0 0 0 1px rgba(35, 32, 43, .28), 0 0 9px rgba(255, 201, 60, .85); }
+@keyframes pet-sheen { from { transform: translateX(-110%); } to { transform: translateX(240%); } }
+@keyframes pet-flow { to { transform: translateX(-14.14px); } }
+/* Supermochi: Tapomo buzzes with energy. */
+.pet[data-zone="super"] .stage { animation: pet-buzz calc(90ms / var(--speed, 1)) steps(2) infinite; }
+@keyframes pet-buzz { 0% { transform: translate(.4px, -.3px); } 50% { transform: translate(-.4px, .3px); } }
 /* Calibrating: striped fill (progress = long bursts so far); the stripes slide by transform. */
 .livebar.calibrating i { background: #d9d3e3; }
 .livebar.calibrating i::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; right: -20px;
@@ -67,6 +96,7 @@ html, body {
 
 /* Less motion: faces still change, nothing bounces. */
 @media (prefers-reduced-motion: reduce) {
-  .bubble, .livebar.calibrating i::before { animation: none; }
+  .bubble, .livebar.calibrating i::before, .livebar i::after, .pet[data-zone="super"] .stage,
+  .pet[data-zone="super"] .livebar i { animation: none; }
   .livebar i { transition: none; }
 }

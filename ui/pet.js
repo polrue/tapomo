@@ -21,6 +21,10 @@ const RECORD_JUMP_MS = 900; // length of the new-record jump; the crown appears 
 // zone, colour, face and effects follow the falling value.
 const DECAY_TAU = 2.5;
 const BLEND_TAU = 0.15;
+// Supermochi (>= 108 %) is a power-up: once in, Tapomo stays in it for at least SUPER_MIN_MS even if
+// the pace drops, and shrugs off backspaces meanwhile (no "oops", the crown stays). Only the pet's
+// reaction: the stats (streak without deleting, etc.) stay honest. It ends when typing stops.
+const SUPER_MIN_MS = 35000;
 
 const $ = (id) => document.getElementById(id);
 const pet = $('pet');
@@ -33,6 +37,7 @@ const state = {
   zone: null,
   streak: { current: 0, best: 0 },
   oopsUntil: 0,
+  superSince: 0, // when Supermochi started (0 = off)
   crownHoldUntil: 0, // the crown waits for the new-record jump to finish
   // Live value shown (percent of the personal reference) and how it moves.
   display: 0,
@@ -55,6 +60,8 @@ function renderFace() {
     Mascot.setCrown(svg, false);
     return Mascot.setFace(svg, { eyes: 'closed', mouth: 'small' });
   }
+  // Supermochi keeps its own face, and the crown (if any) stays on even if a backspace reset the streak.
+  if (state.zone === 'super') return Mascot.setFace(svg, { eyes: 'sparkle', mouth: 'open', cheeks: true });
   if (Date.now() < state.oopsUntil) return Mascot.setFace(svg, { eyes: 'dots', mouth: 'wavy' });
   const level = faceLevel();
   Mascot.setCrown(svg, level === 5);
@@ -115,6 +122,10 @@ function onKey(cls) {
   }
   if (state.paused) return;
   Mascot.keyTick(svg);
+  if ((cls === 'delete' || cls === 'word_delete') && state.zone === 'super') {
+    Mascot.superAbsorb(svg); // shielded: no "oops", no tilt, the crown stays
+    return;
+  }
   if (cls === 'delete' || cls === 'word_delete') {
     const big = cls === 'word_delete';
     // Backspace breaks the streak: the crown (if any) flies off before the face goes back to level 1.
@@ -129,7 +140,28 @@ function onKey(cls) {
   renderFace();
 }
 
-const zoneOfPct = (p) => (p > 100 ? 'beating' : p >= 85 ? 'fire' : p >= 60 ? 'good' : 'warming');
+// Same thresholds as `Zone::of` in tapomo-core.
+const zoneOfPct = (p) =>
+  p >= 108 ? 'super' : p >= 95 ? 'beating' : p >= 80 ? 'fire' : p >= 60 ? 'good' : p >= 40 ? 'rhythm' : 'warming';
+
+/** Zone shown by the pet: the pace zone, except that Supermochi holds for at least SUPER_MIN_MS. */
+function petZone(paceZone) {
+  if (!paceZone || state.asleep || state.paused) {
+    state.superSince = 0;
+    return paceZone;
+  }
+  const now = Date.now();
+  if (paceZone === 'super') {
+    if (!state.superSince) {
+      state.superSince = now;
+      say('zone.super', 1800, true);
+    }
+    return 'super';
+  }
+  if (state.superSince && now - state.superSince < SUPER_MIN_MS) return 'super';
+  state.superSince = 0;
+  return paceZone;
+}
 let rafId = 0;
 let lastFrame = 0;
 let lastSig = '';
@@ -187,7 +219,7 @@ function paintBar() {
   const bar = $('livebar');
   const cal = state.calibrating;
   const active = state.display > 0 && !state.paused;
-  state.zone = active ? zoneOfPct(state.display) : null;
+  state.zone = petZone(active ? zoneOfPct(state.display) : null);
   pet.dataset.zone = state.zone || 'idle';
   const show = !state.paused && (active || !!cal);
   bar.hidden = !show;
@@ -211,8 +243,8 @@ function paintBar() {
 }
 
 // Star bursts on upgrades: 1 small (4-5 tiny stars), 2 medium, 3 full. At most one per BURST_GAP_MS.
-const ZONE_RANK = { warming: 0, good: 1, fire: 2, beating: 3 };
-const ZONE_BURST = [0, 1, 2, 3];
+const ZONE_RANK = { warming: 0, rhythm: 1, good: 2, fire: 3, beating: 4, super: 5 };
+const ZONE_BURST = [0, 0, 1, 2, 3, 3]; // rhythm earns nothing yet: it sits right next to warming
 const LEVEL_BURST = [0, 1, 1, 2, 2, 3]; // by face level 0-5 (levels 1-2 small, 3-4 medium, 5 full)
 const BURST_GAP_MS = 1500;
 const BURSTS = [null, [5, 0.45], [7, 0.75], [10, 1]];
@@ -256,6 +288,31 @@ function goToSleep() {
   renderFace();
 }
 
+/** What Tapomo wears: the saved look, limited to what the current level has unlocked. */
+async function applyLook(settings) {
+  const xp = await invoke('get_xp');
+  const open = new Set(Wardrobe.unlocked(xp.level));
+  Wardrobe.set({
+    skin: open.has(settings.skin) ? settings.skin : 'clasico',
+    acc: (settings.accessories || []).filter((a) => open.has(a)),
+    style: settings.wear_style === 'subtle' ? 'subtle' : 'bold',
+  });
+}
+
+/** `tapomo://xp`: a level-up gets the big celebration, a finished challenge a small one. */
+function onXp(p) {
+  if (p.level > p.prev_level) {
+    invoke('get_settings').then(applyLook).catch(console.error);
+    if (state.paused) return;
+    celebrate(3, true);
+    Mascot.jump(svg, { big: true });
+    sayText(t('pet.levelup', { lv: p.level }), 4000, true);
+  } else if ((p.challenges || []).length && !state.paused && !state.asleep) {
+    Mascot.jump(svg, { big: false });
+    say('pet.challenge', 2500);
+  }
+}
+
 async function loadSettings() {
   const settings = await invoke('get_settings');
   setLanguage(resolveLanguage(settings.language));
@@ -272,6 +329,7 @@ async function loadSettings() {
   }
   paintBar();
   renderFace();
+  applyLook(settings).catch(console.error);
 }
 
 // ------------------------------------------------- hover, eyes and dragging
@@ -435,6 +493,7 @@ async function init() {
     listen('tapomo://live', (e) => onLive(e.payload)),
     listen('tapomo://record', onRecord),
     listen('tapomo://goal', onGoal),
+    listen('tapomo://xp', (e) => onXp(e.payload)),
     listen('tapomo://settings', () => loadSettings().catch(console.error)),
     listen('tapomo://pet-say', () => onClick()),
     listen('tapomo://pet-state', (e) => onPetState(e.payload)),

@@ -16,7 +16,7 @@ use tapomo_core::{personal_reference, Burst, Config, Engine, KeyClass, KeyEvent,
 use tauri::{AppHandle, Emitter};
 
 use crate::hook::RawKey;
-use crate::{db, pet, platform};
+use crate::{db, pet, platform, xp};
 
 /// Worker tick: closes finished bursts and drives the live bar.
 const TICK: Duration = Duration::from_millis(250);
@@ -70,6 +70,16 @@ impl Shared {
 struct GoalReached {
     goal_min: u32,
     today_ms: u64,
+}
+
+/// Payload of `tapomo://xp`: XP changed. `level > prev_level` is a level-up.
+#[derive(Serialize, Clone)]
+struct XpChanged {
+    xp: u64,
+    level: u32,
+    prev_level: u32,
+    /// Challenges of the day completed just now.
+    challenges: Vec<&'static str>,
 }
 
 /// Payload of `tapomo://live`. `wpm` is `null` when no burst is open (or it is too young).
@@ -141,6 +151,8 @@ struct Tracker {
     /// Local day for which `tapomo://goal` has fired (or the goal was already met), so it fires once.
     goal_fired_day: Option<i64>,
     goal_refreshed: Instant,
+    /// Total XP after the last settle.
+    xp_total: u64,
 }
 
 impl Tracker {
@@ -171,7 +183,14 @@ impl Tracker {
             goal_stored_ms: 0,
             goal_fired_day: None,
             goal_refreshed: Instant::now(),
+            xp_total: 0,
         };
+        // Converts the history the first time and catches up on days the app was closed. Silent: the
+        // main window reveals any level reached meanwhile.
+        match xp::settle(&t.conn) {
+            Ok(s) => t.xp_total = s.total,
+            Err(e) => log::error!("could not settle XP: {e}"),
+        }
         t.refresh_reference();
         t.reload();
         t
@@ -277,10 +296,45 @@ impl Tracker {
             log::error!("could not save burst: {e}");
             return;
         }
+        // Records against the values from before this burst (the first peak or run is not a record).
+        let peak_record = burst.peak_wpm.zip(self.max_peak).is_some_and(|(p, max)| p > max);
+        let streak_record = self.saved_best > 0 && burst.best_streak > self.saved_best;
         self.persist_best();
         self.refresh_reference();
         self.goal_stored_ms += burst.duration_ms();
         let _ = self.app.emit("tapomo://burst", ());
+        if peak_record || streak_record {
+            if let Err(e) = xp::add_record(&self.conn) {
+                log::error!("could not save record XP: {e}");
+            }
+        }
+        self.settle_xp();
+    }
+
+    /// Updates the XP ledger and tells the windows when it changed.
+    fn settle_xp(&mut self) {
+        let settled = match xp::settle(&self.conn) {
+            Ok(s) => s,
+            Err(e) => {
+                log::error!("could not settle XP: {e}");
+                return;
+            }
+        };
+        if settled.total == self.xp_total && settled.new_challenges.is_empty() {
+            return;
+        }
+        let prev_level = tapomo_core::xp::level_for_xp(self.xp_total);
+        self.xp_total = settled.total;
+        let payload = XpChanged {
+            xp: settled.total,
+            level: tapomo_core::xp::level_for_xp(settled.total),
+            prev_level,
+            challenges: settled.new_challenges,
+        };
+        if payload.level > prev_level {
+            log::info!("level up: {} -> {}", prev_level, payload.level);
+        }
+        let _ = self.app.emit("tapomo://xp", payload);
     }
 
     /// Re-reads the goal setting and the stored active time of today. A goal that is already met
@@ -350,12 +404,7 @@ impl Tracker {
             wpm,
             reference: self.reference,
             percent,
-            zone: percent.map(|p| match Zone::of(p) {
-                Zone::WarmingUp => "warming",
-                Zone::Good => "good",
-                Zone::OnFire => "fire",
-                Zone::BeatingYourself => "beating",
-            }),
+            zone: percent.map(|p| Zone::of(p).id()),
             record_percent: self.max_peak.zip(self.reference).map(|(m, r)| m / r * 100.0),
             calibrating: self
                 .reference
