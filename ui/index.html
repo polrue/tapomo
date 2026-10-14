@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="xp.css">
   <link rel="stylesheet" href="badges.css">
+  <link rel="stylesheet" href="league.css">
 </head>
 <body>
   <header class="top">
@@ -76,6 +77,15 @@
         <div class="lv-row"><span class="lv-xp" id="lv-xp"></span><span class="lv-today" id="lv-today" hidden></span></div>
         <div class="lv-bar" id="lv-bar" role="progressbar" aria-valuemin="0" data-i18n-aria="level.title"><i id="lv-fill"></i></div>
         <p class="lv-next" id="lv-next"></p>
+      </div>
+    </section>
+
+    <section class="card league" id="league" aria-labelledby="lg-name" hidden>
+      <div class="lg-emblem" id="lg-emblem"></div>
+      <div class="lg-body">
+        <div class="lg-head"><h2 class="lg-name" id="lg-name"></h2><span class="lg-days" id="lg-days"></span></div>
+        <p class="lg-text" id="lg-text"></p>
+        <div class="lg-bar" id="lg-bar" role="progressbar" aria-valuemin="0" data-i18n-aria="league.bar" hidden><i id="lg-fill"></i></div>
       </div>
     </section>
 
@@ -304,6 +314,20 @@
     </div>
   </div>
 
+  <div id="league-dialog" class="welcome" hidden>
+    <div class="welcome-card lvup-card" role="dialog" aria-modal="true" aria-labelledby="lgup-title" aria-describedby="lgup-text" tabindex="-1">
+      <div class="welcome-body">
+        <div class="lgup-emblem" id="lgup-emblem"></div>
+        <h2 id="lgup-title"></h2>
+        <p id="lgup-text"></p>
+        <div class="lgup-letter" id="lgup-letter"></div>
+      </div>
+      <div class="welcome-nav lvup-nav">
+        <button type="button" id="lgup-ok" data-i18n="lvup.ok"></button>
+      </div>
+    </div>
+  </div>
+
   <script src="i18n.js"></script>
   <script src="mascot.js"></script>
   <script src="wardrobe.js"></script>
@@ -311,6 +335,7 @@
   <script src="welcome.js"></script>
   <script src="badges-art.js"></script>
   <script src="badges.js"></script>
+  <script src="league.js"></script>
   <script src="xp.js"></script>
   <script src="app.js"></script>
 </body>

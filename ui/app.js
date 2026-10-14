@@ -301,7 +301,7 @@ async function refreshAll() {
   try {
     renderYesterday().catch(showError);
     renderGoal().catch(showError);
-    Progress.refresh(range).then(() => Badges.refresh()).catch(showError);
+    Progress.refresh(range).then(() => Badges.refresh()).then(() => League.refresh()).catch(showError);
     const s = await renderSummary();
     if (s.bursts > 0) await Promise.all([renderHeatmap(s.reference), renderApps()]);
   } catch (e) {
@@ -336,6 +336,7 @@ async function onLanguageChange() {
   renderGoal().catch(showError);
   Progress.relabel();
   Badges.render();
+  League.render();
   paintLive(lastLive || {});
   renderPetState();
   renderVersion();
@@ -758,7 +759,7 @@ async function bindEvents() {
 
 // ----------------------------------------------------------------- glossary
 
-const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak', 'xp', 'challenges', 'wardrobe', 'badges'];
+const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak', 'xp', 'challenges', 'wardrobe', 'badges', 'league'];
 
 function renderGlossary() {
   const dl = $('glossary-list');
@@ -830,7 +831,7 @@ async function init() {
   // A window that stays open for days asks again once the cache is a day old.
   setInterval(checkForUpdate, 60 * 60 * 1000);
   // The level reveal waits for the welcome to close.
-  if (!settings.welcome_done) Welcome.open(() => saveSettings({ welcome_done: true }).then(() => { Progress.maybeReveal(); Badges.maybeReveal(); }));
+  if (!settings.welcome_done) Welcome.open(() => saveSettings({ welcome_done: true }).then(() => { Progress.maybeReveal(); Badges.maybeReveal(); League.maybeReveal(); }));
   renderExclusions().catch(showError);
   refreshAll();
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { refreshAll(); refreshPetState(); } });

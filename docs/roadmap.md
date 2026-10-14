@@ -16,7 +16,7 @@ Reglas que valen para todo el plan:
 |---|---|---|
 | 0.1 | Medición pasiva por ráfagas, estadísticas, calendario, apps | Hecho |
 | 0.2 | Barra de velocidad personal, Tapomo flotante, caras de racha, estrellitas, bienvenida, instalador con Tapomo, aviso de versión nueva | Hecho |
-| 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (hechas: 0.3.0 objetivo diario y días seguidos; 0.3.1 actualizador y caracteres por minuto; 0.3.2 XP, niveles, retos, armario y zonas nuevas; 0.3.3 insignias) |
+| 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (hechas: 0.3.0 objetivo diario y días seguidos; 0.3.1 actualizador y caracteres por minuto; 0.3.2 XP, niveles, retos, armario y zonas nuevas; 0.3.3 insignias; 0.3.4 liga contigo mismo) |
 | 0.4 | Lecciones de mecanografía (ES + US) y entrenador de atajos | Pendiente |
 | 0.5 | Web tapomo.app, estadísticas anónimas opcionales, ligas entre amigos | Pendiente |
 | Más tarde | Cifrado de la base de datos, más idiomas | Pendiente |
@@ -74,7 +74,9 @@ Se calculan con datos locales. Primera tanda (unas 15):
 
 Pantalla de insignias con las conseguidas en color y las pendientes en silueta suave con una pista amable («Escribe 1.000 caracteres sin borrar»). Nunca un «0 de 15» frío: se muestra lo conseguido.
 
-### 0.3.4 Liga contigo mismo
+### 0.3.4 Liga contigo mismo *(hecho, 15-10-2026)*
+
+- Implementada en `crates/tapomo-core/src/league.rs` y `src-tauri/src/league.rs`, sin tabla nueva: se recalcula con `xp_events`. No cuentan la XP del historial ni la de las insignias. La primera semana marca el ritmo y no sube; las semanas vacías cuentan como 0.
 
 - Cada semana (lunes a domingo) cuenta tu XP semanal.
 - Ligas: Bronce → Plata → Oro → Diamante → Mochi legendario.

@@ -85,7 +85,7 @@ const Badges = (() => {
       $('badge-dialog').hidden = true;
       document.querySelectorAll('.top, main').forEach((n) => (n.inert = false));
       revealing = false;
-      invoke('mark_badges_seen').then(refresh).catch(showError);
+      invoke('mark_badges_seen').then(refresh).then(() => League.maybeReveal()).catch(showError);
     };
     $('bdup-ok').onclick = close;
     $('badge-dialog').onkeydown = (e) => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
