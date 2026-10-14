@@ -530,6 +530,10 @@
     .mascot.rw-pose-auto[data-eyes="star"] .rw-arm-u, .mascot.rw-pose-auto[data-eyes="star"] .rw-arm-f,
     .mascot.rw-pose-auto[data-eyes="sparkle"] .rw-arm-u, .mascot.rw-pose-auto[data-eyes="sparkle"] .rw-arm-f { transform: rotate(0deg); }
     .mascot.rw-pose-flex .rw-bicep, .mascot.rw-pose-auto.rw-flexing .rw-bicep, .mascot.rw-pose-auto[data-eyes="star"] .rw-bicep { animation: rw-pump calc(900ms / var(--speed)) ease-in-out infinite; }
+    .mascot.rw-subtle .rw-rgb { animation: none; stroke: #3ddc97; }
+    .mascot.rw-subtle .rw-rgb-f { animation: none; fill: #3ddc97; }
+    .mascot.rw-subtle .rw-abs { opacity: .55; }
+    .mascot.rw-subtle .rw-bicep { animation: none !important; }
     @keyframes rw-pump { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08, 1.16); } }
     .rw-flutter { transform-box: fill-box; transform-origin: 0% 50%; animation: rw-flutter calc(900ms / var(--speed)) ease-in-out infinite; }
     @keyframes rw-flutter { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(7deg) scaleX(1.05); } }
@@ -604,6 +608,22 @@
   Mascot.mount = (svg) => { const r = realMount(svg); decorate(svg); return r; };
 
   const itemOf = (k) => ACC[k] || PROPS[k];
+  // ------------------------------------------------------------------ style (user setting)
+  // "llamativo / sutil" will be a user setting. Simple items look the same in both; only items where a
+  // bolder version adds something change. true = changes between styles (with what changes).
+  const STYLE_VARIES = {
+    lacito: 'sutil: lazo pequeño liso · llamativo: lazo grande con topos',
+    bufanda: 'sutil: bufanda fina · llamativo: bufanda gruesa a rayas con dos puntas y flecos',
+    gorrito: 'sutil: gorrito sencillo · llamativo: franja, borde rojo y pompón grande',
+    capa: 'sutil: capa corta · llamativo: capa larga con cuello y ribete dorado',
+    flores: 'sutil: flores pequeñas · llamativo: flores grandes y más hojas',
+    gamer: 'sutil: luces fijas · llamativo: luces que cambian de color',
+    musculitos: 'sutil: tableta suave y sin bombeo · llamativo: tableta marcada y bíceps que bombean',
+    fresa: 'sutil: mochi rosa con semillitas · llamativo: disfraz de fresa con hojas',
+    dorado: 'sutil: oro quieto · llamativo: destellos de luz cada 5–10 s',
+  };
+  const SAME_IN_BOTH = ['gafas', 'auris', 'pajarita', 'chef', 'aureola', 'gorra', 'gafassol', 'ninja', 'vikingo', 'bigote', 'barba', 'cejas', 'parche', 'pesa', 'cicatriz', 'astronauta', 'superheroe', 'dino', 'clasico', 'matcha', 'mango', 'arandano', 'sesamo'];
+
   // ------------------------------------------------------------------ clothing rules
   // Every item declares its slot(s) and what it excludes ('slot:x' = everything in slot x, or an item
   // key). Two items conflict if they share a slot or either one excludes the other. Full-body costumes
@@ -664,7 +684,8 @@
     if (!rw) return;
     const skin = SKINS[state.skin];
     const bold = state.style === 'bold';
-    const A = bold ? ART_BOLD : ART;
+    const A = new Proxy({}, { get: (_, k) => (!bold && STYLE_VARIES[k === 'capaFront' ? 'capa' : k] ? ART[k] : ART_BOLD[k]) });
+    svg.classList.toggle('rw-subtle', !bold);
     const worn = [...state.acc];
     const head = worn.find((k) => slotsOf(k).includes('cabeza'));
     const covered = worn.some((k) => slotsOf(k).includes('cabeza') || slotsOf(k).includes('cuerpo'));
@@ -691,7 +712,7 @@
     const wrap = (k, html) => (html ? `<g data-acc="${k}"${pop(k)}>${html}</g>` : '');
     rw.back.innerHTML = fix(FRONT_ORDER.filter((k) => state.acc.has(k)).map((k) => wrap(k, backOf(k))).join(''));
     rw.front.innerHTML = fix((calyx ? CALYX : '') + FRONT_ORDER.filter((k) => state.acc.has(k)).map((k) => wrap(k, frontOf(k))).join(''));
-    const headLift = !head ? 0 : PROPS[head] ? PROPS[head].lift || 0 : (bold ? LIFT_BOLD[head] : ACC[head].lift) || 0;
+    const headLift = !head ? 0 : PROPS[head] ? PROPS[head].lift || 0 : (!bold && STYLE_VARIES[head] ? ACC[head].lift : LIFT_BOLD[head]) || 0;
     const up = headLift + (calyx ? 12 : 0);
     rw.lift.setAttribute('transform', `translate(0 ${-up})`);
     rw.lift.style.transform = `translateY(${-up}px)`;
@@ -967,6 +988,9 @@
         <li><b>Disfraces completos</b> (astronauta, dinosaurio, superhéroe) quitan todo lo de fuera: sombreros, cintas, auriculares, capas, brazos, bufanda, pajarita y lazo. Solo se quedan los ojos o gafas, cejas, bigote, barba, cicatriz y la aureola, que flota por encima.</li>
         <li><b>Cicatriz</b>: en la mejilla va con todo; en la frente quita gorros, casco, cinta y dinosaurio; en el cuerpo quita barba, bufanda y pajarita.</li>
         <li><b>Corona de récord</b> y <b>Modo Supermochi</b> son efectos: van con todo. La corona se sube encima del sombrero; con algo en la cabeza, el mechón dorado de Supermochi no se dibuja y el aura se queda.</li></ul>
+      <p class="rw-sub">Estilo sutil / llamativo (ajuste del usuario)</p>
+      <ul class="rules-ex">${Object.entries(STYLE_VARIES).map(([k, v]) => `<li><b>${(itemOf(k) || SKINS[k]).name}</b> cambia. ${v}</li>`).join('')}</ul>
+      <p class="note">Iguales en los dos estilos: ${SAME_IN_BOTH.map((k) => (itemOf(k) || SKINS[k]).name.toLowerCase()).join(', ')}.</p>
       <p class="rw-sub">Cabeza y pelo: compatibilidad</p><div class="tbl-wrap">${matrix}</div>
       <p class="note">✓ se pueden llevar juntos · ✗ uno quita al otro · «oculta»: las hojas del disfraz de fresa no se dibujan · «sube»: la corona se coloca encima.</p>`;
   })();
@@ -976,7 +1000,7 @@
     const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const spd = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--speed')) || 1;
     function glint() {
-      if (state.skin === 'dorado' && !reduce() && !document.hidden) {
+      if (state.skin === 'dorado' && state.style === 'bold' && !reduce() && !document.hidden) {
         const T = (600 + Math.random() * 300) / spd();
         const tx = 45 + Math.random() * 70;
         const ty = 50 + Math.random() * 28;
