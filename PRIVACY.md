@@ -2,7 +2,7 @@
 
 **Español** · [English](#tapomo-privacy-policy)
 
-*Última actualización: 15 de octubre de 2026.*
+*Última actualización: 15 de octubre de 2026 (funciones en línea opcionales).*
 
 Tapomo es una aplicación gratuita y de código abierto que mide a qué velocidad escribes. Está hecha para que **nada de lo que escribes salga nunca de tu equipo**, y casi nada se guarde siquiera en él.
 
@@ -42,7 +42,14 @@ Tapomo **no tiene telemetría, ni analítica, ni publicidad, ni cuentas de usuar
 
 Como en cualquier conexión, GitHub ve tu dirección IP. Consulta la [declaración de privacidad de GitHub](https://docs.github.com/es/site-policy/privacy-policies/github-general-privacy-statement).
 
-Si en el futuro Tapomo ofrece algo que envíe datos fuera de tu equipo, como ligas con amigos, será **opcional, desactivado por defecto**, y esta política se actualizará antes.
+### Funciones en línea opcionales (desactivadas por defecto)
+
+Solo funcionan si tú las activas, y hablan únicamente con `api.tapomo.app` (Cloudflare Workers; el código está en [`server/`](server/)):
+
+- **Estadísticas anónimas** (Ajustes → «Compartir estadísticas anónimas»): una vez por semana se envía la semana anterior: velocidad media, pico, precisión, minutos activos e idioma de la app, con un número de instalación al azar. Sin cuenta, sin email, sin nada de lo que escribes. Se guarda 26 semanas y lo puedes borrar con «Borrar mis datos del servidor».
+- **Ligas con amigos** (solo si creas una liga o te unes a una): tu apodo y tu XP semanal. Se guarda 12 semanas y se borra al salir de la liga.
+
+El servidor no guarda direcciones IP (solo un resumen cifrado, que cambia cada 10 minutos, para limitar abusos), pero Cloudflare, como cualquier proveedor, ve la IP de la conexión. Consulta la [política de privacidad de Cloudflare](https://www.cloudflare.com/privacypolicy/).
 
 ## Cambios en el sistema
 
@@ -98,7 +105,14 @@ Tapomo has **no telemetry, analytics, ads or user accounts**. The only connectio
 
 As with any connection, GitHub sees your IP address. See [GitHub's privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 
-If Tapomo ever offers something that sends data off your computer, such as leagues with friends, it will be **optional and off by default**, and this policy will be updated first.
+### Optional online features (off by default)
+
+They only work if you turn them on, and they only talk to `api.tapomo.app` (Cloudflare Workers; the code is in [`server/`](server/)):
+
+- **Anonymous stats** (Settings → "Share anonymous stats"): once a week the previous week is sent: average speed, peak, accuracy, active minutes and the app language, with a random install number. No account, no email, nothing you type. Kept for 26 weeks, and you can delete it with "Delete my data from the server".
+- **Leagues with friends** (only if you create or join a league): your nickname and weekly XP. Kept for 12 weeks and deleted when you leave the league.
+
+The server stores no IP addresses (only a salted hash that changes every 10 minutes, to limit abuse), but Cloudflare, like any provider, sees the connection's IP. See [Cloudflare's privacy policy](https://www.cloudflare.com/privacypolicy/).
 
 ## Changes to your system
 

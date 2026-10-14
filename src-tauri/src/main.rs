@@ -14,6 +14,7 @@ mod pet_tip;
 mod platform;
 mod records;
 mod shortcuts;
+mod social;
 mod tracker;
 mod updater;
 mod weekly;
@@ -83,6 +84,9 @@ fn main() {
             commands::get_shortcut_tip,
             commands::mark_shortcut_known,
             commands::get_shortcut_album,
+            commands::get_week_summary,
+            commands::social_get,
+            commands::social_set,
             commands::get_heatmap,
             commands::get_apps,
             commands::set_alias,

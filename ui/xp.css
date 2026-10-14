@@ -39,11 +39,11 @@
 .ch-full { margin: 10px 0 0; font-weight: 800; color: var(--accent-strong); }
 
 /* --------------------------------------------------------------- wardrobe */
-.wardrobe summary, .album summary { cursor: pointer; list-style: none; }
-.wardrobe summary::-webkit-details-marker, .album summary::-webkit-details-marker { display: none; }
-.wardrobe summary h2, .album summary h2 { display: inline; }
-.wardrobe summary::after, .album summary::after { content: "▾"; margin-left: 8px; color: var(--muted); }
-.wardrobe[open] summary::after, .album[open] summary::after { content: "▴"; }
+.wardrobe summary, .album summary, .friends summary { cursor: pointer; list-style: none; }
+.wardrobe summary::-webkit-details-marker, .album summary::-webkit-details-marker, .friends summary::-webkit-details-marker { display: none; }
+.wardrobe summary h2, .album summary h2, .friends summary h2 { display: inline; }
+.wardrobe summary::after, .album summary::after, .friends summary::after { content: "▾"; margin-left: 8px; color: var(--muted); }
+.wardrobe[open] summary::after, .album[open] summary::after, .friends[open] summary::after { content: "▴"; }
 .wd-style { border: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
 .wd-style legend { float: left; font-weight: 700; margin-right: 8px; padding: 0; }
 .wd-style label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
@@ -110,3 +110,17 @@
 .al-dots i { width: 8px; height: 8px; border-radius: 999px; background: var(--line); }
 .al-dots i.on { background: var(--accent); }
 @media (max-width: 520px) { .al-item { grid-template-columns: 1fr auto; } .al-text { grid-column: 1 / -1; grid-row: 2; } .al-dots { grid-column: 2; } }
+
+/* ----------------------------------------------------- online, optional (0.5) */
+.social-percentile { margin: 0 0 12px; font-weight: 800; color: var(--accent-strong); }
+.lf-form { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: flex-end; margin: 10px 0; }
+.lf-form label { display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem; font-weight: 700; flex: 1 1 160px; }
+.lf-form input { font: inherit; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.lf-error { color: var(--accent-strong); font-weight: 700; }
+.lf-code { font-family: ui-monospace, Consolas, monospace; letter-spacing: .12em; font-size: 1.1rem; }
+.lf-list { margin: 8px 0 12px; padding-left: 1.6em; display: grid; gap: 4px; }
+.lf-list li { padding: 6px 10px; border-radius: 10px; background: var(--bg); }
+.lf-list li > * { vertical-align: middle; }
+.lf-list li[data-me] { outline: 2px solid var(--accent); }
+.lf-xp { float: right; font-variant-numeric: tabular-nums; }
+.lf-up { margin-left: 6px; }
