@@ -99,6 +99,12 @@ pub fn get_shortcuts(state: State<AppState>) -> CmdResult<crate::shortcuts::Toda
     state.with_db(crate::shortcuts::today)
 }
 
+/// Personal records with their context (when, where, how long).
+#[tauri::command]
+pub fn get_records(state: State<AppState>) -> CmdResult<Vec<crate::records::Record>> {
+    state.with_db(crate::records::list)
+}
+
 #[tauri::command]
 pub fn get_heatmap(state: State<AppState>, range: String) -> CmdResult<Vec<HeatCell>> {
     state.with_db(|c| db::heatmap(c, &range))
