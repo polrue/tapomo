@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="meta.title">Tapomo · Cada tecla cuenta</title>
+  <meta name="description" content="Tapomo es una app gratuita y de código abierto para Windows que mide a qué velocidad escribes de verdad, sin guardar nunca lo que escribes." data-i18n-attr="content:meta.desc">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1b1822" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="canonical" href="https://tapomo.app/">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tapomo.app/">
+  <meta property="og:title" content="Tapomo · Cada tecla cuenta" data-i18n-attr="content:meta.title">
+  <meta property="og:description" content="Tapomo es una app gratuita y de código abierto para Windows que mide a qué velocidad escribes de verdad, sin guardar nunca lo que escribes." data-i18n-attr="content:meta.desc">
+  <link rel="stylesheet" href="css/mascot.css">
+  <link rel="stylesheet" href="css/site.css">
+  <script>
+    // Decided before the first paint, so a first visit never flashes the page before the intro.
+    (function () {
+      var h = document.documentElement, seen = false;
+      h.classList.add('js');
+      try { seen = localStorage.getItem('tapomo.visited') === '1'; } catch (e) { seen = true; }
+      var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      h.classList.add(!seen && !still ? 'intro-on' : 'returning');
+      // Safety net: if the scripts never run, never leave the page covered.
+      setTimeout(function () { if (!h.classList.contains('intro-built')) h.classList.remove('intro-on'); }, 2500);
+    })();
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main" data-i18n="skip">Saltar al contenido</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#top" aria-label="Tapomo, inicio" data-i18n-attr="aria-label:home">
+        <svg viewBox="26 37 108 104" width="28" height="28" aria-hidden="true" focusable="false">
+          <rect x="30" y="40" width="100" height="98" rx="30" fill="#ff9e7a"/>
+          <rect x="40" y="46" width="80" height="72" rx="22" fill="#fff" opacity=".28"/>
+          <circle cx="61" cy="84" r="9" fill="#23202b"/><circle cx="99" cy="84" r="9" fill="#23202b"/>
+          <circle cx="64" cy="81" r="3" fill="#fff"/><circle cx="102" cy="81" r="3" fill="#fff"/>
+          <path d="M70 101 Q80 112 90 101" stroke="#23202b" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <span>Tapomo</span>
+      </a>
+      <nav class="site-nav" aria-label="Secciones" data-i18n-attr="aria-label:nav.label">
+        <ul>
+          <li><a href="#mide" data-i18n="nav.measure">Qué mide</a></li>
+          <li><a href="#privacidad" data-i18n="nav.privacy">Privacidad</a></li>
+          <li><a href="#habitos" data-i18n="nav.habits">Hábitos</a></li>
+          <li><a href="#codigo" data-i18n="nav.code">Código abierto</a></li>
+          <li><a href="#preguntas" data-i18n="nav.faq">Preguntas</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <button class="lang-btn" type="button" aria-label="Read in English" data-i18n-attr="aria-label:lang.label" data-i18n="lang.switch">EN</button>
+        <a class="btn btn-small" href="https://github.com/polrue/tapomo/releases/latest/download/Tapomo-setup.exe" data-i18n="nav.download">Descargar</a>
+      </div>
+    </div>
+    <div class="scroll-progress" aria-hidden="true"></div>
+  </header>
+
+  <!-- Tapomo's road: a winding dotted path through the page; the traveller rides it with the scroll. -->
+  <div class="trail-layer" aria-hidden="true">
+    <svg class="trail" xmlns="http://www.w3.org/2000/svg"><g class="trail-base"></g><g class="trail-done"></g></svg>
+    <div class="traveler"><div class="traveler-inner">
+      <div class="goal-ring"><svg viewBox="0 0 100 100"><circle class="gr-track" cx="50" cy="50" r="44"/><circle class="gr-fill" cx="50" cy="50" r="44" pathLength="100"/></svg></div>
+      <svg class="traveler-svg" viewBox="0 0 160 160"></svg>
+      <div class="bubble"><span></span></div>
+    </div></div>
+  </div>
+
+  <main id="main">
+    <!-- ============================== HERO -->
+    <section id="top" class="hero" aria-labelledby="hero-title">
+      <div class="wrap hero-grid">
+        <div class="hero-text">
+          <p class="eyebrow" data-i18n="hero.eyebrow">Gratis · Código abierto · Para Windows</p>
+          <h1 id="hero-title" data-i18n="hero.title">Cada tecla<br>cuenta.</h1>
+          <p class="lead" data-i18n="hero.lead">Tapomo mide, sin molestar, a qué velocidad escribes de verdad. Vive en la bandeja del sistema, celebra tus avances y nunca guarda lo que escribes.</p>
+          <div class="dl-row">
+            <a class="btn btn-big dl-btn" href="https://github.com/polrue/tapomo/releases/latest/download/Tapomo-setup.exe">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span data-i18n="dl.button">Descargar para Windows</span>
+            </a>
+            <a class="link-arrow" href="https://github.com/polrue/tapomo/releases" data-i18n="dl.all">Todas las versiones</a>
+          </div>
+          <p class="fine" data-i18n="dl.note">Se instala solo para tu usuario, sin permisos de administrador.</p>
+        </div>
+        <div class="stage stage-hero" data-stage="hero" role="img" aria-label="Tapomo, una tecla de mochi color melocotón con cara sonriente" data-i18n-attr="aria-label:hero.mascot"></div>
+      </div>
+      <a class="scroll-cue" href="#mide"><span data-i18n="hero.more">Conoce a Tapomo</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    </section>
+
+    <!-- ============================== WHAT IT MEASURES -->
+    <section id="mide" class="sec" aria-labelledby="m-title">
+      <div class="wrap">
+        <div class="sec-head">
+          <div class="sec-text reveal">
+            <p class="kicker" data-i18n="m.kicker">Qué mide</p>
+            <h2 id="m-title" data-i18n="m.title">Tu velocidad de verdad, no la de un test.</h2>
+            <p class="lead" data-i18n="m.lead">Tapomo mide mientras escribes correos, código o mensajes. Las pausas para pensar no cuentan, así que puedes escribir a tu ritmo.</p>
+          </div>
+          <div class="stage" data-stage="measure"></div>
+        </div>
+        <div class="bento measure-grid">
+          <article class="card card-speed reveal">
+            <h3 data-i18n="m.speed.t">Velocidad media</h3>
+            <p class="big-num"><span class="count" data-to="72">72</span><span class="unit" data-i18n="m.speed.u">ppm</span></p>
+            <p class="zone-pill" data-i18n="m.zone">¡En racha!</p>
+            <div class="mini-keys" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="wide"></i></div>
+            <p class="card-d" data-i18n="m.speed.d">Palabras por minuto, y también caracteres por minuto.</p>
+          </article>
+          <article class="card card-peak reveal">
+            <h3 data-i18n="m.peak.t">Tu récord</h3>
+            <svg class="spark" viewBox="0 0 200 70" aria-hidden="true" focusable="false">
+              <polyline class="spark-line" pathLength="100" points="4,52 22,46 40,50 58,38 76,42 94,30 112,34 130,12 148,26 166,22 184,30 196,28"/>
+              <polygon class="spark-star" points="130,0 133.5,7.5 141.5,8.3 135.6,13.7 137.2,21.6 130,17.6 122.8,21.6 124.4,13.7 118.5,8.3 126.5,7.5"/>
+            </svg>
+            <p class="mid-num" data-i18n="m.peak.v">84 ppm</p>
+            <p class="card-d" data-i18n="m.peak.d">Tu mejor velocidad mantenida durante 10 segundos.</p>
+          </article>
+          <article class="card card-streak reveal">
+            <h3 data-i18n="m.streak.t">Racha sin borrar</h3>
+            <p class="big-num" data-i18n="m.streak.v">1.284</p>
+            <div class="streak-bar" aria-hidden="true"><span></span></div>
+            <p class="card-d" data-i18n="m.streak.d">Caracteres seguidos sin pulsar Retroceso.</p>
+          </article>
+          <article class="card card-heat reveal">
+            <h3 data-i18n="m.heat.t">Tus mejores horas</h3>
+            <div class="heat" role="img" aria-label="Ejemplo de mapa de calor: más intensidad entre las 9 y las 13 de lunes a viernes" data-i18n-attr="aria-label:m.heat.aria"></div>
+            <p class="card-d" data-i18n="m.heat.d">Un mapa de calor de la semana te enseña cuándo escribes mejor.</p>
+          </article>
+          <article class="card card-apps reveal">
+            <h3 data-i18n="m.apps.t">Por aplicación</h3>
+            <ul class="bars">
+              <li style="--w:.92"><span class="bar-label" data-i18n="m.app.1">Correo</span><span class="bar"><i></i></span><span class="bar-val">68</span></li>
+              <li style="--w:.74"><span class="bar-label" data-i18n="m.app.2">Documentos</span><span class="bar"><i></i></span><span class="bar-val">74</span></li>
+              <li style="--w:.55"><span class="bar-label" data-i18n="m.app.3">Código</span><span class="bar"><i></i></span><span class="bar-val">51</span></li>
+              <li style="--w:.38"><span class="bar-label" data-i18n="m.app.4">Chat</span><span class="bar"><i></i></span><span class="bar-val">63</span></li>
+            </ul>
+            <p class="card-d" data-i18n="m.apps.d">Dónde escribes más y dónde vas más rápido.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== PRIVACY -->
+    <section id="privacidad" class="sec band-dark" aria-labelledby="p-title">
+      <div class="wrap">
+        <div class="sec-head flip">
+          <div class="sec-text reveal">
+            <p class="kicker" data-i18n="p.kicker">Privacidad</p>
+            <h2 id="p-title" data-i18n="p.title">Lo que escribes es tuyo. Y no sale de tu ordenador.</h2>
+            <p class="lead" data-i18n="p.lead">Tapomo no sabe qué escribes: solo cuenta teclas. Sin telemetría, sin cuentas y sin anuncios.</p>
+          </div>
+          <div class="stage" data-stage="privacy"></div>
+        </div>
+        <div class="cat-demo reveal">
+          <h3 data-i18n="p.cat.t">Cada tecla se convierte en una categoría</h3>
+          <div class="cat-rows" role="img" aria-label="Las teclas h, o, l, a, espacio y retroceso se convierten en: letra, letra, letra, letra, espacio, borrar" data-i18n-attr="aria-label:p.cat.aria">
+            <div class="cat-keys" aria-hidden="true"><kbd>h</kbd><kbd>o</kbd><kbd>l</kbd><kbd>a</kbd><kbd class="k-space">␣</kbd><kbd>⌫</kbd></div>
+            <div class="cat-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4v15m0 0-6-6m6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cat-chips" aria-hidden="true">
+              <span data-i18n="p.chip.letter">letra</span><span data-i18n="p.chip.letter">letra</span><span data-i18n="p.chip.letter">letra</span><span data-i18n="p.chip.letter">letra</span><span class="c-space" data-i18n="p.chip.space">espacio</span><span class="c-del" data-i18n="p.chip.delete">borrar</span>
+            </div>
+          </div>
+          <p data-i18n="p.cat.d">En el mismo instante en que pulsas, la tecla se traduce a letra, espacio, intro o borrar, y se descarta. Tapomo no puede reconstruir tu texto porque nunca lo tiene.</p>
+        </div>
+        <div class="trio">
+          <div class="trio-item reveal">
+            <svg class="trio-ico" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="10" y="21" width="28" height="20" rx="6" fill="#ff9e7a"/><path d="M16 21v-5a8 8 0 0 1 16 0v5" fill="none" stroke="#ff9e7a" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="30" r="3" fill="#23202b"/><path d="M24 31v4" stroke="#23202b" stroke-width="3" stroke-linecap="round"/></svg>
+            <h3 data-i18n="p.pw.t">Las contraseñas, ni las mira</h3>
+            <p data-i18n="p.pw.d">Los campos de contraseña se ignoran por completo, y los gestores de contraseñas están excluidos de serie.</p>
+          </div>
+          <div class="trio-item reveal">
+            <svg class="trio-ico" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="6" y="9" width="36" height="24" rx="5" fill="#ff9e7a"/><rect x="11" y="14" width="26" height="14" rx="3" fill="#23202b" opacity=".85"/><path d="M18 40h12M24 33v7" stroke="#ff9e7a" stroke-width="4" stroke-linecap="round"/><path d="M19 21l4 4 7-7" fill="none" stroke="#ffcc4d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <h3 data-i18n="p.local.t">Todo se queda en tu equipo</h3>
+            <p data-i18n="p.local.d">Tus datos viven en una base de datos local. La única conexión es buscar versiones nuevas en GitHub una vez al día, y se puede desactivar.</p>
+          </div>
+          <div class="trio-item reveal">
+            <svg class="trio-ico" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="6" y="15" width="36" height="18" rx="9" fill="#ff9e7a"/><circle cx="33" cy="24" r="6.5" fill="#fff"/><rect x="14" y="20" width="3" height="8" rx="1.5" fill="#23202b"/><rect x="19.5" y="20" width="3" height="8" rx="1.5" fill="#23202b"/></svg>
+            <h3 data-i18n="p.you.t">Tú mandas</h3>
+            <p data-i18n="p.you.d">Pausa la medición desde la bandeja cuando quieras, excluye las apps que prefieras y deja fuera los juegos a pantalla completa.</p>
+          </div>
+        </div>
+        <p class="center reveal"><a class="link-arrow" href="https://github.com/polrue/tapomo/blob/main/PRIVACY.md" data-i18n="p.link">Lee la política de privacidad</a></p>
+      </div>
+    </section>
+
+    <!-- ============================== HABITS AND ACHIEVEMENTS -->
+    <section id="habitos" class="sec soft" aria-labelledby="h-title">
+      <div class="wrap">
+        <div class="sec-head">
+          <div class="sec-text reveal">
+            <p class="kicker" data-i18n="h.kicker">Hábitos y logros</p>
+            <h2 id="h-title" data-i18n="h.title">Un poquito cada día.</h2>
+            <p class="lead" data-i18n="h.lead">Metas amables, premios por constancia y ni un solo reproche. Tapomo celebra lo que haces, nunca lo que te falta.</p>
+          </div>
+          <div class="stage" data-stage="habits"></div>
+        </div>
+        <div class="bento habits-grid">
+          <article class="card card-goal reveal">
+            <div class="ring" aria-hidden="true">
+              <svg viewBox="0 0 120 120"><circle class="ring-track" cx="60" cy="60" r="50"/><circle class="ring-fill" cx="60" cy="60" r="50" pathLength="100"/></svg>
+            </div>
+            <div>
+              <h3 data-i18n="h.goal.t">Objetivo diario</h3>
+              <p class="mid-num" data-i18n="h.goal.v">12 de 20 min</p>
+              <p class="card-d" data-i18n="h.goal.d">10, 20 o 30 minutos escribiendo. El anillo se llena solo mientras trabajas.</p>
+            </div>
+          </article>
+          <article class="card card-days reveal">
+            <svg class="flame" viewBox="0 0 48 60" aria-hidden="true" focusable="false"><path d="M24 3c3 9 15 15 15 30a15 15 0 0 1-30 0c0-7 3-11 6-14 0 5 2 8 5 8-1-9 1-17 4-24z" fill="#ff8a5c" stroke="#23202b" stroke-width="2.4" stroke-linejoin="round"/><path d="M24 30c3 4 7 6 7 12a7 7 0 0 1-14 0c0-4 3-7 7-12z" fill="#ffd56b"/></svg>
+            <h3 data-i18n="h.streak.t">Días seguidos</h3>
+            <p class="mid-num" data-i18n="h.streak.v">6 días</p>
+            <p class="card-d" data-i18n="h.streak.d">Un día libre por semana no rompe la racha: Tapomo te la guarda.</p>
+          </article>
+          <article class="card card-xp reveal">
+            <div class="wardrobe" role="img" aria-label="Tapomo con gorrito de lana, lacito, bufanda y auriculares" data-i18n-attr="aria-label:h.xp.aria">
+              <svg class="mini" data-wear="gorrito" viewBox="0 0 160 160"></svg>
+              <svg class="mini" data-wear="lacito" viewBox="0 0 160 160"></svg>
+              <svg class="mini" data-wear="bufanda" viewBox="0 0 160 160"></svg>
+              <svg class="mini" data-wear="auris" viewBox="0 0 160 160"></svg>
+            </div>
+            <div class="xp-bar" aria-hidden="true"><span></span></div>
+            <h3 data-i18n="h.xp.t">XP, niveles y armario</h3>
+            <p class="card-d" data-i18n="h.xp.d">Gana XP escribiendo y, cada tres niveles, estrena premios para vestir a Tapomo.</p>
+          </article>
+          <article class="card card-badges reveal">
+            <ul class="medals">
+              <li data-medal="early_bird" data-rarity="bronze" title="Madrugador" data-i18n-attr="title:badge.early_bird"><span class="sr-only" data-i18n="badge.early_bird">Madrugador</span></li>
+              <li data-medal="night_owl" data-rarity="bronze" title="Búho" data-i18n-attr="title:badge.night_owl"><span class="sr-only" data-i18n="badge.night_owl">Búho</span></li>
+              <li data-medal="clean_1000" data-rarity="silver" title="Mano firme" data-i18n-attr="title:badge.clean_1000"><span class="sr-only" data-i18n="badge.clean_1000">Mano firme</span></li>
+              <li data-medal="goal_week" data-rarity="silver" title="Semana redonda" data-i18n-attr="title:badge.goal_week"><span class="sr-only" data-i18n="badge.goal_week">Semana redonda</span></li>
+              <li data-medal="crowned" data-rarity="silver" title="Coronado" data-i18n-attr="title:badge.crowned"><span class="sr-only" data-i18n="badge.crowned">Coronado</span></li>
+              <li data-medal="shortcuts_1000" data-rarity="gold" data-locked title="Pendiente: Maestro de atajos" data-i18n-attr="title:badge.locked"><span class="sr-only" data-i18n="badge.locked">Pendiente: Maestro de atajos</span></li>
+            </ul>
+            <h3 data-i18n="h.badges.t">Insignias</h3>
+            <p class="card-d" data-i18n="h.badges.d">Madrugador, Búho, Mano firme… Las que aún no tienes te dan una pista amable, nunca un frío «0 de 22».</p>
+          </article>
+          <article class="card card-league reveal">
+            <ol class="leagues">
+              <li class="lg-bronze" data-i18n="h.league.l1">Bronce</li>
+              <li class="lg-silver" data-i18n="h.league.l2">Plata</li>
+              <li class="lg-gold is-now" data-i18n="h.league.l3">Oro</li>
+              <li class="lg-diamond" data-i18n="h.league.l4">Diamante</li>
+              <li class="lg-legend" data-i18n="h.league.l5">Mochi legendario</li>
+            </ol>
+            <h3 data-i18n="h.league.t">Liga contigo mismo</h3>
+            <p class="card-d" data-i18n="h.league.d">Subes si superas tu propia media de las últimas semanas. Y nunca bajas.</p>
+          </article>
+          <article class="card card-lessons reveal">
+            <div class="home-row" aria-hidden="true"><kbd class="f0">A</kbd><kbd class="f1">S</kbd><kbd class="f2">D</kbd><kbd class="f3 bump">F</kbd><kbd class="f3 dim">G</kbd><kbd class="f6 dim">H</kbd><kbd class="f6 bump">J</kbd><kbd class="f7">K</kbd><kbd class="f8">L</kbd><kbd class="f9" data-i18n="h.lessons.last">Ñ</kbd></div>
+            <h3 data-i18n="h.lessons.t">Lecciones</h3>
+            <p class="card-d" data-i18n="h.lessons.d">Aprende a escribir con todos los dedos, con teclado español o estadounidense, y practica a medida con las teclas que más se te resisten.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== OPEN SOURCE + CODE SIGNING POLICY -->
+    <section id="codigo" class="sec" aria-labelledby="c-title">
+      <div class="wrap">
+        <div class="sec-head flip">
+          <div class="sec-text reveal">
+            <p class="kicker" data-i18n="c.kicker">Código abierto</p>
+            <h2 id="c-title" data-i18n="c.title">Nada que esconder. Literalmente.</h2>
+            <p class="lead" data-i18n="c.lead">Tapomo es software libre con licencia GPL-3.0. Todo el código está en GitHub: puedes leerlo, compilarlo y mejorarlo.</p>
+          </div>
+          <div class="stage" data-stage="code"></div>
+        </div>
+        <div class="code-grid">
+          <div class="code-col">
+            <div class="reveal">
+              <h3 data-i18n="c.build.t">Compilado a la vista</h3>
+              <p data-i18n="c.build.d">Cada versión se compila con GitHub Actions a partir del código público, con una certificación de procedencia firmada por GitHub que dice de qué commit sale.</p>
+            </div>
+            <div class="reveal">
+              <h3 data-i18n="c.verify.t">Compruébalo tú</h3>
+              <p data-i18n="c.verify.d">Las notas de cada versión incluyen la huella SHA-256 del instalador. Compárala en PowerShell o verifica la certificación con la <a href="https://cli.github.com">CLI de GitHub</a>:</p>
+              <pre class="term"><code><span class="prompt">PS&gt;</span> Get-FileHash .\Tapomo_X.Y.Z_x64-setup.exe
+<span class="prompt">$</span> gh attestation verify Tapomo_X.Y.Z_x64-setup.exe -R polrue/tapomo</code></pre>
+            </div>
+            <p class="reveal"><a class="btn btn-ghost" href="https://github.com/polrue/tapomo">
+              <svg class="ico" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+              <span data-i18n="c.repo">Ver el código en GitHub</span></a></p>
+          </div>
+          <div class="card policy reveal">
+            <h3 data-i18n="c.policy.t">Política de firma de código</h3>
+            <ul class="checks">
+              <li data-i18n="c.policy.1">Los binarios se compilan solo desde el repositorio público, de forma automática y verificable, con GitHub Actions.</li>
+              <li data-i18n="c.policy.2">Autor, revisor y aprobador de cada versión: <a href="https://github.com/polrue">Pol Rué</a>. Ninguna versión se publica sin su aprobación manual.</li>
+              <li class="pending" data-i18n="c.policy.3">El instalador todavía no está firmado con un certificado de firma de código. Estamos solicitando la firma gratuita para proyectos de código abierto.</li>
+              <li data-i18n="c.policy.4">Tapomo no envía datos sin tu permiso: consulta la <a href="https://github.com/polrue/tapomo/blob/main/PRIVACY.md">política de privacidad</a>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== FAQ -->
+    <section id="preguntas" class="sec soft" aria-labelledby="f-title">
+      <div class="wrap narrow">
+        <div class="sec-head">
+          <div class="sec-text reveal">
+            <p class="kicker" data-i18n="f.kicker">Preguntas frecuentes</p>
+            <h2 id="f-title" data-i18n="f.title">¿Dudas? Normal.</h2>
+          </div>
+          <div class="stage stage-small" data-stage="faq"></div>
+        </div>
+        <div class="faq">
+          <details class="reveal"><summary data-i18n="f.q1">Windows dice que «ha protegido el equipo». ¿Qué hago?</summary><div class="answer"><p data-i18n="f.a1">Es normal, y te lo contamos claro: el instalador <strong>todavía no está firmado</strong> con un certificado de firma de código, y Windows SmartScreen avisa con los programas nuevos que no lo están. Para seguir, pulsa <strong>«Más información»</strong> y luego <strong>«Ejecutar de todas formas»</strong>.<br><br>Si antes quieres asegurarte de que el archivo es auténtico, compara su huella SHA-256 o verifica la certificación de GitHub (lo explicamos en <a href="#codigo">Código abierto</a>). Si tienes activado el Control inteligente de aplicaciones de Windows 11, puede que lo bloquee del todo. Cuando el instalador esté firmado, estos avisos irán desapareciendo.</p></div></details>
+          <details class="reveal"><summary data-i18n="f.q2">¿Tapomo es un keylogger?</summary><div class="answer"><p data-i18n="f.a2">No. Un keylogger guarda las teclas que pulsas para que alguien las lea. Tapomo convierte cada pulsación en su categoría (letra, espacio, borrar…) en el mismo instante y descarta la tecla, así que nunca tiene tu texto: ni lo guarda ni lo envía. No hay telemetría, y el código es público para que cualquiera pueda comprobarlo.</p></div></details>
+          <details class="reveal"><summary data-i18n="f.q3">¿Ralentiza el ordenador?</summary><div class="answer"><p data-i18n="f.a3">No. Convertir una tecla en su categoría es instantáneo y el resto de cálculos se hacen aparte, sin frenar lo que escribes. Cuando no escribes, Tapomo descansa, y los juegos y presentaciones a pantalla completa se dejan fuera.</p></div></details>
+          <details class="reveal"><summary data-i18n="f.q4">¿Cuánto cuesta?</summary><div class="answer"><p data-i18n="f.a4">Nada. Tapomo es gratis y sin anuncios. Si te gusta y te apetece apoyarlo, puedes hacer una donación opcional en <a href="https://github.com/sponsors/polrue">GitHub Sponsors</a>.</p></div></details>
+          <details class="reveal"><summary data-i18n="f.q5">¿Hay versión para Mac o Linux?</summary><div class="answer"><p data-i18n="f.a5">De momento, Tapomo es solo para Windows.</p></div></details>
+          <details class="reveal"><summary data-i18n="f.q6">¿Puedo borrar mis datos?</summary><div class="answer"><p data-i18n="f.a6">Sí. Están solo en tu equipo y, al desinstalar Tapomo desde Configuración → Aplicaciones, puedes borrarlos también.</p></div></details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== FINAL DOWNLOAD -->
+    <section id="descargar" class="sec cta" aria-labelledby="cta-title">
+      <div class="wrap cta-inner">
+        <h2 id="cta-title" class="reveal" data-i18n="cta.title">¿Empezamos?</h2>
+        <p class="lead reveal" data-i18n="cta.lead">Instálalo, olvídate y escribe como siempre. Tapomo se encarga del resto.</p>
+        <div class="cta-row">
+          <div class="dl-col reveal">
+            <a class="btn btn-big dl-btn" href="https://github.com/polrue/tapomo/releases/latest/download/Tapomo-setup.exe">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span data-i18n="dl.button">Descargar para Windows</span>
+            </a>
+            <a class="link-arrow" href="https://github.com/polrue/tapomo/releases" data-i18n="dl.all">Todas las versiones</a>
+          </div>
+          <div class="stage" data-stage="cta"></div>
+        </div>
+        <p class="fine reveal" data-i18n="dl.note">Se instala solo para tu usuario, sin permisos de administrador.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div class="footer-brand">
+        <svg viewBox="26 37 108 104" width="40" height="40" aria-hidden="true" focusable="false">
+          <rect x="30" y="40" width="100" height="98" rx="30" fill="#ff9e7a"/>
+          <rect x="40" y="46" width="80" height="72" rx="22" fill="#fff" opacity=".28"/>
+          <circle cx="61" cy="84" r="9" fill="#23202b"/><circle cx="99" cy="84" r="9" fill="#23202b"/>
+          <circle cx="64" cy="81" r="3" fill="#fff"/><circle cx="102" cy="81" r="3" fill="#fff"/>
+          <path d="M70 101 Q80 112 90 101" stroke="#23202b" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div><strong>Tapomo</strong><br><span data-i18n="ft.tag">Cada tecla cuenta.</span></div>
+      </div>
+      <ul class="footer-links">
+        <li><a href="https://github.com/polrue/tapomo/blob/main/PRIVACY.md" data-i18n="ft.privacy">Política de privacidad</a></li>
+        <li><a href="https://github.com/polrue/tapomo" data-i18n="ft.github">GitHub</a></li>
+        <li><a href="https://github.com/sponsors/polrue" data-i18n="ft.support">Apoyar el proyecto</a></li>
+        <li><button type="button" class="link-btn replay-intro" data-i18n="ft.replay">Ver cómo nació Tapomo</button></li>
+      </ul>
+      <p class="footer-fine"><span data-i18n="ft.license">Software libre bajo licencia GPL-3.0.</span> <span data-i18n="ft.by">Hecho con cariño por Pol Rué.</span></p>
+    </div>
+  </footer>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/mascot.js"></script>
+  <script src="js/wardrobe-lite.js"></script>
+  <script src="js/badges-art.js"></script>
+  <script src="js/site.js"></script>
+</body>
+</html>
