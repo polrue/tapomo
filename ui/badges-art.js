@@ -184,6 +184,22 @@
       `<g fill="none" stroke="${c.ink}" stroke-width="1.3" stroke-linecap="round"><path d="M27.6 38.4 Q29.3 40 31 38.4"/><path d="M35 38.4 Q36.7 40 38.4 38.4"/></g>` +
       `<circle cx="27.4" cy="42" r="1.5" fill="${c.blush}" opacity=".55"/><circle cx="38.6" cy="42" r="1.5" fill="${c.blush}" opacity=".55"/></g>` +
       label(c, 44.6, 29, 'z', 7) + label(c, 47.4, 22.8, 'z', 5.4),
+    // 0.4.3 shortcut trainer: a keycap graduating (first mastered shortcut)...
+    first_mastered: (c) =>
+      key(c, 21.5, 29, 21, 17, true) +
+      `<path d="M26 27.5 V31 Q32 33.6 38 31 V27.5 Z" fill="${c.night}" stroke="${c.ink}" stroke-width="1.5" stroke-linejoin="round"/>` +
+      `<path d="M32 19 L45 24.2 L32 29.4 L19 24.2 Z" fill="${c.night}" stroke="${c.ink}" stroke-width="1.6" stroke-linejoin="round"/>` +
+      `<path d="M25 23.6 L32 20.9" stroke="${c.white}" stroke-width="1.1" stroke-linecap="round" opacity=".6"/>` +
+      `<path d="M32 24.2 L41.5 26 V31.5" fill="none" stroke="${c.gold}" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>` +
+      `<circle cx="41.5" cy="32.6" r="1.6" fill="${c.gold}" stroke="${c.ink}" stroke-width="1"/>` +
+      `<circle cx="32" cy="24.2" r="1.3" fill="${c.gold}" stroke="${c.ink}" stroke-width=".9"/>` +
+      spark(c, 47, 37, 0.6),
+    // ...and a fan of mastered keycaps with "10" on the front one.
+    mastered_10: (c) =>
+      `<g transform="rotate(-20 32 50)">${key(c, 23.5, 21.5, 17, 17)}</g>` +
+      `<g transform="rotate(20 32 50)">${key(c, 23.5, 21.5, 17, 17)}</g>` +
+      key(c, 22.5, 22, 19, 17) + label(c, 32, 33, '10', 9.5) +
+      star(c, 32, 45.5, 4.2) + spark(c, 17, 21, 0.55) + spark(c, 47, 21, 0.55),
     // ...and the shortcut master: Ctrl + C keycaps under a little crown.
     shortcuts_1000: (c) =>
       key(c, 13.5, 31.5, 20.5, 14) + label(c, 23.75, 39.4, 'Ctrl', 6.6) +

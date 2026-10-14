@@ -1,0 +1,498 @@
+{
+ "_comment": "Tapomo shortcut catalogue v1 (0.4.3). Open data: contributions welcome. mods: c=Ctrl a=Alt w=Win s=Shift; vk = Windows virtual-key code (layout-independent). Sensitive shortcuts (e.g. incognito windows) are never listed: they count as 'other'.",
+ "version": 1,
+ "shortcuts": [
+  {
+   "id": "copy",
+   "apps": "*",
+   "mods": "c",
+   "vk": 67,
+   "label": "Ctrl+C",
+   "category": "edit",
+   "level": "basic",
+   "tip": {
+    "es": "Copia lo seleccionado.",
+    "en": "Copies the selection."
+   },
+   "label_en": "Ctrl+C"
+  },
+  {
+   "id": "paste",
+   "apps": "*",
+   "mods": "c",
+   "vk": 86,
+   "label": "Ctrl+V",
+   "category": "edit",
+   "level": "basic",
+   "tip": {
+    "es": "Pega lo copiado.",
+    "en": "Pastes what you copied."
+   },
+   "label_en": "Ctrl+V"
+  },
+  {
+   "id": "cut",
+   "apps": "*",
+   "mods": "c",
+   "vk": 88,
+   "label": "Ctrl+X",
+   "category": "edit",
+   "level": "basic",
+   "tip": {
+    "es": "Corta lo seleccionado para pegarlo en otro sitio.",
+    "en": "Cuts the selection to paste it elsewhere."
+   },
+   "label_en": "Ctrl+X"
+  },
+  {
+   "id": "undo",
+   "apps": "*",
+   "mods": "c",
+   "vk": 90,
+   "label": "Ctrl+Z",
+   "category": "edit",
+   "level": "basic",
+   "tip": {
+    "es": "Deshace lo último. Tu red de seguridad.",
+    "en": "Undoes the last thing. Your safety net."
+   },
+   "label_en": "Ctrl+Z"
+  },
+  {
+   "id": "redo",
+   "apps": "*",
+   "mods": "c",
+   "vk": 89,
+   "label": "Ctrl+Y",
+   "category": "edit",
+   "level": "medium",
+   "tip": {
+    "es": "Rehace lo que deshiciste.",
+    "en": "Redoes what you undid."
+   },
+   "label_en": "Ctrl+Y"
+  },
+  {
+   "id": "select_all",
+   "apps": "*",
+   "mods": "c",
+   "vk": 65,
+   "label": "Ctrl+A",
+   "category": "edit",
+   "level": "basic",
+   "tip": {
+    "es": "Selecciona todo de golpe.",
+    "en": "Selects everything at once."
+   },
+   "label_en": "Ctrl+A"
+  },
+  {
+   "id": "find",
+   "apps": "*",
+   "mods": "c",
+   "vk": 70,
+   "label": "Ctrl+F",
+   "category": "edit",
+   "level": "basic",
+   "tip": {
+    "es": "Busca una palabra en la página o el documento.",
+    "en": "Finds a word in the page or document."
+   },
+   "overrides": {
+    "es": {
+     "apps": [
+      "WINWORD.EXE"
+     ],
+     "mods": "c",
+     "vk": 66,
+     "label": "Ctrl+B"
+    }
+   },
+   "label_en": "Ctrl+F"
+  },
+  {
+   "id": "save",
+   "apps": "*",
+   "mods": "c",
+   "vk": 83,
+   "label": "Ctrl+S",
+   "category": "edit",
+   "level": "basic",
+   "tip": {
+    "es": "Guarda el documento. Mejor a menudo.",
+    "en": "Saves the document. Do it often."
+   },
+   "overrides": {
+    "es": {
+     "apps": [
+      "WINWORD.EXE",
+      "EXCEL.EXE",
+      "POWERPNT.EXE"
+     ],
+     "mods": "c",
+     "vk": 71,
+     "label": "Ctrl+G"
+    }
+   },
+   "label_en": "Ctrl+S"
+  },
+  {
+   "id": "word_left",
+   "apps": "*",
+   "mods": "c",
+   "vk": 37,
+   "label": "Ctrl+←",
+   "category": "edit",
+   "level": "medium",
+   "tip": {
+    "es": "Salta palabra a palabra hacia la izquierda.",
+    "en": "Jumps word by word to the left."
+   },
+   "label_en": "Ctrl+←"
+  },
+  {
+   "id": "word_right",
+   "apps": "*",
+   "mods": "c",
+   "vk": 39,
+   "label": "Ctrl+→",
+   "category": "edit",
+   "level": "medium",
+   "tip": {
+    "es": "Salta palabra a palabra hacia la derecha.",
+    "en": "Jumps word by word to the right."
+   },
+   "label_en": "Ctrl+→"
+  },
+  {
+   "id": "doc_start",
+   "apps": "*",
+   "mods": "c",
+   "vk": 36,
+   "label": "Ctrl+Inicio",
+   "category": "edit",
+   "level": "advanced",
+   "tip": {
+    "es": "Va al principio del documento.",
+    "en": "Goes to the start of the document."
+   },
+   "label_en": "Ctrl+Home"
+  },
+  {
+   "id": "doc_end",
+   "apps": "*",
+   "mods": "c",
+   "vk": 35,
+   "label": "Ctrl+Fin",
+   "category": "edit",
+   "level": "advanced",
+   "tip": {
+    "es": "Va al final del documento.",
+    "en": "Goes to the end of the document."
+   },
+   "label_en": "Ctrl+End"
+  },
+  {
+   "id": "alt_tab",
+   "apps": "*",
+   "mods": "a",
+   "vk": 9,
+   "label": "Alt+Tab",
+   "category": "windows",
+   "level": "basic",
+   "tip": {
+    "es": "Cambia de ventana sin tocar el ratón.",
+    "en": "Switches window without the mouse."
+   },
+   "label_en": "Alt+Tab"
+  },
+  {
+   "id": "explorer",
+   "apps": "*",
+   "mods": "w",
+   "vk": 69,
+   "label": "Win+E",
+   "category": "windows",
+   "level": "basic",
+   "tip": {
+    "es": "Abre el Explorador de archivos.",
+    "en": "Opens File Explorer."
+   },
+   "label_en": "Win+E"
+  },
+  {
+   "id": "desktop",
+   "apps": "*",
+   "mods": "w",
+   "vk": 68,
+   "label": "Win+D",
+   "category": "windows",
+   "level": "basic",
+   "tip": {
+    "es": "Muestra el escritorio (y vuelve).",
+    "en": "Shows the desktop (and back)."
+   },
+   "label_en": "Win+D"
+  },
+  {
+   "id": "lock",
+   "apps": "*",
+   "mods": "w",
+   "vk": 76,
+   "label": "Win+L",
+   "category": "windows",
+   "level": "basic",
+   "tip": {
+    "es": "Bloquea el ordenador al levantarte.",
+    "en": "Locks the computer when you step away."
+   },
+   "label_en": "Win+L"
+  },
+  {
+   "id": "clipboard",
+   "apps": "*",
+   "mods": "w",
+   "vk": 86,
+   "label": "Win+V",
+   "category": "windows",
+   "level": "medium",
+   "tip": {
+    "es": "Historial del portapapeles: pega algo que copiaste antes.",
+    "en": "Clipboard history: paste something you copied earlier."
+   },
+   "label_en": "Win+V"
+  },
+  {
+   "id": "snip",
+   "apps": "*",
+   "mods": "ws",
+   "vk": 83,
+   "label": "Win+Mayús+S",
+   "category": "windows",
+   "level": "medium",
+   "tip": {
+    "es": "Recorta un trozo de pantalla.",
+    "en": "Snips part of the screen."
+   },
+   "label_en": "Win+Shift+S"
+  },
+  {
+   "id": "snap_left",
+   "apps": "*",
+   "mods": "w",
+   "vk": 37,
+   "label": "Win+←",
+   "category": "windows",
+   "level": "medium",
+   "tip": {
+    "es": "Pega la ventana a la mitad izquierda.",
+    "en": "Snaps the window to the left half."
+   },
+   "label_en": "Win+←"
+  },
+  {
+   "id": "snap_right",
+   "apps": "*",
+   "mods": "w",
+   "vk": 39,
+   "label": "Win+→",
+   "category": "windows",
+   "level": "medium",
+   "tip": {
+    "es": "Pega la ventana a la mitad derecha.",
+    "en": "Snaps the window to the right half."
+   },
+   "label_en": "Win+→"
+  },
+  {
+   "id": "emoji",
+   "apps": "*",
+   "mods": "w",
+   "vk": 190,
+   "label": "Win+.",
+   "category": "windows",
+   "level": "advanced",
+   "tip": {
+    "es": "Abre el panel de emojis. 🎉",
+    "en": "Opens the emoji panel. 🎉"
+   },
+   "label_en": "Win+."
+  },
+  {
+   "id": "task_view",
+   "apps": "*",
+   "mods": "w",
+   "vk": 9,
+   "label": "Win+Tab",
+   "category": "windows",
+   "level": "advanced",
+   "tip": {
+    "es": "Ve todas tus ventanas y escritorios.",
+    "en": "Shows all your windows and desktops."
+   },
+   "label_en": "Win+Tab"
+  },
+  {
+   "id": "task_manager",
+   "apps": "*",
+   "mods": "cs",
+   "vk": 27,
+   "label": "Ctrl+Mayús+Esc",
+   "category": "windows",
+   "level": "advanced",
+   "tip": {
+    "es": "Abre el Administrador de tareas.",
+    "en": "Opens Task Manager."
+   },
+   "label_en": "Ctrl+Shift+Esc"
+  },
+  {
+   "id": "close_app",
+   "apps": "*",
+   "mods": "a",
+   "vk": 115,
+   "label": "Alt+F4",
+   "category": "windows",
+   "level": "medium",
+   "tip": {
+    "es": "Cierra la ventana actual.",
+    "en": "Closes the current window."
+   },
+   "label_en": "Alt+F4"
+  },
+  {
+   "id": "new_tab",
+   "apps": [
+    "chrome.exe",
+    "msedge.exe",
+    "firefox.exe",
+    "brave.exe",
+    "opera.exe"
+   ],
+   "mods": "c",
+   "vk": 84,
+   "label": "Ctrl+T",
+   "category": "browser",
+   "level": "basic",
+   "tip": {
+    "es": "Abre una pestaña nueva.",
+    "en": "Opens a new tab."
+   },
+   "label_en": "Ctrl+T"
+  },
+  {
+   "id": "close_tab",
+   "apps": [
+    "chrome.exe",
+    "msedge.exe",
+    "firefox.exe",
+    "brave.exe",
+    "opera.exe"
+   ],
+   "mods": "c",
+   "vk": 87,
+   "label": "Ctrl+W",
+   "category": "browser",
+   "level": "basic",
+   "tip": {
+    "es": "Cierra la pestaña.",
+    "en": "Closes the tab."
+   },
+   "label_en": "Ctrl+W"
+  },
+  {
+   "id": "reopen_tab",
+   "apps": [
+    "chrome.exe",
+    "msedge.exe",
+    "firefox.exe",
+    "brave.exe",
+    "opera.exe"
+   ],
+   "mods": "cs",
+   "vk": 84,
+   "label": "Ctrl+Mayús+T",
+   "category": "browser",
+   "level": "medium",
+   "tip": {
+    "es": "Recupera la pestaña que cerraste sin querer.",
+    "en": "Brings back the tab you closed by mistake."
+   },
+   "label_en": "Ctrl+Shift+T"
+  },
+  {
+   "id": "address_bar",
+   "apps": [
+    "chrome.exe",
+    "msedge.exe",
+    "firefox.exe",
+    "brave.exe",
+    "opera.exe"
+   ],
+   "mods": "c",
+   "vk": 76,
+   "label": "Ctrl+L",
+   "category": "browser",
+   "level": "medium",
+   "tip": {
+    "es": "Salta a la barra de direcciones.",
+    "en": "Jumps to the address bar."
+   },
+   "label_en": "Ctrl+L"
+  },
+  {
+   "id": "next_tab",
+   "apps": [
+    "chrome.exe",
+    "msedge.exe",
+    "firefox.exe",
+    "brave.exe",
+    "opera.exe"
+   ],
+   "mods": "c",
+   "vk": 9,
+   "label": "Ctrl+Tab",
+   "category": "browser",
+   "level": "medium",
+   "tip": {
+    "es": "Pasa a la pestaña siguiente.",
+    "en": "Goes to the next tab."
+   },
+   "label_en": "Ctrl+Tab"
+  },
+  {
+   "id": "zoom_in",
+   "apps": [
+    "chrome.exe",
+    "msedge.exe",
+    "firefox.exe",
+    "brave.exe",
+    "opera.exe"
+   ],
+   "mods": "c",
+   "vk": 187,
+   "label": "Ctrl++",
+   "category": "browser",
+   "level": "advanced",
+   "tip": {
+    "es": "Agranda la página (Ctrl+- la achica, Ctrl+0 la deja igual).",
+    "en": "Zooms in (Ctrl+- zooms out, Ctrl+0 resets)."
+   },
+   "label_en": "Ctrl++",
+   "overrides": {
+    "en": {
+     "apps": [
+      "chrome.exe",
+      "msedge.exe",
+      "firefox.exe",
+      "brave.exe",
+      "opera.exe"
+     ],
+     "mods": "cs",
+     "vk": 187,
+     "label": "Ctrl++"
+    }
+   }
+  }
+ ]
+}

@@ -123,9 +123,13 @@ unsafe fn handle(wparam: WPARAM, lparam: LPARAM) {
             let class = classify(vk, ctrl, alt, win);
             if class == KeyClass::Ignored {
                 // A Ctrl/Alt/Win combination becomes one of five kinds right here; the key is dropped.
-                if let Some(kind) = tapomo_core::shortcuts::classify(vk, ctrl, alt, win, is_down(VK_SHIFT)) {
+                let shift = is_down(VK_SHIFT);
+                if let Some(kind) = tapomo_core::shortcuts::classify(vk, ctrl, alt, win, shift) {
+                    // Phase B: only a combination from the closed catalogue is ever identified.
+                    use crate::catalog::{known_combo, ALT, CTRL, SHIFT, WIN};
+                    let mods = u8::from(ctrl) * CTRL | u8::from(alt) * ALT | u8::from(win) * WIN | u8::from(shift) * SHIFT;
                     if let Some(tx) = SENDER.get() {
-                        let _ = tx.send(Msg::Shortcut(kind, GetForegroundWindow().0 as isize));
+                        let _ = tx.send(Msg::Shortcut(kind, known_combo(mods, vk), GetForegroundWindow().0 as isize));
                     }
                 }
                 return;

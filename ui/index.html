@@ -133,6 +133,17 @@
       </div>
     </section>
 
+    <section class="card sc-tip" id="sc-tip" aria-labelledby="sc-tip-title" hidden>
+      <div>
+        <h2 id="sc-tip-title" data-i18n="album.tip_title"></h2>
+        <p><kbd id="sc-tip-keys"></kbd> <span id="sc-tip-text"></span></p>
+      </div>
+      <div class="sc-tip-nav">
+        <button type="button" class="ghost" id="sc-tip-known" data-i18n="album.known"></button>
+        <button type="button" id="sc-tip-ok" data-i18n="album.thanks"></button>
+      </div>
+    </section>
+
     <section class="card shortcuts" id="shortcuts" aria-labelledby="sc-title" hidden>
       <div class="sc-head">
         <h2><span id="sc-title" data-i18n="shortcuts.title"></span><button type="button" class="info" data-tip="tip.shortcuts" data-i18n-aria="tip.more">i</button></h2>
@@ -224,6 +235,13 @@
       <ul class="rc-grid" id="rc-grid"></ul>
     </section>
 
+    <details class="card album" id="album">
+      <summary><h2 data-i18n="album.title"></h2></summary>
+      <p class="hint" data-i18n="album.hint"></p>
+      <p class="al-count" id="al-count"></p>
+      <div id="al-grid"></div>
+    </details>
+
     <details class="card wardrobe" id="wardrobe">
       <summary><h2 data-i18n="wd.title"></h2></summary>
       <p class="hint" data-i18n="wd.hint"></p>
@@ -270,6 +288,7 @@
 
       <label class="check"><input id="s-shortcuts" type="checkbox"><span data-i18n="settings.count_shortcuts"></span></label>
       <p class="hint" data-i18n="settings.count_shortcuts.hint"></p>
+      <label class="check"><input id="s-sc-tips" type="checkbox"><span data-i18n="settings.shortcut_tips"></span></label>
       <label class="check"><input id="s-autostart" type="checkbox"><span data-i18n="settings.autostart"></span></label>
       <label class="check"><input id="s-fullscreen" type="checkbox"><span data-i18n="settings.fullscreen"></span></label>
       <p class="hint" data-i18n="settings.fullscreen.hint"></p>
@@ -413,6 +432,7 @@
   <script src="lessons.js"></script>
   <script src="records.js"></script>
   <script src="shortcuts.js"></script>
+  <script src="album.js"></script>
   <script src="weekly.js"></script>
   <script src="league.js"></script>
   <script src="xp.js"></script>
