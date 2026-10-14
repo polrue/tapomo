@@ -268,6 +268,7 @@ const Progress = (() => {
   /** `tapomo://xp`: XP changed; a level-up opens the reveal, a finished challenge gets its stamp. */
   async function onXp(p) {
     st = await invoke('get_xp');
+    League.refresh().catch(showError);
     applyLook();
     renderLevel();
     renderChallenges(p.challenges || []);

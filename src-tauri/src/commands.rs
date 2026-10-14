@@ -76,6 +76,17 @@ pub fn mark_badges_seen(state: State<AppState>) -> CmdResult<()> {
     state.with_db(crate::badges::mark_seen)
 }
 
+/// League with yourself: this week's XP, the bar to beat and last week's unseen result.
+#[tauri::command]
+pub fn get_league(state: State<AppState>) -> CmdResult<crate::league::LeagueOut> {
+    state.with_db(crate::league::state)
+}
+
+#[tauri::command]
+pub fn ack_league(state: State<AppState>, week: i64) -> CmdResult<()> {
+    state.with_db(|c| crate::league::ack(c, week))
+}
+
 #[tauri::command]
 pub fn get_heatmap(state: State<AppState>, range: String) -> CmdResult<Vec<HeatCell>> {
     state.with_db(|c| db::heatmap(c, &range))
