@@ -1,0 +1,281 @@
+<title>Tapomo animation lab</title>
+<!-- Animation lab: a developer page, not linked from the app. It runs the real mascot.js, mascot.css,
+     pet.css and pet.js against a mocked window.__TAURI__ (see lab.js), so what you see here is what
+     the floating Tapomo does. rewards.js (lab only) adds the "Premios" accessories and skins on top. -->
+  <link rel="stylesheet" href="mascot.css">
+  <link rel="stylesheet" href="pet.css">
+  <style>
+    /* Layout: stage on the left, control panel on the right; stacks on phones. */
+    :root {
+      --bg: #f4efe9; --card: #ffffff; --fg: #23202b; --muted: #6b6577; --border: rgba(35,32,43,.14);
+      --accent: #ff9e7a; --accent-strong: #f0764a; --ink: #23202b; --line: #e3d6cc;
+      --chip: #fbf3ee; --chip-on: #ffe3d8; --badge: #efe6f7; --badge-fg: #5b4f73;
+      --menu-hover: #ffe3d8; --pend-bg: #fff0c2; --pend-fg: #7a5600; --pend-line: #e7c25a;
+      --ok-bg: #e3f5df; --ok-fg: #2d6b2a; --no-bg: #fde2e0; --no-fg: #a3302a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #17151c; --card: #221f29; --fg: #ece8f2; --muted: #a59fb3; --border: rgba(236,232,242,.16);
+        --line: #3a3444; --chip: #2b2733; --chip-on: #4a3330; --badge: #352f42; --badge-fg: #d6cbef;
+        --menu-hover: #3a2f3a; --pend-bg: #4a3d14; --pend-fg: #ffe08a; --pend-line: #8a7230; --ok-bg: #213a22; --ok-fg: #9be09a; --no-bg: #43201f; --no-fg: #ff9a92; color-scheme: dark;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #17151c; --card: #221f29; --fg: #ece8f2; --muted: #a59fb3; --border: rgba(236,232,242,.16);
+      --line: #3a3444; --chip: #2b2733; --chip-on: #4a3330; --badge: #352f42; --badge-fg: #d6cbef;
+      --menu-hover: #3a2f3a; --pend-bg: #4a3d14; --pend-fg: #ffe08a; --pend-line: #8a7230; --ok-bg: #213a22; --ok-fg: #9be09a; --no-bg: #43201f; --no-fg: #ff9a92; color-scheme: dark;
+    }
+    html, body { height: auto; min-height: 100%; background: var(--bg); color: var(--fg); }
+    html { overflow-y: auto; overflow-x: hidden; }
+    body { overflow: visible; }
+    body { margin: 0; font: 14px/1.4 var(--font); }
+    .lab { display: flex; flex-wrap: wrap; gap: 20px; padding: 20px; align-items: flex-start; }
+    /* The stage stays in view while the controls scroll. Side by side it sticks near the top; when
+       the columns stack it becomes a compact sticky stage of at most ~40 % of the viewport height. */
+    .stage-box { position: sticky; top: 12px; z-index: 3; width: min(630px, 100%, calc(100vh - 24px)); aspect-ratio: 1 / 1; max-width: 100%; flex: none; border-radius: 18px; background: #fff8f3; overflow: hidden; box-shadow: 0 0 0 1px var(--border); }
+    @media (max-width: 989px) {
+      .lab { flex-direction: column; align-items: stretch; flex-wrap: nowrap; }
+      .stage-box { top: env(safe-area-inset-top, 0px); align-self: center; width: min(100%, 40vh, 420px); box-shadow: 0 0 0 1px var(--border), 0 10px 18px -12px rgba(0,0,0,.45); }
+      .panel { max-width: none; flex-basis: auto; }
+    }
+    .stage-box.dark { background: #1b1822; }
+    .scaler { position: absolute; left: 0; top: 0; width: 210px; height: 210px; transform: scale(3); transform-origin: 0 0; }
+    .panel { flex: 1; min-width: 0; flex-basis: 300px; max-width: 640px; display: grid; gap: 14px; }
+    fieldset { margin: 0; min-width: 0; border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px 12px; background: var(--card); }
+    legend { font-weight: 800; padding: 0 6px; }
+    .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+    button { font: inherit; font-weight: 700; color: #23202b; background: var(--accent); border: 0; border-radius: 9px; padding: 5px 11px; cursor: pointer; }
+    button:hover { background: var(--accent-strong); }
+    button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
+    button.on { outline: 3px solid var(--fg); }
+    label { display: inline-flex; align-items: center; gap: 8px; margin-right: 12px; flex-wrap: wrap; }
+    output { min-width: 3.2em; font-variant-numeric: tabular-nums; font-weight: 700; }
+    h1 { margin: 0; font-size: 1.2rem; }
+    .menu-mock { list-style: none; margin: 8px 0 0; padding: 4px; width: 220px; max-width: 100%; background: var(--card); border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.25); }
+    .menu-mock li { padding: 5px 12px; border-radius: 5px; }
+    .menu-mock li:hover { background: var(--menu-hover); }
+    .hdr { display: flex; align-items: center; gap: 14px; padding: 8px 4px; }
+    .hdr b { font-size: 1.4rem; letter-spacing: -0.02em; }
+    .hdr .hide-note { min-height: 1.4em; }
+    .stage-box.away .scaler { opacity: 0; transition: opacity 200ms; }
+    .stage-box .scaler { transition: opacity 200ms; }
+    .note { margin: 0; color: var(--muted); font-size: 12px; }
+
+    /* ---------- Premios */
+    .rw { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+    .rw > *, .zn > * { min-width: 0; }
+    .rw-level { display: grid; gap: 4px; }
+    .rw-level input[type=range] { width: 100%; accent-color: var(--accent-strong); }
+    .rw-level .row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+    .rw-level .lv { font-size: 1.15rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .rw-level .xp { color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 700; }
+    .rw-next { margin: 0; font-weight: 700; }
+    .rw-next b { color: var(--accent-strong); }
+    .rw-sub { margin: 0 0 6px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { display: inline-flex; align-items: center; gap: 7px; background: var(--chip); color: var(--fg); border: 1.5px solid var(--border); padding: 4px 9px 4px 6px; border-radius: 999px; font-weight: 700; }
+    .chip:hover { background: var(--chip-on); }
+    .chip.on { background: var(--chip-on); border-color: var(--accent-strong); outline: 0; box-shadow: 0 0 0 2px var(--accent-strong) inset; }
+    .chip .sw { width: 16px; height: 16px; border-radius: 6px; border: 1.5px solid #23202b; flex: none; }
+    .chip .ic { width: 22px; height: 22px; flex: none; }
+    .chip .bd { font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; padding: 1px 6px; border-radius: 999px; background: var(--badge); color: var(--badge-fg); }
+    .chip.locked { opacity: .42; border-style: dashed; filter: grayscale(.85); }
+    .chip.locked.on { opacity: .75; }
+    .chip.locked .bd::before { content: "bloqueado · "; }
+    .chip.unlocked-now { animation: rw-unlock 600ms ease-out; }
+    @keyframes rw-unlock { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
+    .seg { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 0; }
+    .seg-l { font-weight: 800; margin-right: 10px; }
+    .seg .note { flex-basis: 100%; margin-top: 2px; }
+    .seg-b { background: var(--chip); color: var(--fg); box-shadow: 0 0 0 1.5px var(--border) inset; border-radius: 0; padding: 5px 14px; }
+    .seg-b:first-of-type { border-radius: 9px 0 0 9px; }
+    .seg-b:last-of-type { border-radius: 0 9px 9px 0; }
+    .seg-b.on { background: var(--accent); color: #23202b; outline: 0; box-shadow: none; }
+    .seg-z { background: var(--chip); color: var(--fg); box-shadow: 0 0 0 1.5px var(--border) inset; border-radius: 0; padding: 5px 14px; }
+    .seg-z:first-of-type { border-radius: 9px 0 0 9px; }
+    .seg-z:last-of-type { border-radius: 0 9px 9px 0; }
+    .seg-z.on { background: var(--accent); color: #23202b; outline: 0; box-shadow: none; }
+    .pend { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 800; letter-spacing: .02em; text-transform: none; padding: 2px 8px; border-radius: 999px; background: var(--pend-bg); color: var(--pend-fg); vertical-align: 1px; }
+    fieldset.prop { border-style: dashed; border-width: 2px; border-color: var(--pend-line); }
+    .pr-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); gap: 8px; }
+    .pr-card { display: grid; grid-template-columns: 44px 1fr; gap: 2px 8px; align-items: center; text-align: left; background: var(--chip); color: var(--fg); border: 1.5px solid var(--border); border-radius: 12px; padding: 6px 8px; font-weight: 700; }
+    .pr-card:hover { background: var(--chip-on); }
+    .pr-card.on { background: var(--chip-on); box-shadow: 0 0 0 2px var(--accent-strong) inset; outline: 0; border-color: var(--accent-strong); }
+    .pr-card svg { grid-row: span 3; width: 44px; height: 44px; }
+    .pr-card .nm { line-height: 1.15; }
+    .pr-card .tg { justify-self: start; font-size: 10.5px; font-weight: 800; padding: 1px 7px; border-radius: 999px; color: #23202b; }
+    .pr-card .nt { font-size: 11px; font-weight: 600; color: var(--muted); line-height: 1.2; }
+    .tg-canero { background: #9fd3ff; } .tg-broma { background: #ffd66b; } .tg-fuerza { background: #ff9fa8; } .tg-disfraz { background: #b9e6a8; }
+    .tbl-wrap { overflow-x: auto; }
+    table.pack { border-collapse: collapse; width: 100%; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+    table.pack th { text-align: left; font-size: 11px; color: var(--muted); font-weight: 800; padding: 4px 8px; border-bottom: 1.5px solid var(--border); }
+    table.pack td { padding: 4px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    table.pack td.num { text-align: right; color: var(--muted); }
+    table.pack td .tg { font-size: 10px; font-weight: 800; padding: 0 6px; border-radius: 999px; color: #23202b; margin-left: 4px; }
+    table.pack td.free { color: var(--muted); font-style: italic; }
+    table.pack button { padding: 2px 9px; font-size: 12px; }
+    .zn { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
+    .zn input[type=range] { width: 100%; accent-color: var(--accent-strong); }
+    .zn-now { display: flex; align-items: baseline; gap: 10px; }
+    .zn-chip { font-weight: 800; padding: 2px 10px; border-radius: 999px; background: var(--chip); border: 1.5px solid var(--border); }
+    .zn .xp { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .zn-scale { position: relative; height: 30px; margin: 0 8px; font-size: 10.5px; color: var(--muted); font-weight: 700; }
+    .zn-scale span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; display: grid; justify-items: center; }
+    .zn-scale span::before { content: ""; width: 1.5px; height: 7px; background: var(--muted); }
+    .zn-scale i { position: absolute; top: 14px; height: 5px; border-radius: 3px; }
+    /* Proposed zones: own bar colours, a gold shimmer for Supermochi, and threshold ticks on the live bar. */
+    .pet[data-zone="rhythm"] .livebar i { background: #e7a29a; }
+    .pet[data-super="on"] .livebar i { background: linear-gradient(90deg, #ffb81c, #fff1a6, #ffb81c) 0 0 / 200% 100%; animation: zn-shimmer calc(700ms / var(--speed, 1)) linear infinite; }
+    @keyframes zn-shimmer { to { background-position: -200% 0; } }
+    .pet.pz .livebar { background-image:
+      linear-gradient(90deg, transparent calc(30.77% - .6px), rgba(35,32,43,.4) 0 calc(30.77% + .6px), transparent 0),
+      linear-gradient(90deg, transparent calc(46.15% - .6px), rgba(35,32,43,.4) 0 calc(46.15% + .6px), transparent 0),
+      linear-gradient(90deg, transparent calc(61.54% - .6px), rgba(35,32,43,.4) 0 calc(61.54% + .6px), transparent 0),
+      linear-gradient(90deg, transparent calc(76.92% - .6px), rgba(35,32,43,.4) 0 calc(76.92% + .6px), transparent 0),
+      linear-gradient(90deg, transparent calc(88.46% - .6px), rgba(35,32,43,.4) 0 calc(88.46% + .6px), transparent 0); }
+    .pet[data-super="on"] .stage { animation: zn-buzz calc(90ms / var(--speed, 1)) steps(2) infinite; }
+    @keyframes zn-buzz { 0% { transform: translate(.4px, -.3px); } 50% { transform: translate(-.4px, .3px); } }
+    @media (prefers-reduced-motion: reduce) { .pet[data-super="on"] .stage, .pet[data-super="on"] .livebar i { animation: none; } }
+    .rm-note { margin: 6px 0 0; font-size: 12px; font-weight: 800; color: var(--pend-fg); background: var(--pend-bg); padding: 3px 10px; border-radius: 8px; display: inline-block; }
+    .seg-x { padding: 4px 12px; }
+    details.rules-d { border-top: 1.5px solid var(--border); padding-top: 8px; }
+    details.rules-d summary { cursor: pointer; font-weight: 800; }
+    details.rules-d summary:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; border-radius: 4px; }
+    #rules { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr); margin-top: 8px; }
+    #rules .rw-sub { margin: 4px 0 0; }
+    .rules-ex { margin: 0; padding-left: 18px; font-size: 12.5px; display: grid; gap: 3px; }
+    table.mx { border-collapse: collapse; font-size: 11px; font-variant-numeric: tabular-nums; }
+    table.mx th { font-weight: 800; padding: 3px 5px; white-space: nowrap; text-align: left; color: var(--fg); }
+    table.mx thead th { writing-mode: vertical-rl; transform: rotate(180deg); text-align: left; height: 54px; vertical-align: bottom; }
+    table.mx td { width: 26px; height: 22px; text-align: center; border: 1px solid var(--border); font-weight: 800; }
+    table.mx td.mx-ok { color: var(--ok-fg); background: var(--ok-bg); }
+    table.mx td.mx-no { color: var(--no-fg); background: var(--no-bg); }
+    table.mx td.mx-hide { color: var(--muted); background: var(--chip); font-size: 9px; font-weight: 700; }
+    table.mx td.mx-self { background: var(--border); }
+    table.mx td.mx-ok[title] { font-size: 9px; }
+    .rw-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+    .rw-actions button.ghost { background: transparent; color: var(--fg); box-shadow: 0 0 0 1.5px var(--border) inset; }
+    .rw-actions button.ghost:hover { background: var(--chip-on); }
+    .rw-track { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 4px 10px; margin: 0; padding: 0; list-style: none; font-size: 12px; }
+    .rw-track li { display: flex; gap: 6px; align-items: baseline; font-variant-numeric: tabular-nums; }
+    .rw-track li b { min-width: 2.2em; text-align: right; color: var(--muted); }
+    .rw-track li.locked { opacity: .45; }
+    .rw-track li.next b, .rw-track li.next span { color: var(--accent-strong); font-weight: 800; }
+    @media (max-width: 480px) { .lab { padding: 16px; gap: 14px; } }
+    @media (prefers-reduced-motion: reduce) { .chip.unlocked-now { animation: none; } }
+  </style>
+  <div class="lab">
+    <div class="stage-box" id="stage-box">
+      <div class="scaler" id="scaler">
+        <div id="pet" class="pet" data-zone="idle">
+          <div id="bubble" class="bubble" role="status" hidden></div>
+          <div class="stage" id="stage">
+            <svg id="mascot" viewBox="0 0 160 160" role="img" aria-label="Tapomo"></svg>
+          </div>
+          <div id="livebar" class="livebar" hidden><i id="livefill"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel">
+      <h1>Tapomo animation lab</h1>
+      <p class="note">Real pet.js / mascot.js with a mocked Tauri. The eyes follow your mouse; moving over the body counts as hover.</p>
+      <fieldset><legend>Premios</legend>
+        <div class="rw">
+          <div class="rw-level">
+            <div class="row"><label for="rw-level" style="margin:0">Nivel</label><span class="lv" id="rw-lv">Nivel 1</span><span class="xp" id="rw-xp">0 XP</span></div>
+            <input id="rw-level" type="range" min="1" max="50" step="1" value="1" aria-describedby="rw-next">
+            <p class="rw-next" id="rw-next"></p>
+          </div>
+          <div class="seg" role="group" aria-label="Estilo">
+            <span class="seg-l">Estilo</span>
+            <button type="button" class="seg-b" id="rw-style-bold" data-style="bold">llamativo</button><button type="button" class="seg-b" id="rw-style-subtle" data-style="subtle">sutil</button>
+            <span class="note">Cambia a la vez el disfraz de fresa y todos los accesorios.</span>
+          </div>
+          <div><p class="rw-sub">Skin (solo color y textura)</p><div class="chips" id="rw-skins"></div></div>
+          <div><p class="rw-sub">Accesorios (combinables; uno por zona)</p><div class="chips" id="rw-acc"></div>
+            <p class="rm-note" id="rw-note" role="status" hidden></p></div>
+          <div class="rw-actions">
+            <button type="button" id="rw-all">Ponerse todo lo desbloqueado</button>
+            <button type="button" class="ghost" id="rw-none">Quitar accesorios</button>
+            <button type="button" class="ghost" id="rw-reset">Skin clásico</button>
+          </div>
+          <div><p class="rw-sub">Premios por nivel</p><ul class="rw-track" id="rw-track"></ul></div>
+          <p class="note">Lo bloqueado sale en gris pero se puede probar igual. Los accesorios van dentro del cuerpo, así que saltan, se aplastan y giran con Tapomo; con las gafas de sol puestas las redondas se apartan, y la corona de récord se sube encima del gorro.</p>
+        </div>
+      </fieldset>
+      <fieldset class="prop"><legend>Propuestas <span class="pend">Propuesta, pendiente de Pol</span></legend>
+        <div class="rw">
+          <p class="note">Ideas nuevas, todavía sin aprobar. Se combinan con los skins, con los premios y con todas las animaciones, con la misma regla de una pieza por zona. Solo existen en estilo llamativo.</p>
+          <div class="pr-cards" id="pr-cards"></div>
+          <p class="rm-note" id="pr-note" role="status" hidden></p>
+          <div class="seg" id="pr-pose" role="group" aria-label="Pose de los musculitos"></div>
+          <div class="seg" id="pr-scar" role="group" aria-label="Sitio de la cicatriz"></div>
+          <div><p class="rw-sub">Probar caras (para las cejas y los musculitos)</p><div class="btns" id="pr-faces"></div></div>
+          <div>
+            <p class="rw-sub">Pack de dos por nivel <span class="pend">Propuesta, pendiente de Pol</span></p>
+            <div class="tbl-wrap"><table class="pack" id="pr-pack">
+              <thead><tr><th>Nivel</th><th>XP</th><th>Premio aprobado</th><th>Propuesta</th><th></th></tr></thead><tbody></tbody>
+            </table></div>
+            <p class="note">Los más graciosos (vikingo, musculitos, dinosaurio, astronauta) quedan para los niveles medios y altos. La cicatriz ocupa el hueco del nivel 43; el 50 queda libre para una idea más.</p>
+          </div>
+          <details class="rules-d"><summary>Reglas de ropa</summary><div id="rules"></div></details>
+        </div>
+      </fieldset>
+      <fieldset><legend>Playback</legend>
+        <label>Animation speed <input id="speed" type="range" min="0.25" max="2" step="0.05" value="1"><output id="speed-out">1.00×</output></label>
+        <label><input id="loop" type="checkbox"> Loop this reaction</label>
+        <label><input id="bg-dark" type="checkbox"> Dark background</label>
+        <label>Language <select id="lang"><option value="es">es</option><option value="en">en</option></select></label>
+      </fieldset>
+      <fieldset><legend>Keys</legend><div class="btns" id="g-keys"></div>
+        <p><label>Typing speed <input id="wpm" type="range" min="20" max="150" step="5" value="70"><output id="wpm-out"></output></label>
+        <button type="button" id="burst">Start typing</button> <button type="button" id="stopburst">Stop typing (bar eases down)</button></p>
+      </fieldset>
+      <fieldset><legend>Streak mood (current / best)</legend><div class="btns" id="g-streak"></div></fieldset>
+      <fieldset><legend>Live zone</legend>
+        <div class="zn">
+          <div class="seg" role="group" aria-label="Zonas">
+            <span class="seg-l">Zonas</span>
+            <button type="button" class="seg-z" id="zn-cur" data-set="cur">actuales</button><button type="button" class="seg-z" id="zn-prop" data-set="prop">propuesta</button>
+          </div>
+          <div class="zn-now"><span id="zn-name" class="zn-chip">Sin escribir</span><span id="zn-pct" class="xp">–</span></div>
+          <div>
+            <label for="zn-slider" style="margin:0">Ritmo frente a tu referencia</label>
+            <input id="zn-slider" type="range" min="0" max="140" step="1" value="0">
+            <div class="zn-scale" id="zn-scale" aria-hidden="true"></div>
+          </div>
+          <div class="btns" id="zn-presets"></div>
+          <p class="note" id="zn-legend"></p>
+        </div>
+        <p class="rw-sub" style="margin-top:12px">Botones originales</p>
+        <div class="btns" id="g-zone"></div></fieldset>
+      <fieldset><legend>Mouse actions on Tapomo</legend><div class="btns" id="g-mouse"></div>
+        <ul id="menu-mock" class="menu-mock" hidden></ul><p class="note" id="mouse-log"></p></fieldset>
+      <fieldset><legend>Main window header (Tapomo hiding)</legend>
+        <div class="hdr">
+          <div class="mascot-wrap" id="hdr-wrap"><svg id="mascot-h" viewBox="0 0 160 160" role="img" aria-label="Tapomo"></svg></div>
+          <div><b>Tapomo</b><p class="hide-note" id="hdr-note" hidden><span id="hdr-text"></span><button type="button" class="pill" id="hdr-btn" hidden></button></p></div>
+        </div>
+        <div class="btns" id="g-hide"></div>
+        <p class="note" id="hide-log"></p>
+      </fieldset>
+      <fieldset><legend>Reactions and states</legend><div class="btns" id="g-react"></div></fieldset>
+    </div>
+  </div>
+  <script>
+    // The pet window is 210 px; scale it to fill the stage box at any width (phones included).
+    (() => {
+      const box = document.getElementById('stage-box');
+      const sc = document.getElementById('scaler');
+      const fit = () => { const w = box.clientWidth; if (w) sc.style.transform = `scale(${w / 210})`; };
+      fit();
+      if (window.ResizeObserver) new ResizeObserver(fit).observe(box); else window.addEventListener('resize', fit);
+    })();
+  </script>
+  <script src="mascot.js"></script>
+  <script src="rewards.js"></script>
+  <script src="i18n.js"></script>
+  <script src="lab.js"></script>
+  <script src="zones.js"></script>
+  <script src="pet.js"></script>
