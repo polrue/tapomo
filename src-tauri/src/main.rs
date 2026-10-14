@@ -5,6 +5,7 @@ mod commands;
 mod db;
 mod hook;
 mod i18n;
+mod league;
 mod password;
 mod pet;
 mod pet_tip;
@@ -66,6 +67,8 @@ fn main() {
             commands::ack_xp,
             commands::get_badges,
             commands::mark_badges_seen,
+            commands::get_league,
+            commands::ack_league,
             commands::get_heatmap,
             commands::get_apps,
             commands::set_alias,
