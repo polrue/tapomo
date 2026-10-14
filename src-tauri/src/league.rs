@@ -25,6 +25,8 @@ pub struct LeagueOut {
     pub days_left: u8,
     /// Result of the last finished week, while it has not been shown.
     pub result: Option<WeekResult>,
+    /// Monday of last week (local day number), for its weekly card.
+    pub last_week: i64,
 }
 
 #[derive(Debug, Serialize)]
@@ -55,6 +57,7 @@ pub fn state(conn: &Connection) -> rusqlite::Result<LeagueOut> {
         target: s.target,
         days_left: 7 - tapomo_core::weekday(today),
         result,
+        last_week: monday(today) - 7,
     })
 }
 
