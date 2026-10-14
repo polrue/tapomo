@@ -1,6 +1,6 @@
 # Tapomo — Diseño de XP, retos, logros y atajos
 
-> Propuesta del 13-10-2026, **pendiente de revisión por Pol** antes de implementar la 0.3.2.
+> Propuesta del 13-10-2026, **aprobada por Pol el 14-10-2026**. Es el diseño de la 0.3.2.
 > Sustituye a los números provisionales de `roadmap.md` §0.3.2 en cuanto se apruebe.
 
 ## Principios
@@ -75,8 +75,8 @@ Se amplía la lista de la 0.3.3 con niveles de rareza:
 | Coronado (cara de corona) | Plata |
 | Ni tocas el ratón (100 atajos en un día) | Plata |
 | Maestro de atajos (1.000 atajos) | Oro |
-| Primer atajo masterizado (fase B) | Bronce |
-| 10 atajos masterizados | Oro |
+| Primer atajo dominado (fase B) | Bronce |
+| 10 atajos dominados | Oro |
 
 ## Niveles
 
@@ -143,8 +143,8 @@ Cada atajo del catálogo tiene su propio nivel, según los **días distintos** e
 | 0 | Por descubrir (silueta en el álbum) | — |
 | 1–3 | Aprendiendo | +5 |
 | 4–7 | Cogiendo el tranquillo | +10 |
-| 8–10 | Dominando | +15 |
-| 11 o más | Masterizado | +25 |
+| 8–10 | Casi lo tienes | +15 |
+| 11 o más | Dominado | +25 |
 
 - **Por qué días y no veces:** mide hábito, y además es imposible de farmear, porque 500 `Ctrl+C` en un día cuentan como un día.
 - **Datos guardados por atajo:** solo `days_used` y `last_day`, sin historial por día. Un día cuenta si se usó al menos una vez.
@@ -152,10 +152,10 @@ Cada atajo del catálogo tiene su propio nivel, según los **días distintos** e
 - **«Ya lo sé»:** marca el atajo como conocido para que deje de sugerirlo, pero **no da nivel**. El nivel solo llega usándolo.
 - **Nunca baja.** Si dejas de usar un atajo durante meses, conserva su nivel.
 - **Celebraciones sin ruido:**
-  - Con Tapomo y globo, solo al llegar a «Masterizado» y la primera vez que usas un atajo que te sugirió («¡Ya usas `Ctrl+Mayús+T`!»).
+  - Con Tapomo y globo, solo al llegar a «Dominado» y la primera vez que usas un atajo que te sugirió («¡Ya usas `Ctrl+Mayús+T`!»).
   - Los demás cambios de nivel se ven en el álbum con un puntito de novedad.
   - Si en un mismo día suben muchos, se agrupan en un único globo («¡6 atajos nuevos en tu álbum!»).
-- **Atajos cotidianos:** `Ctrl+C` y `Ctrl+V` llegarán a «Masterizado» en dos semanas en casi todo el mundo. Es bueno, porque da victorias tempranas. El aprendizaje de verdad está en los atajos menos habituales.
+- **Atajos cotidianos:** `Ctrl+C` y `Ctrl+V` llegarán a «Dominado» en dos semanas en casi todo el mundo. Es bueno, porque da victorias tempranas. El aprendizaje de verdad está en los atajos menos habituales.
 - **XP máxima del catálogo v1:** 30 atajos × 55 = 1.650 XP en total, una sola vez.
 
 ## XP retroactiva (usuarios con historial)
@@ -164,9 +164,11 @@ Cada atajo del catálogo tiene su propio nivel, según los **días distintos** e
 - No se calculan retos, récords ni atajos, porque no existían.
 - Se da de golpe con una única celebración: «Tapomo ha repasado tu historial: ¡empiezas en el nivel 6!».
 
-## Preguntas abiertas para Pol
+## Decisiones de Pol (14-10-2026)
 
-1. ¿Los nombres «Retos del día» y «Masterizado» (o «Maestro»)?
-2. ¿Te parece bien el reparto, con un 55 % de escribir y un 45 % de hábitos?
-3. ~~Ritmo de los niveles~~ Resuelto el 14-10-2026: nivel 50 en un año (ver «Niveles»).
-4. ~~Accesorios y niveles~~ Resuelto el 14-10-2026: premio cada 3 niveles, con accesorios y skins.
+1. **Nombres:**
+   - «Retos del día».
+   - Niveles de atajo: «Aprendiendo», «Cogiendo el tranquillo», «Casi lo tienes» y «Dominado».
+2. **Reparto:** se queda en un 55 % escribir y un 45 % hábitos.
+3. **Ritmo de los niveles:** el usuario normal llega al nivel 50 en un año. Ver «Niveles».
+4. **Premios:** uno cada 3 niveles, con accesorios y skins.
