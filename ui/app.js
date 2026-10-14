@@ -278,6 +278,7 @@ function renderSettings() {
   $('s-pet').checked = settings.show_pet;
   $('s-goal').value = String(settings.daily_goal_min);
   $('s-weekend').checked = settings.weekend_rest;
+  $('s-shortcuts').checked = settings.count_shortcuts;
   $('s-updates').checked = settings.check_updates;
   $('s-auto-update').checked = settings.auto_update;
   $('s-auto-update').disabled = !settings.check_updates;
@@ -302,6 +303,7 @@ async function refreshAll() {
     renderYesterday().catch(showError);
     renderGoal().catch(showError);
     Progress.refresh(range).then(() => Badges.refresh()).then(() => League.refresh()).catch(showError);
+    Shortcuts.refresh(range).catch(showError);
     const s = await renderSummary();
     if (s.bursts > 0) await Promise.all([renderHeatmap(s.reference), renderApps()]);
   } catch (e) {
@@ -363,6 +365,7 @@ function bindControls() {
   $('s-goal').addEventListener('change', () => saveSettings({ daily_goal_min: Number($('s-goal').value) }).then(() => renderGoal()).catch(showError));
   $('s-weekend').addEventListener('change', () => saveSettings({ weekend_rest: $('s-weekend').checked }).then(() => renderGoal()).catch(showError));
   $('s-pet').addEventListener('change', () => saveSettings({ show_pet: $('s-pet').checked }));
+  $('s-shortcuts').addEventListener('change', () => saveSettings({ count_shortcuts: $('s-shortcuts').checked }).then(() => Shortcuts.refresh()).catch(showError));
   $('s-updates').addEventListener('change', async () => {
     await saveSettings({ check_updates: $('s-updates').checked });
     renderSettings();
@@ -749,6 +752,7 @@ async function bindEvents() {
   await listen('tapomo://record', blush);
   await listen('tapomo://goal', goalReached);
   await listen('tapomo://xp', (e) => Progress.onXp(e.payload).catch(showError));
+  await listen('tapomo://shortcut', () => Shortcuts.bump());
   await listen('tapomo://settings', async () => {
     settings = await invoke('get_settings');
     renderSettings();
@@ -759,7 +763,7 @@ async function bindEvents() {
 
 // ----------------------------------------------------------------- glossary
 
-const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak', 'xp', 'challenges', 'wardrobe', 'badges', 'league'];
+const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak', 'xp', 'challenges', 'wardrobe', 'badges', 'league', 'shortcuts'];
 
 function renderGlossary() {
   const dl = $('glossary-list');

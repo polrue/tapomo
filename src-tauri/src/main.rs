@@ -10,6 +10,7 @@ mod password;
 mod pet;
 mod pet_tip;
 mod platform;
+mod shortcuts;
 mod tracker;
 mod updater;
 mod weekly;
@@ -71,6 +72,7 @@ fn main() {
             commands::get_league,
             commands::ack_league,
             commands::get_weekly_letter,
+            commands::get_shortcuts,
             commands::get_heatmap,
             commands::get_apps,
             commands::set_alias,

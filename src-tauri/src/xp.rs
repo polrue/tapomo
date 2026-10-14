@@ -78,7 +78,8 @@ fn goal_on(days: &[(i64, u64)], day: i64, settings: &db::Settings) -> Option<u32
 pub fn challenges(conn: &Connection, day: i64, settings: &db::Settings) -> rusqlite::Result<[Challenge; 3]> {
     let bursts = day_bursts(conn, day - xp::CALIBRATION_DAYS, day)?;
     let goal_ms = u64::from(settings.daily_goal_min) * 60_000;
-    Ok(xp::daily_challenges(&bursts, day, history_days(conn, day)?, goal_ms))
+    let shortcuts = if settings.count_shortcuts { crate::shortcuts::daily(conn)? } else { Vec::new() };
+    Ok(xp::daily_challenges(&bursts, day, history_days(conn, day)?, goal_ms, &shortcuts))
 }
 
 /// What a settle changed.
@@ -114,7 +115,10 @@ pub fn settle(conn: &Connection) -> rusqlite::Result<Settled> {
     };
     let from = db::get_raw(conn, "xp_settled_day")?.and_then(|v| v.parse::<i64>().ok()).unwrap_or(since).max(since);
     let mut new_challenges = Vec::new();
+    let shortcuts = crate::shortcuts::daily(conn)?;
     for day in from..=today {
+        let used = shortcuts.iter().filter(|(d, _)| *d == day).map(|(_, n)| *n).sum();
+        award(conn, day, "shortcuts", tapomo_core::shortcuts::shortcut_xp(used))?;
         award(conn, day, "typing", xp::typing_xp(chars.get(&day).copied().unwrap_or(0)))?;
         if let Some(streak) = goal_on(&days, day, &settings) {
             award(conn, day, "goal", xp::GOAL_XP)?;

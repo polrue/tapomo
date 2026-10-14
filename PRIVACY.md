@@ -2,7 +2,7 @@
 
 **Español** · [English](#tapomo-privacy-policy)
 
-*Última actualización: 13 de octubre de 2026.*
+*Última actualización: 15 de octubre de 2026.*
 
 Tapomo es una aplicación gratuita y de código abierto que mide a qué velocidad escribes. Está hecha para que **nada de lo que escribes salga nunca de tu equipo**, y casi nada se guarde siquiera en él.
 
@@ -23,7 +23,8 @@ En una base de datos SQLite local, en tu carpeta de usuario:
 
 - Para cada ráfaga de escritura: hora de inicio y fin, número de pulsaciones, número de borrados y la mejor velocidad de 10 segundos.
 - El **nombre del ejecutable** de la aplicación en primer plano (por ejemplo `WINWORD.EXE`) y el nombre propio que le pongas.
-- Tus ajustes y tu progreso: objetivo diario, días seguidos, etc.
+- Tus ajustes y tu progreso: objetivo diario, días seguidos, XP, insignias, etc.
+- Cuántos **atajos de teclado** usas cada día de cada tipo (copiar y pegar, deshacer, guardar, ventanas, otros). El atajo se convierte en su tipo dentro del propio gancho de teclado, así que nunca se guarda cuál fue. Se desactiva en Ajustes → «Contar atajos de teclado».
 
 **Nunca** se guarda: el texto, las teclas concretas, los títulos de ventana, las direcciones web, capturas de pantalla ni nada parecido.
 
@@ -56,7 +57,7 @@ Para cualquier duda, abre una incidencia en [github.com/polrue/tapomo/issues](ht
 
 # Tapomo privacy policy
 
-*Last updated: 13 October 2026.*
+*Last updated: 15 October 2026.*
 
 Tapomo is a free, open-source app that measures how fast you type. It is built so that **nothing you type ever leaves your computer**, and almost nothing is even stored on it.
 
@@ -77,7 +78,8 @@ In a local SQLite database in your user folder:
 
 - For each typing burst: start and end time, keystroke count, delete count and the best 10-second speed.
 - The foreground application's **executable name** (e.g. `WINWORD.EXE`) and any friendly name you give it.
-- Your settings and progress: daily goal, days in a row, etc.
+- Your settings and progress: daily goal, days in a row, XP, badges, etc.
+- How many **keyboard shortcuts** you use each day of each kind (copy & paste, undo, save, windows, other). The shortcut becomes its kind inside the keyboard hook itself, so which one it was is never stored. Turn it off in Settings → "Count keyboard shortcuts".
 
 **Never** stored: text, individual keys, window titles, web addresses, screenshots or anything similar.
 

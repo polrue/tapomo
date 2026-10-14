@@ -90,6 +90,15 @@
       </div>
     </section>
 
+    <section class="card shortcuts" id="shortcuts" aria-labelledby="sc-title" hidden>
+      <div class="sc-head">
+        <h2><span id="sc-title" data-i18n="shortcuts.title"></span><button type="button" class="info" data-tip="tip.shortcuts" data-i18n-aria="tip.more">i</button></h2>
+        <strong class="sc-total" id="sc-total"></strong>
+      </div>
+      <p class="sc-line muted" id="sc-line"></p>
+      <ul class="chips sc-kinds" id="sc-kinds"></ul>
+    </section>
+
     <section class="card challenges" id="challenges" aria-labelledby="ch-title" hidden>
       <h2><span id="ch-title" data-i18n="ch.title"></span><button type="button" class="info" data-tip="tip.challenges" data-i18n-aria="tip.more">i</button></h2>
       <ul class="ch-list" id="ch-list"></ul>
@@ -210,6 +219,8 @@
       <label class="check"><input id="s-weekend" type="checkbox"><span data-i18n="settings.weekend_rest"></span></label>
       <p class="hint" data-i18n="settings.weekend_rest.hint"></p>
 
+      <label class="check"><input id="s-shortcuts" type="checkbox"><span data-i18n="settings.count_shortcuts"></span></label>
+      <p class="hint" data-i18n="settings.count_shortcuts.hint"></p>
       <label class="check"><input id="s-autostart" type="checkbox"><span data-i18n="settings.autostart"></span></label>
       <label class="check"><input id="s-fullscreen" type="checkbox"><span data-i18n="settings.fullscreen"></span></label>
       <p class="hint" data-i18n="settings.fullscreen.hint"></p>
@@ -244,6 +255,7 @@
       <p id="about-version" class="muted"></p>
       <p class="privacy" data-i18n="about.privacy"></p>
       <p class="privacy" data-i18n="about.privacy_passwords"></p>
+      <p class="privacy" data-i18n="about.privacy_shortcuts"></p>
       <p><button type="button" id="welcome-again" data-i18n="welcome.again"></button></p>
       <p class="links">
         <a href="https://github.com/polrue/tapomo" target="_blank" rel="noopener" data-i18n="about.source"></a>
@@ -346,6 +358,7 @@
   <script src="welcome.js"></script>
   <script src="badges-art.js"></script>
   <script src="badges.js"></script>
+  <script src="shortcuts.js"></script>
   <script src="weekly.js"></script>
   <script src="league.js"></script>
   <script src="xp.js"></script>

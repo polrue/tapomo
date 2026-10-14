@@ -62,6 +62,10 @@ fn facts(conn: &Connection) -> rusqlite::Result<Facts> {
         night_owl: exists(format!("SELECT 1 FROM bursts WHERE {HOUR} >= 23"))?,
         full_goal_week: badges::full_goal_week(&days, goal_ms, settings.weekend_rest),
         full_houses: conn.query_row("SELECT COUNT(*) FROM xp_events WHERE kind = 'full'", [], |r| r.get(0))?,
+        shortcuts: conn.query_row("SELECT COALESCE(SUM(count), 0) FROM shortcut_days", [], |r| r.get::<_, i64>(0))?.max(0) as u64,
+        best_day_shortcuts: conn
+            .query_row("SELECT COALESCE(MAX(n), 0) FROM (SELECT SUM(count) AS n FROM shortcut_days GROUP BY day)", [], |r| r.get::<_, i64>(0))?
+            .max(0) as u64,
     })
 }
 
