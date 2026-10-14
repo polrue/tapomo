@@ -6,6 +6,7 @@ mod db;
 mod hook;
 mod i18n;
 mod league;
+mod lessons;
 mod password;
 mod pet;
 mod pet_tip;
@@ -75,6 +76,9 @@ fn main() {
             commands::get_weekly_letter,
             commands::get_shortcuts,
             commands::get_records,
+            commands::save_lesson,
+            commands::get_lessons_progress,
+            commands::get_hard_keys,
             commands::get_heatmap,
             commands::get_apps,
             commands::set_alias,

@@ -105,6 +105,40 @@ pub fn get_records(state: State<AppState>) -> CmdResult<Vec<crate::records::Reco
     state.with_db(crate::records::list)
 }
 
+/// Stores a finished lesson, gives its XP and tells every window, like the tracker does for typing.
+#[tauri::command]
+pub fn save_lesson(app: AppHandle, state: State<AppState>, run: crate::lessons::LessonRun) -> CmdResult<crate::lessons::Saved> {
+    let (saved, before, after, badges) = state.with_db(|c| {
+        let before = crate::xp::total(c)?;
+        let saved = crate::lessons::save(c, &run)?;
+        let badges = crate::badges::check(c)?;
+        Ok((saved, before, crate::xp::total(c)?, badges))
+    })?;
+    let _ = state.tx.send(Msg::XpRefresh);
+    let _ = app.emit(
+        "tapomo://xp",
+        serde_json::json!({
+            "xp": after,
+            "level": tapomo_core::xp::level_for_xp(after),
+            "prev_level": tapomo_core::xp::level_for_xp(before),
+            "challenges": [],
+            "badges": badges,
+        }),
+    );
+    Ok(saved)
+}
+
+#[tauri::command]
+pub fn get_lessons_progress(state: State<AppState>, layout: String) -> CmdResult<crate::lessons::Progress> {
+    state.with_db(|c| crate::lessons::progress(c, &layout))
+}
+
+/// Keys of the lesson texts the user misses most (for the custom practice).
+#[tauri::command]
+pub fn get_hard_keys(state: State<AppState>, layout: String) -> CmdResult<Vec<String>> {
+    state.with_db(|c| crate::lessons::hard_keys(c, &layout, 6))
+}
+
 #[tauri::command]
 pub fn get_heatmap(state: State<AppState>, range: String) -> CmdResult<Vec<HeatCell>> {
     state.with_db(|c| db::heatmap(c, &range))

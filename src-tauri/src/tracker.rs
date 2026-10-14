@@ -32,6 +32,8 @@ pub enum Msg {
     Reload,
     /// A key was dropped because a password field has focus: close the open burst.
     PasswordFocus,
+    /// XP changed outside the tracker (a lesson): re-read the total so no level-up is announced twice.
+    XpRefresh,
     /// A shortcut of this kind was used in the window with this handle (the key itself is never sent).
     Shortcut(tapomo_core::shortcuts::ShortcutKind, isize),
     /// Flush the open burst, save and stop. The sender is acknowledged when done.
@@ -225,6 +227,11 @@ impl Tracker {
                 }
                 Ok(Msg::Reload) => self.reload(),
                 Ok(Msg::Shortcut(kind, hwnd)) => self.on_shortcut(kind, hwnd),
+                Ok(Msg::XpRefresh) => {
+                    if let Ok(total) = xp::total(&self.conn) {
+                        self.xp_total = total;
+                    }
+                }
                 Ok(Msg::PasswordFocus) => {
                     self.shared.last_key_ms.store(now_ms(), Ordering::Relaxed);
                     self.last_key_ms = None;
@@ -292,7 +299,7 @@ impl Tracker {
             return;
         }
         let Some(exe) = self.exe_for(key.hwnd) else { return };
-        if self.excluded.contains(&exe.to_lowercase()) {
+        if self.excluded.contains(&exe.to_lowercase()) || is_own_exe(&exe) {
             return;
         }
         let Some(app_id) = self.app_id(&exe) else { return };
@@ -322,7 +329,7 @@ impl Tracker {
             return;
         }
         let Some(exe) = self.exe_for(hwnd) else { return };
-        if self.excluded.contains(&exe.to_lowercase()) {
+        if self.excluded.contains(&exe.to_lowercase()) || is_own_exe(&exe) {
             return;
         }
         if let Err(e) = shortcuts::add(&self.conn, kind) {
@@ -537,6 +544,14 @@ impl Tracker {
         }
         self.fullscreen.1
     }
+}
+
+/// Tapomo's own windows (settings fields, lessons) are never measured: lesson typing has its own stats.
+fn is_own_exe(exe: &str) -> bool {
+    static OWN: std::sync::OnceLock<Option<String>> = std::sync::OnceLock::new();
+    OWN.get_or_init(|| std::env::current_exe().ok()?.file_name()?.to_str().map(str::to_lowercase))
+        .as_deref()
+        .is_some_and(|own| own == exe.to_lowercase())
 }
 
 /// Class name for the mascot animation: never the key itself.

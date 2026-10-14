@@ -1,0 +1,154 @@
+/* On-screen keyboard (keyboard.js). Colours by finger, soft keycaps, gentle highlight. */
+.kb {
+  --kb-ink: var(--ink, #23202b);
+  --kb-text: #3a3444;
+  --kb-sub: #6d6579;
+  --kb-dead: var(--accent-strong, #f0764a);
+  --kb-edge: rgba(35, 32, 43, 0.22);
+  --kb-lip-mix: #8a7a74;
+  --kb-thumb: #f4eee9;
+  --kb-f0: #ffd3dc; /* left pinky  - rose */
+  --kb-f1: #ffdfc4; /* left ring   - peach */
+  --kb-f2: #fff0b3; /* left middle - butter */
+  --kb-f3: #d6f1cb; /* left index  - mint */
+  --kb-f6: #c8ecf3; /* right index - aqua */
+  --kb-f7: #d3ddff; /* right middle - periwinkle */
+  --kb-f8: #e5d6fb; /* right ring  - lilac */
+  --kb-f9: #f9d2ec; /* right pinky - orchid */
+  --kb-next: var(--accent, #ff9e7a);
+  --kb-next-ring: var(--accent-strong, #f0764a);
+  --kb-ok: #7fd49a;
+  --kb-bad: #f29a9a;
+  font-family: var(--font, "Nunito", "Segoe UI", system-ui, sans-serif);
+  container-type: inline-size;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  .kb {
+    --kb-text: #f5eefb;
+    --kb-sub: #c9bfd8;
+    --kb-dead: #ffb597;
+    --kb-edge: rgba(0, 0, 0, 0.45);
+    --kb-lip-mix: #0e0c12;
+    --kb-thumb: #3a3444;
+    --kb-f0: #6a4053;
+    --kb-f1: #6b4e3a;
+    --kb-f2: #655a36;
+    --kb-f3: #405f47;
+    --kb-f6: #335b64;
+    --kb-f7: #414d76;
+    --kb-f8: #554574;
+    --kb-f9: #674266;
+    --kb-ok: #5fbf7f;
+    --kb-bad: #d97a7a;
+  }
+}
+
+.kb-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  user-select: none;
+}
+
+.kb-key { --fc: var(--kb-thumb); }
+.kb-f0 { --fc: var(--kb-f0); }
+.kb-f1 { --fc: var(--kb-f1); }
+.kb-f2 { --fc: var(--kb-f2); }
+.kb-f3 { --fc: var(--kb-f3); }
+.kb-f4, .kb-f5 { --fc: var(--kb-thumb); }
+.kb-f6 { --fc: var(--kb-f6); }
+.kb-f7 { --fc: var(--kb-f7); }
+.kb-f8 { --fc: var(--kb-f8); }
+.kb-f9 { --fc: var(--kb-f9); }
+
+.kb-lip {
+  fill: color-mix(in oklab, var(--fc) 70%, var(--kb-lip-mix));
+  stroke: var(--kb-edge);
+  stroke-width: 1.2;
+}
+.kb-face { fill: var(--fc); }
+.kb-ring { fill: none; stroke: var(--kb-next-ring); stroke-width: 0; opacity: 0; }
+.kb-flash { opacity: 0; pointer-events: none; }
+.kb-flash.ok { fill: var(--kb-ok); }
+.kb-flash.bad { fill: var(--kb-bad); }
+
+.kb-key text { fill: var(--kb-text); }
+.kb-main { font-size: 15px; font-weight: 800; }
+.kb-sub { font-size: 12px; font-weight: 700; }
+.kb-base { font-size: 13px; }
+.kb-alt { font-size: 10px; font-weight: 700; fill: var(--kb-sub) !important; }
+.kb-key .kb-dead { fill: var(--kb-dead); }
+.kb-modtext { font-size: 10.5px; font-weight: 700; fill: var(--kb-sub) !important; }
+.kb-icon { fill: none; stroke: var(--kb-sub); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.kb-icon-fill { fill: var(--kb-sub); }
+.kb-bump { fill: color-mix(in oklab, var(--fc) 55%, var(--kb-lip-mix)); }
+
+/* Narrow: the SVG shrinks, so labels grow a little to stay readable. */
+@container (max-width: 520px) {
+  .kb-main { font-size: 18px; }
+  .kb-sub { font-size: 12.5px; }
+  .kb-base { font-size: 14px; }
+  .kb-alt { font-size: 11.5px; }
+  .kb-modtext { font-size: 12px; }
+}
+
+/* Highlight: the key(s) to press now, the rest step back a little. */
+.kb-key { transition: opacity 0.18s ease; }
+.has-next .kb-key:not(.is-next):not(.is-then) { opacity: 0.72; }
+.kb-key.is-next { --fc: var(--kb-next); }
+.kb-key.is-next text { fill: #23202b !important; }
+.kb-key.is-next .kb-icon { stroke: #23202b; }
+.kb-key.is-next .kb-icon-fill { fill: #23202b; }
+.kb-key.is-next .kb-ring {
+  stroke-width: 2.5;
+  opacity: 1;
+  animation: kb-pulse 1.4s ease-in-out infinite;
+}
+.kb-key.is-next[data-level="altgr"] .kb-alt { font-size: 13px; font-weight: 800; fill: #23202b !important; }
+.kb-key.is-next[data-level="altgr"] .kb-sub { opacity: 0.55; }
+.kb-key.is-then .kb-ring {
+  stroke-width: 2;
+  stroke-dasharray: 4 3.5;
+  opacity: 0.85;
+}
+
+@keyframes kb-pulse {
+  0%, 100% { stroke-width: 2.5; opacity: 1; }
+  50% { stroke-width: 5; opacity: 0.35; }
+}
+
+.kb-badge circle { fill: var(--kb-next-ring); stroke: var(--bg, #fff8f3); stroke-width: 1.5; }
+.kb-badge-2 circle { fill: var(--card, #fff); stroke: var(--kb-next-ring); stroke-width: 1.5; }
+.kb-badge text { font-size: 10.5px; font-weight: 800; fill: #fff; }
+.kb-badge-2 text { fill: var(--kb-next-ring); }
+
+@media (prefers-reduced-motion: reduce) {
+  .kb-key { transition: none; }
+  .kb-key.is-next .kb-ring { animation: none; stroke-width: 3; }
+}
+
+/* Optional legend (render(..., { legend: true })). */
+.kb-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  font-size: 0.82rem;
+  color: var(--muted, #7b7589);
+}
+.kb-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.kb-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background: var(--fc);
+  box-shadow: inset 0 -2px 0 color-mix(in oklab, var(--fc) 70%, var(--kb-lip-mix)), 0 0 0 1px var(--kb-edge);
+}
