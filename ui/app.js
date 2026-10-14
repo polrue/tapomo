@@ -280,6 +280,8 @@ function renderSettings() {
   $('s-weekend').checked = settings.weekend_rest;
   $('s-shortcuts').checked = settings.count_shortcuts;
   $('s-lessons-goal').checked = settings.lessons_in_goal;
+  $('s-sc-tips').checked = settings.shortcut_tips;
+  $('s-sc-tips').disabled = !settings.count_shortcuts;
   $('s-updates').checked = settings.check_updates;
   $('s-auto-update').checked = settings.auto_update;
   $('s-auto-update').disabled = !settings.check_updates;
@@ -305,6 +307,7 @@ async function refreshAll() {
     renderGoal().catch(showError);
     Progress.refresh(range).then(() => Badges.refresh()).then(() => League.refresh()).catch(showError);
     Shortcuts.refresh(range).catch(showError);
+    Album.refreshTip(range).catch(showError);
     Records.refresh().catch(showError);
     const s = await renderSummary();
     if (s.bursts > 0) await Promise.all([renderHeatmap(s.reference), renderApps()]);
@@ -369,8 +372,9 @@ function bindControls() {
   $('s-goal').addEventListener('change', () => saveSettings({ daily_goal_min: Number($('s-goal').value) }).then(() => renderGoal()).catch(showError));
   $('s-weekend').addEventListener('change', () => saveSettings({ weekend_rest: $('s-weekend').checked }).then(() => renderGoal()).catch(showError));
   $('s-pet').addEventListener('change', () => saveSettings({ show_pet: $('s-pet').checked }));
+  $('s-sc-tips').addEventListener('change', () => saveSettings({ shortcut_tips: $('s-sc-tips').checked }).then(() => Album.refreshTip()).catch(showError));
   $('s-lessons-goal').addEventListener('change', () => saveSettings({ lessons_in_goal: $('s-lessons-goal').checked }).then(() => renderGoal()).catch(showError));
-  $('s-shortcuts').addEventListener('change', () => saveSettings({ count_shortcuts: $('s-shortcuts').checked }).then(() => Shortcuts.refresh()).catch(showError));
+  $('s-shortcuts').addEventListener('change', () => saveSettings({ count_shortcuts: $('s-shortcuts').checked }).then(() => { renderSettings(); Shortcuts.refresh(); Album.refreshTip(); }).catch(showError));
   $('s-updates').addEventListener('change', async () => {
     await saveSettings({ check_updates: $('s-updates').checked });
     renderSettings();
@@ -758,6 +762,7 @@ async function bindEvents() {
   await listen('tapomo://goal', goalReached);
   await listen('tapomo://xp', (e) => Progress.onXp(e.payload).catch(showError));
   await listen('tapomo://shortcut', () => Shortcuts.bump());
+  await listen('tapomo://shortcut-learnt', () => Album.onUsed());
   await listen('tapomo://settings', async () => {
     settings = await invoke('get_settings');
     renderSettings();
@@ -768,7 +773,7 @@ async function bindEvents() {
 
 // ----------------------------------------------------------------- glossary
 
-const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak', 'xp', 'challenges', 'wardrobe', 'badges', 'league', 'shortcuts', 'records', 'lessons'];
+const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak', 'xp', 'challenges', 'wardrobe', 'badges', 'league', 'shortcuts', 'records', 'lessons', 'album'];
 
 function renderGlossary() {
   const dl = $('glossary-list');
@@ -805,6 +810,7 @@ async function init() {
   bindControls();
   Progress.bind();
   Lessons.bind();
+  Album.bind();
   $('hide-btn').addEventListener('click', comeOut);
   Tips.init({
     vars: () => ({

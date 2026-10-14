@@ -139,6 +139,23 @@ pub fn get_hard_keys(state: State<AppState>, layout: String) -> CmdResult<Vec<St
     state.with_db(|c| crate::lessons::hard_keys(c, &layout, 6))
 }
 
+/// Today's shortcut tip (one a day), if any.
+#[tauri::command]
+pub fn get_shortcut_tip(state: State<AppState>, lang: String) -> CmdResult<Option<crate::catalog::Tip>> {
+    state.with_db(|c| crate::catalog::tip(c, &lang))
+}
+
+/// "Ya lo sé": stop suggesting this shortcut.
+#[tauri::command]
+pub fn mark_shortcut_known(state: State<AppState>, id: String) -> CmdResult<()> {
+    state.with_db(|c| crate::catalog::mark_known(c, &id))
+}
+
+#[tauri::command]
+pub fn get_shortcut_album(state: State<AppState>, lang: String) -> CmdResult<Vec<crate::catalog::AlbumItem>> {
+    state.with_db(|c| crate::catalog::album(c, &lang))
+}
+
 #[tauri::command]
 pub fn get_heatmap(state: State<AppState>, range: String) -> CmdResult<Vec<HeatCell>> {
     state.with_db(|c| db::heatmap(c, &range))
@@ -236,6 +253,7 @@ fn changed_settings(old: &Settings, new: &Settings) -> Vec<&'static str> {
         ("wear_style", old.wear_style != new.wear_style),
         ("count_shortcuts", old.count_shortcuts != new.count_shortcuts),
         ("lessons_in_goal", old.lessons_in_goal != new.lessons_in_goal),
+        ("shortcut_tips", old.shortcut_tips != new.shortcut_tips),
     ]
     .into_iter()
     .filter_map(|(name, changed)| changed.then_some(name))

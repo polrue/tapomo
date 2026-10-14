@@ -24,7 +24,8 @@ En una base de datos SQLite local, en tu carpeta de usuario:
 - Para cada ráfaga de escritura: hora de inicio y fin, número de pulsaciones, número de borrados y la mejor velocidad de 10 segundos.
 - El **nombre del ejecutable** de la aplicación en primer plano (por ejemplo `WINWORD.EXE`) y el nombre propio que le pongas.
 - Tus ajustes y tu progreso: objetivo diario, días seguidos, XP, insignias, etc.
-- Cuántos **atajos de teclado** usas cada día de cada tipo (copiar y pegar, deshacer, guardar, ventanas, otros). El atajo se convierte en su tipo dentro del propio gancho de teclado, así que nunca se guarda cuál fue. Se desactiva en Ajustes → «Contar atajos de teclado».
+- De las **lecciones** (el texto es de Tapomo, no tuyo): resultados y qué teclas del texto de la lección fallas más, para prepararte práctica a medida.
+- Cuántos **atajos de teclado** usas cada día de cada tipo (copiar y pegar, deshacer, guardar, ventanas, otros). El atajo se convierte en su tipo dentro del propio gancho de teclado. Solo los atajos del **álbum** (un catálogo cerrado y público de unos 30, en [`data/shortcuts.json`](data/shortcuts.json), sin ninguno sensible como abrir una ventana de incógnito) se reconocen por su nombre, y de cada uno solo se guarda en cuántos días distintos lo has usado. Cualquier otra combinación cuenta como «otros» sin saber cuál fue. Se desactiva en Ajustes → «Contar atajos de teclado».
 
 **Nunca** se guarda: el texto, las teclas concretas, los títulos de ventana, las direcciones web, capturas de pantalla ni nada parecido.
 
@@ -79,7 +80,8 @@ In a local SQLite database in your user folder:
 - For each typing burst: start and end time, keystroke count, delete count and the best 10-second speed.
 - The foreground application's **executable name** (e.g. `WINWORD.EXE`) and any friendly name you give it.
 - Your settings and progress: daily goal, days in a row, XP, badges, etc.
-- How many **keyboard shortcuts** you use each day of each kind (copy & paste, undo, save, windows, other). The shortcut becomes its kind inside the keyboard hook itself, so which one it was is never stored. Turn it off in Settings → "Count keyboard shortcuts".
+- From **lessons** (the text is Tapomo's, not yours): results and which keys of the lesson text you miss most, to build tailored practice.
+- How many **keyboard shortcuts** you use each day of each kind (copy & paste, undo, save, windows, other). The shortcut becomes its kind inside the keyboard hook itself. Only **album** shortcuts (a closed, public catalogue of about 30, in [`data/shortcuts.json`](data/shortcuts.json), with nothing sensitive such as opening an incognito window) are recognised by name, and for each one only the number of different days you used it is stored. Any other combination counts as "other" without knowing which. Turn it off in Settings → "Count keyboard shortcuts".
 
 **Never** stored: text, individual keys, window titles, web addresses, screenshots or anything similar.
 
