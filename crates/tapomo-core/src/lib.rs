@@ -10,6 +10,7 @@
 
 pub mod badges;
 pub mod league;
+pub mod lessons;
 pub mod shortcuts;
 pub mod xp;
 

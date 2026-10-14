@@ -17,7 +17,7 @@ Reglas que valen para todo el plan:
 | 0.1 | Medición pasiva por ráfagas, estadísticas, calendario, apps | Hecho |
 | 0.2 | Barra de velocidad personal, Tapomo flotante, caras de racha, estrellitas, bienvenida, instalador con Tapomo, aviso de versión nueva | Hecho |
 | 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (hechas: 0.3.0 objetivo diario y días seguidos; 0.3.1 actualizador y caracteres por minuto; 0.3.2 XP, niveles, retos, armario y zonas nuevas; 0.3.3 insignias; 0.3.4 liga contigo mismo; 0.3.5 carta semanal; 0.3.6 atajos por tipos; 0.3.7 récords) |
-| 0.4 | Lecciones de mecanografía (ES + US) y entrenador de atajos | Pendiente |
+| 0.4 | Lecciones de mecanografía (ES + US) y entrenador de atajos | En curso (0.4.0 motor y filas) |
 | 0.5 | Web tapomo.app, estadísticas anónimas opcionales, ligas entre amigos | Pendiente |
 | Más tarde | Cifrado de la base de datos, más idiomas | Pendiente |
 | Aparte | Firma de código (SignPath), web tapomo.app, Microsoft Store y winget. Ver [`distribution.md`](distribution.md) | En curso |
@@ -120,6 +120,8 @@ Pantalla de insignias con las conseguidas en color y las pendientes en silueta s
 ---
 
 ## 0.4 — Lecciones de mecanografía
+
+> **Reparto en versiones (15-10-2026):** 0.4.0 motor, teclados ES y US y las tres filas · 0.4.1 resto de unidades (mayúsculas, números, puntuación, acentos, palabras, frases) · 0.4.2 práctica de tus teclas difíciles y lecciones en el objetivo diario · 0.4.3 entrenador de atajos (fase B).
 
 Lo que hace único a Tapomo: puede decir «desde que empezaste las lecciones tu velocidad **real** ha pasado de 52 a 61 ppm», porque mide la escritura del día a día.
 
