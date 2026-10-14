@@ -57,6 +57,22 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
              COMMIT;",
         )?;
     }
+    if version < 3 {
+        // XP ledger (0.3.2): one row per day and kind of award, amounts only. Additive only.
+        conn.execute_batch(
+            "BEGIN;
+             CREATE TABLE xp_events (
+                 id INTEGER PRIMARY KEY,
+                 ts INTEGER NOT NULL,
+                 day INTEGER NOT NULL,
+                 kind TEXT NOT NULL,
+                 amount INTEGER NOT NULL,
+                 UNIQUE(day, kind)
+             );
+             PRAGMA user_version = 3;
+             COMMIT;",
+        )?;
+    }
     Ok(())
 }
 
@@ -82,6 +98,11 @@ pub struct Settings {
     pub daily_goal_min: u32,
     /// Saturdays and Sundays never break the day streak.
     pub weekend_rest: bool,
+    /// What Tapomo wears: skin id, accessory ids and drawing style (`bold` or `subtle`). The ids
+    /// belong to `ui/wardrobe.js`, which ignores unknown or locked ones.
+    pub skin: String,
+    pub accessories: Vec<String>,
+    pub wear_style: String,
 }
 
 /// Goal choices offered in the settings; anything else falls back to the default.
@@ -122,6 +143,11 @@ pub fn get_settings(conn: &Connection) -> rusqlite::Result<Settings> {
         welcome_done: flag("welcome_done", false)?,
         daily_goal_min: valid_goal(get_raw(conn, "daily_goal_min")?.and_then(|v| v.parse().ok()).unwrap_or(DEFAULT_GOAL_MIN)),
         weekend_rest: flag("weekend_rest", false)?,
+        skin: get_raw(conn, "skin")?.unwrap_or_else(|| "clasico".into()),
+        accessories: get_raw(conn, "accessories")?
+            .map(|v| v.split(',').map(str::trim).filter(|s| !s.is_empty()).map(String::from).collect())
+            .unwrap_or_default(),
+        wear_style: get_raw(conn, "wear_style")?.filter(|v| v == "subtle").unwrap_or_else(|| "bold".into()),
     })
 }
 
@@ -137,7 +163,11 @@ pub fn set_settings(conn: &Connection, s: &Settings) -> rusqlite::Result<()> {
     set_raw(conn, "auto_update", b(s.auto_update))?;
     set_raw(conn, "welcome_done", b(s.welcome_done))?;
     set_raw(conn, "daily_goal_min", &valid_goal(s.daily_goal_min).to_string())?;
-    set_raw(conn, "weekend_rest", b(s.weekend_rest))
+    set_raw(conn, "weekend_rest", b(s.weekend_rest))?;
+    let id = |v: &str| v.chars().filter(|c| c.is_ascii_alphanumeric() || *c == '_').take(32).collect::<String>();
+    set_raw(conn, "skin", &id(&s.skin))?;
+    set_raw(conn, "accessories", &s.accessories.iter().map(|a| id(a)).filter(|a| !a.is_empty()).take(16).collect::<Vec<_>>().join(","))?;
+    set_raw(conn, "wear_style", if s.wear_style == "subtle" { "subtle" } else { "bold" })
 }
 
 /// Saved position of the floating Tapomo (physical px). Kept out of [`Settings`]

@@ -1,0 +1,80 @@
+/* Level card, "Retos del día", wardrobe and level-up reveal (0.3.2). Uses the tokens in style.css. */
+
+/* ------------------------------------------------------------ level card */
+.level { display: flex; align-items: center; gap: 16px; padding: 14px 20px; }
+.lv-badge {
+  flex: none; width: 72px; height: 72px; border-radius: 22px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--accent); color: #23202b; line-height: 1;
+}
+.lv-badge span { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; opacity: .75; }
+.lv-badge strong { font-size: 1.9rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.lv-body { flex: 1; min-width: 0; }
+.lv-row { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-weight: 800; }
+.lv-xp { font-variant-numeric: tabular-nums; }
+.lv-today { color: var(--accent-strong); font-size: 0.9rem; }
+.lv-bar { height: 12px; border-radius: 999px; background: var(--cell-empty); overflow: hidden; margin: 6px 0; }
+.lv-bar i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--accent), #ffc93c); transition: width 700ms cubic-bezier(.34, 1.3, .64, 1); }
+.lv-next { margin: 0; color: var(--muted); font-size: 0.88rem; }
+
+/* ------------------------------------------------------------ challenges */
+.ch-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ch {
+  position: relative; display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 4px 10px;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg);
+}
+.ch-stamp { width: 24px; height: 24px; border-radius: 999px; border: 2px dashed var(--muted-fill); }
+.ch[data-done] .ch-stamp {
+  border: none; background: var(--accent) no-repeat center / 16px
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3 3 7-7' fill='none' stroke='%2323202b' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.ch-text { min-width: 0; }
+.ch[data-done] .ch-text { color: var(--muted); }
+.ch-meta { font-size: 0.85rem; font-weight: 800; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ch[data-done] .ch-meta { color: var(--accent-strong); }
+.ch-bar { grid-column: 2 / 4; height: 5px; border-radius: 999px; background: var(--cell-empty); overflow: hidden; }
+.ch-bar::before { content: ""; display: block; height: 100%; width: var(--p, 0%); background: var(--accent); border-radius: inherit; }
+.ch-new .ch-stamp { animation: ch-stamp 650ms cubic-bezier(.34, 1.6, .64, 1); }
+@keyframes ch-stamp { 0% { transform: scale(2.2) rotate(-25deg); opacity: 0; } 60% { opacity: 1; } 100% { transform: none; } }
+.ch-full { margin: 10px 0 0; font-weight: 800; color: var(--accent-strong); }
+
+/* --------------------------------------------------------------- wardrobe */
+.wardrobe summary { cursor: pointer; list-style: none; }
+.wardrobe summary::-webkit-details-marker { display: none; }
+.wardrobe summary h2 { display: inline; }
+.wardrobe summary::after { content: "▾"; margin-left: 8px; color: var(--muted); }
+.wardrobe[open] summary::after { content: "▴"; }
+.wd-style { border: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.wd-style legend { float: left; font-weight: 700; margin-right: 8px; padding: 0; }
+.wd-style label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.wd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+.wd-item {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 6px 10px;
+  background: var(--bg); color: var(--ink); border: 2px solid var(--line); border-radius: 14px;
+  font: inherit; font-size: 0.82rem; font-weight: 700; line-height: 1.2; text-align: center; cursor: pointer;
+}
+.wd-item:hover:not(:disabled) { border-color: var(--accent); background: var(--bg); color: var(--ink); }
+.wd-item[aria-pressed="true"] { border-color: var(--accent-strong); background: color-mix(in srgb, var(--accent) 18%, var(--bg)); }
+.wd-item:disabled { cursor: default; }
+.wd-thumb { width: 84px; height: 84px; overflow: visible; }
+.wd-item[data-locked] .wd-thumb { filter: brightness(0); opacity: .12; }
+.wd-item[data-locked] .wd-name { color: var(--muted); }
+.wd-lock { font-size: 0.75rem; color: var(--muted); min-height: 1em; }
+.wd-item[aria-pressed="true"] .wd-lock { color: var(--accent-strong); }
+.wd-removed { margin: 0 0 8px; color: var(--accent-strong); font-weight: 700; }
+/* Thumbnails are still pictures: no breathing, blinking or glints. */
+.wd-thumb *, .lvup-item svg * { animation-play-state: paused; }
+
+/* ----------------------------------------------------------------- reveal */
+.lvup-card { text-align: center; }
+.lvup-items { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 12px 0 4px; }
+.lvup-item { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 132px; }
+.lvup-item svg { width: 112px; height: 112px; overflow: visible; }
+.lvup-item figcaption { font-weight: 800; }
+.lvup-item button { padding: 4px 14px; border-radius: 999px; margin-top: auto; }
+.lvup-nav { justify-content: center; margin-top: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lv-bar i { transition: none; }
+  .ch-new .ch-stamp { animation: none; }
+}

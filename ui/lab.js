@@ -67,7 +67,8 @@
   const REF = 100;
   const BEST = 40;
   const model = { wpm: null, calibrating: null, streak: 0 };
-  const zoneOf = (p) => (p > 100 ? 'beating' : p >= 85 ? 'fire' : p >= 60 ? 'good' : 'warming');
+  const zoneOf = (p) =>
+    p >= 108 ? 'super' : p >= 95 ? 'beating' : p >= 80 ? 'fire' : p >= 60 ? 'good' : p >= 40 ? 'rhythm' : 'warming';
   function pushLive() {
     const wpm = model.wpm;
     const percent = wpm != null && !model.calibrating ? (wpm / REF) * 100 : null;
@@ -151,10 +152,10 @@
 
   const zones = $('g-zone');
   button(zones, 'Idle', () => { model.wpm = null; model.calibrating = null; pushLive(); }, false);
-  button(zones, 'Warming up', () => { model.wpm = 40; model.calibrating = null; pushLive(); }, false);
-  button(zones, 'Good', () => { model.wpm = 72; model.calibrating = null; pushLive(); }, false);
-  button(zones, 'On fire', () => { model.wpm = 92; model.calibrating = null; pushLive(); }, false);
-  button(zones, 'Beating yourself', () => { model.wpm = 125; model.calibrating = null; pushLive(); }, false);
+  // The mock's reference is 100, so wpm = % of the reference.
+  for (const [label, pct] of [['Warming up', 30], ['Finding your rhythm', 50], ['Good pace', 70], ['On a roll', 88], ['Beating yourself', 100], ['Supermochi', 115]]) {
+    button(zones, `${label} (${pct} %)`, () => { model.wpm = pct; model.calibrating = null; pushLive(); }, false);
+  }
   button(zones, 'Calibrating (7/20)', () => { model.wpm = 48; model.calibrating = { have: 7, need: 20 }; pushLive(); }, false);
 
   const react = $('g-react');

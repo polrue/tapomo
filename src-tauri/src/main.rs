@@ -10,6 +10,7 @@ mod pet_tip;
 mod platform;
 mod tracker;
 mod updater;
+mod xp;
 
 use std::sync::atomic::Ordering;
 use std::sync::mpsc;
@@ -60,6 +61,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             commands::get_summary,
             commands::get_daily_goal,
+            commands::get_xp,
+            commands::ack_xp,
             commands::get_heatmap,
             commands::get_apps,
             commands::set_alias,

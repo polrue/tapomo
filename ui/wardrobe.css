@@ -1,0 +1,51 @@
+/* Wardrobe (what Tapomo wears): styles for the rw-* layers drawn by wardrobe.js. Ported from the animation lab.
+   Uses --speed like mascot.css. Load after mascot.css. */
+.rw-layer > * { transition: opacity calc(200ms / var(--speed)) ease; }
+.mascot[data-shades="on"] .rw-glasses { opacity: 0; transition: opacity calc(160ms / var(--speed)) ease; }
+.rw-glasses { transition: opacity calc(260ms / var(--speed)) ease calc(200ms / var(--speed)); }
+.rw-halo-move { transition: transform calc(240ms / var(--speed)) ease; }
+.rw-halo { animation: rw-float calc(2.6s / var(--speed)) ease-in-out infinite; }
+@keyframes rw-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+.rw-crown-lift { transition: transform calc(240ms / var(--speed)) ease; }
+.mascot .tw > path { transform-box: fill-box; transform-origin: 50% 50%; }
+.mascot .tw { animation: rw-tw calc(1.9s / var(--speed)) ease-in-out infinite; animation-delay: calc(var(--dl, 0s) / var(--speed)); transform-box: fill-box; transform-origin: 50% 50%; }
+@keyframes rw-tw { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.7); } }
+.mascot.rw-straw .cheek { opacity: .8; }
+/* Bushy brows follow the face: happy (sparkle/star), determined (fire/beating zone), surprised
+   (wide eyes / tense), sad ("oops" dot eyes), asleep. Later rules win. */
+.mascot.rw-has-bb .m-brows { visibility: hidden; }
+.rw-bb-l, .rw-bb-r { transform-box: fill-box; transform-origin: 50% 50%; transition: transform calc(220ms / var(--speed)) cubic-bezier(.34,1.56,.64,1); }
+.mascot[data-eyes="sparkle"] .rw-bb-l, .mascot[data-eyes="star"] .rw-bb-l, .mascot[data-mouth="big"] .rw-bb-l { transform: translateY(-3px) rotate(-6deg); }
+.mascot[data-eyes="sparkle"] .rw-bb-r, .mascot[data-eyes="star"] .rw-bb-r, .mascot[data-mouth="big"] .rw-bb-r { transform: translateY(-3px) rotate(6deg); }
+.mascot[data-zone="fire"] .rw-bb-l, .mascot[data-zone="beating"] .rw-bb-l { transform: translate(2px, 3px) rotate(18deg); }
+.mascot[data-zone="fire"] .rw-bb-r, .mascot[data-zone="beating"] .rw-bb-r { transform: translate(-2px, 3px) rotate(-18deg); }
+.mascot[data-eyes="wide"] .rw-bb-l, .mascot[data-eyes="wide"] .rw-bb-r, .mascot[data-brows="up"] .rw-bb-l, .mascot[data-brows="up"] .rw-bb-r, .mascot[data-mouth="o"] .rw-bb-l, .mascot[data-mouth="o"] .rw-bb-r { transform: translateY(-7px) scale(1.06); }
+.mascot[data-eyes="dots"] .rw-bb-l { transform: translateY(-1px) rotate(-16deg); }
+.mascot[data-eyes="dots"] .rw-bb-r { transform: translateY(-1px) rotate(16deg); }
+.mascot.sleeping .rw-bb-l, .mascot.sleeping .rw-bb-r { transform: translateY(3px); }
+/* Musculitos / pesa: relaxed by default; double-biceps flex on happy faces and celebrations
+   (pose "auto"), or forced from the lab. Pivots: shoulder (38,98), elbow (13,97). */
+.rw-arm-u { transform-box: view-box; transform-origin: 38px 98px; transform: rotate(-35deg); transition: transform calc(360ms / var(--speed)) cubic-bezier(.34,1.45,.64,1); }
+.rw-arm-f { transform-box: view-box; transform-origin: 13px 97px; transform: rotate(-120deg); transition: transform calc(360ms / var(--speed)) cubic-bezier(.34,1.45,.64,1); }
+.rw-bicep { transform-box: view-box; transform-origin: 30px 104px; }
+.mascot.rw-pose-flex .rw-arm-u, .mascot.rw-pose-flex .rw-arm-f,
+.mascot.rw-pose-auto.rw-flexing .rw-arm-u, .mascot.rw-pose-auto.rw-flexing .rw-arm-f,
+.mascot.rw-pose-auto[data-eyes="star"] .rw-arm-u, .mascot.rw-pose-auto[data-eyes="star"] .rw-arm-f,
+.mascot.rw-pose-auto[data-eyes="sparkle"] .rw-arm-u, .mascot.rw-pose-auto[data-eyes="sparkle"] .rw-arm-f { transform: rotate(0deg); }
+.mascot.rw-pose-flex .rw-bicep, .mascot.rw-pose-auto.rw-flexing .rw-bicep, .mascot.rw-pose-auto[data-eyes="star"] .rw-bicep { animation: rw-pump calc(900ms / var(--speed)) ease-in-out infinite; }
+.mascot.rw-subtle .rw-rgb { animation: none; stroke: #3ddc97; }
+.mascot.rw-subtle .rw-rgb-f { animation: none; fill: #3ddc97; }
+.mascot.rw-subtle .rw-abs { opacity: .55; }
+.mascot.rw-subtle .rw-bicep { animation: none !important; }
+@keyframes rw-pump { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08, 1.16); } }
+.rw-flutter { transform-box: fill-box; transform-origin: 0% 50%; animation: rw-flutter calc(900ms / var(--speed)) ease-in-out infinite; }
+@keyframes rw-flutter { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(7deg) scaleX(1.05); } }
+.rw-rgb { stroke: #ff4d6d; animation: rw-rgb calc(2.4s / var(--speed)) linear infinite; }
+.rw-rgb-f { fill: #ff4d6d; animation-name: rw-rgb-f; }
+@keyframes rw-rgb { 0%, 100% { stroke: #ff4d6d; } 20% { stroke: #ffd23f; } 40% { stroke: #3ddc97; } 60% { stroke: #4da3ff; } 80% { stroke: #b06bff; } }
+@keyframes rw-rgb-f { 0%, 100% { fill: #ff4d6d; } 20% { fill: #ffd23f; } 40% { fill: #3ddc97; } 60% { fill: #4da3ff; } 80% { fill: #b06bff; } }
+.mascot.rw-straw.blush .cheek, .mascot.rw-straw.hover .cheek { opacity: 1; }
+.rw-skin-base { transition: fill calc(300ms / var(--speed)) ease; }
+.rw-pop { animation: rw-pop calc(420ms / var(--speed)) cubic-bezier(.34,1.56,.64,1); transform-box: view-box; }
+@keyframes rw-pop { 0% { opacity: 0; transform: translateY(-6px); } 100% { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .rw-halo, .mascot .tw, .rw-pop, .rw-bicep, .rw-flutter, .rw-rgb { animation: none !important; } .rw-bb-l, .rw-bb-r, .rw-arm-u, .rw-arm-f { transition: none !important; } }

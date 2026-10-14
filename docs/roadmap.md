@@ -16,7 +16,7 @@ Reglas que valen para todo el plan:
 |---|---|---|
 | 0.1 | Medición pasiva por ráfagas, estadísticas, calendario, apps | Hecho |
 | 0.2 | Barra de velocidad personal, Tapomo flotante, caras de racha, estrellitas, bienvenida, instalador con Tapomo, aviso de versión nueva | Hecho |
-| 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (hechas: 0.3.0 objetivo diario y días seguidos; 0.3.1 actualizador y caracteres por minuto) |
+| 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (hechas: 0.3.0 objetivo diario y días seguidos; 0.3.1 actualizador y caracteres por minuto; 0.3.2 XP, niveles, retos, armario y zonas nuevas) |
 | 0.4 | Lecciones de mecanografía (ES + US) y entrenador de atajos | Pendiente |
 | 0.5 | Web tapomo.app, estadísticas anónimas opcionales, ligas entre amigos | Pendiente |
 | Más tarde | Cifrado de la base de datos, más idiomas | Pendiente |
@@ -50,20 +50,12 @@ Todo es local, sin servidor. Se calcula a partir de las ráfagas que ya se guard
   - Públicamente se llaman «caracteres por minuto», nunca «pulsaciones por minuto», para no confundirlas con las palabras por minuto.
   - El glosario explica que **es lo mismo que las pulsaciones por minuto** de las academias, la medida más usada en España.
 
-### 0.3.2 XP y niveles
+### 0.3.2 XP, niveles, retos del día, armario y zonas nuevas *(hecho, 15-10-2026)*
 
-> Diseño detallado (fuentes, topes, retos del día, logros, curva, simulación y niveles de atajos) en [`xp.md`](xp.md), pendiente de revisión. Los números de abajo son el borrador anterior.
-
-- **XP por constancia, no solo por velocidad**, para que cualquiera pueda subir:
-  - 1 XP por cada 100 caracteres escritos en ráfagas;
-  - +20 XP al cumplir el objetivo diario;
-  - +10 XP por cada récord personal (pico de 10 s, mejor racha sin borrar);
-  - +5 XP por cada día seguido (máximo +50);
-  - más adelante, XP por lecciones.
-- **Niveles**: XP necesaria para el nivel *n* = `100 × n^1.5` acumulada. Curva suave: los primeros niveles llegan en días, los altos en meses.
-- **Recompensas**: accesorios cosméticos para Tapomo (bufanda, gafas, auriculares, gorrito, pajarita…). Se elige cuál ponerse. Regla del personaje: accesorios sí, cambiar la forma del cuerpo no.
-- Datos: tabla `xp_events(ts, kind, amount)` (sin nada de texto ni teclas); el nivel se deriva sumando.
-- Sin pérdida de XP nunca.
+- Diseño completo en [`xp.md`](xp.md): fuentes de XP con topes diarios, curva `47 × (n − 1)^1.8`, retos del día calibrados con tus 14 días anteriores, XP retroactiva del historial.
+- Cada 3 niveles, un pack de dos premios para Tapomo (16 niveles con premio, 31 premios). Se eligen en el **armario**, con estilo llamativo o sutil.
+- La barra de velocidad pasa a 6 zonas (Calentando <40, Cogiendo ritmo 40–60, Buen ritmo 60–80, ¡En racha! 80–95, ¡Superándote! 95–108, ¡Modo Supermochi! ≥108 %), con líneas de velocidad. El Supermochi dura al menos 35 s y mientras dura Tapomo no dice «¡ups!».
+- Datos: tabla `xp_events(ts, day, kind, amount)`, una fila por día y tipo de premio; sin texto ni teclas.
 
 ### 0.3.3 Insignias
 
@@ -72,7 +64,7 @@ Se calculan con datos locales. Primera tanda (unas 15):
 - Primera ráfaga · 100 ráfagas · 1.000 ráfagas
 - 1.000 caracteres sin borrar · 5.000 sin borrar
 - 10.000 caracteres en un día
-- Primer récord batido · Superándote (zona morada) 5 veces
+- Primer récord batido · ¡Superándote! (zona dorada, 95–108 %) 5 veces
 - 7 días seguidos · 30 días seguidos
 - Madrugador (escribir antes de las 8) · Búho (después de las 23)
 - Una semana entera con objetivo cumplido

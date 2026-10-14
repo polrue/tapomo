@@ -8,6 +8,8 @@
 //! towards speed, and bursts shorter than [`Config::min_chars`] ("ok", a search,
 //! a file rename) are discarded so they don't pollute the stats.
 
+pub mod xp;
+
 /// What kind of key was pressed. The keyboard hook maps every key to one of these.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum KeyClass {
@@ -291,26 +293,48 @@ pub fn personal_reference(peaks: &[f64]) -> Option<f64> {
     Some(sorted[rank - 1])
 }
 
-/// Bar zones, by percentage of the personal reference.
+/// Bar zones, by percentage of the personal reference. Each zone starts at its lower bound
+/// (inclusive). The UI mirrors these thresholds in `zoneOfPct` (ui/app.js, ui/pet.js).
+///
+/// The floating pet keeps Supermochi for at least 35 s once entered and ignores backspaces
+/// meanwhile; that hold is only the pet's reaction and lives in ui/pet.js, not here.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Zone {
-    /// Below 60 %.
+    /// Below 40 %.
     WarmingUp,
-    /// 60–85 %.
+    /// 40–60 %: finding your rhythm.
+    Rhythm,
+    /// 60–80 %.
     Good,
-    /// 85–100 %.
+    /// 80–95 %: on a roll.
     OnFire,
-    /// Above 100 %: beating your own pace.
+    /// 95–108 %: beating your own pace.
     BeatingYourself,
+    /// 108 % and above: Supermochi mode.
+    Supermochi,
 }
 
 impl Zone {
     pub fn of(percent: f64) -> Self {
         match percent {
-            p if p > 100.0 => Zone::BeatingYourself,
-            p if p >= 85.0 => Zone::OnFire,
+            p if p >= 108.0 => Zone::Supermochi,
+            p if p >= 95.0 => Zone::BeatingYourself,
+            p if p >= 80.0 => Zone::OnFire,
             p if p >= 60.0 => Zone::Good,
+            p if p >= 40.0 => Zone::Rhythm,
             _ => Zone::WarmingUp,
+        }
+    }
+
+    /// Stable id sent to the UI (`zone.<id>` locale keys, `data-zone` styles).
+    pub fn id(self) -> &'static str {
+        match self {
+            Zone::WarmingUp => "warming",
+            Zone::Rhythm => "rhythm",
+            Zone::Good => "good",
+            Zone::OnFire => "fire",
+            Zone::BeatingYourself => "beating",
+            Zone::Supermochi => "super",
         }
     }
 }
@@ -584,11 +608,27 @@ mod tests {
 
     #[test]
     fn zones_follow_percent() {
+        assert_eq!(Zone::of(0.0), Zone::WarmingUp);
         assert_eq!(Zone::of(30.0), Zone::WarmingUp);
+        assert_eq!(Zone::of(39.9), Zone::WarmingUp);
+        assert_eq!(Zone::of(40.0), Zone::Rhythm);
+        assert_eq!(Zone::of(50.0), Zone::Rhythm);
         assert_eq!(Zone::of(60.0), Zone::Good);
+        assert_eq!(Zone::of(70.0), Zone::Good);
+        assert_eq!(Zone::of(80.0), Zone::OnFire);
         assert_eq!(Zone::of(90.0), Zone::OnFire);
-        assert_eq!(Zone::of(100.0), Zone::OnFire);
-        assert_eq!(Zone::of(100.1), Zone::BeatingYourself);
+        assert_eq!(Zone::of(94.9), Zone::OnFire);
+        assert_eq!(Zone::of(95.0), Zone::BeatingYourself);
+        assert_eq!(Zone::of(100.0), Zone::BeatingYourself);
+        assert_eq!(Zone::of(107.9), Zone::BeatingYourself);
+        assert_eq!(Zone::of(108.0), Zone::Supermochi);
+        assert_eq!(Zone::of(115.0), Zone::Supermochi);
+    }
+
+    #[test]
+    fn zone_ids_match_the_ui() {
+        let ids: Vec<&str> = [30.0, 50.0, 70.0, 90.0, 100.0, 115.0].iter().map(|&p| Zone::of(p).id()).collect();
+        assert_eq!(ids, ["warming", "rhythm", "good", "fire", "beating", "super"]);
     }
 
     #[test]
