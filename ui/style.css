@@ -10,9 +10,11 @@
   --muted-fill: #b7b0c4;
   /* Zone colours: the live bar and the heatmap share these. */
   --zone-warming: #b7b0c4;
+  --zone-rhythm: #e7a29a;
   --zone-good: #ff9e7a;
   --zone-fire: #f0553a;
   --zone-beating: #ffc93c;
+  --zone-super: #ffb81c;
   --radius: 16px;
   --font: "Nunito", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Trebuchet MS", sans-serif;
 }
@@ -132,9 +134,11 @@ main { padding: 8px 24px 32px; max-width: 960px; margin: 0 auto; }
   background: color-mix(in srgb, var(--zc) calc(var(--lvl, 0) * 100%), var(--cell-empty));
 }
 .heatmap .cell[data-zone="warming"], .heat-legend i[data-zone="warming"] { --zc: var(--zone-warming); }
+.heatmap .cell[data-zone="rhythm"], .heat-legend i[data-zone="rhythm"] { --zc: var(--zone-rhythm); }
 .heatmap .cell[data-zone="good"], .heat-legend i[data-zone="good"] { --zc: var(--zone-good); }
 .heatmap .cell[data-zone="fire"], .heat-legend i[data-zone="fire"] { --zc: var(--zone-fire); }
 .heatmap .cell[data-zone="beating"], .heat-legend i[data-zone="beating"] { --zc: var(--zone-beating); }
+.heatmap .cell[data-zone="super"], .heat-legend i[data-zone="super"] { --zc: var(--zone-super); }
 .heatmap .cell[data-lvl]:hover, .heatmap .cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
 .heat-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 12px; font-size: 0.8rem; color: var(--muted); font-weight: 700; }
 .heat-legend .chip { display: inline-flex; align-items: center; gap: 6px; }
@@ -201,9 +205,11 @@ a { color: var(--accent-strong); font-weight: 700; }
   --pct: 0%;
 }
 .live[data-zone="warming"] { --zone: var(--zone-warming); --zone-text: var(--muted); }
+.live[data-zone="rhythm"] { --zone: var(--zone-rhythm); --zone-text: #c0675c; }
 .live[data-zone="good"] { --zone: var(--zone-good); --zone-text: var(--accent-strong); }
 .live[data-zone="fire"] { --zone: var(--zone-fire); --zone-text: #e0462c; }
 .live[data-zone="beating"] { --zone: var(--zone-beating); --zone-text: #b07d00; }
+.live[data-zone="super"] { --zone: linear-gradient(90deg, #ffb81c, #fff1a6, #ffb81c) 0 0 / 200% 100%; --zone-text: #b07d00; }
 .live-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .live-head h2 { margin-bottom: 6px; }
 .live-zone { font-weight: 800; color: var(--zone-text); min-height: 1.4em; }
@@ -218,6 +224,8 @@ a { color: var(--accent-strong); font-weight: 700; }
   background: var(--zone); transition: width 200ms ease-out, background-color 200ms ease-out;
 }
 .live[data-zone="beating"] .live-fill { animation: live-glow 1.6s ease-in-out infinite; }
+.live[data-zone="super"] .live-fill { animation: live-glow 1.6s ease-in-out infinite, live-shimmer 700ms linear infinite; }
+@keyframes live-shimmer { to { background-position: -200% 0; } }
 .live-tick { position: absolute; top: -5px; bottom: -5px; left: 76.92%; width: 3px; margin-left: -1.5px; border-radius: 2px; background: var(--ink); }
 .live-record { position: absolute; top: calc(100% + 2px); left: 100%; width: 0; height: 0; margin-left: -6px;
   border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 9px solid #e6a800; }
@@ -249,7 +257,7 @@ a { color: var(--accent-strong); font-weight: 700; }
 @media (prefers-reduced-motion: reduce) {
   .live-fill { transition: none; }
   .live[data-calibrating] .live-fill::before { animation: none; }
-  .live[data-zone="beating"] .live-fill { animation: none; box-shadow: 0 0 8px 2px rgba(255, 201, 60, .8); }
+  .live[data-zone="beating"] .live-fill, .live[data-zone="super"] .live-fill { animation: none; box-shadow: 0 0 8px 2px rgba(255, 201, 60, .8); }
 }
 
 /* ------------------------------------------------------------ info popovers */

@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tapomo</title>
   <link rel="stylesheet" href="mascot.css">
+  <link rel="stylesheet" href="wardrobe.css">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="xp.css">
 </head>
 <body>
   <header class="top">
@@ -67,6 +69,21 @@
       </div>
     </section>
 
+    <section class="card level" id="level" aria-labelledby="lv-label" hidden>
+      <div class="lv-badge"><span id="lv-label" data-i18n="level.title"></span><strong id="lv-num"></strong></div>
+      <div class="lv-body">
+        <div class="lv-row"><span class="lv-xp" id="lv-xp"></span><span class="lv-today" id="lv-today" hidden></span></div>
+        <div class="lv-bar" id="lv-bar" role="progressbar" aria-valuemin="0" data-i18n-aria="level.title"><i id="lv-fill"></i></div>
+        <p class="lv-next" id="lv-next"></p>
+      </div>
+    </section>
+
+    <section class="card challenges" id="challenges" aria-labelledby="ch-title" hidden>
+      <h2><span id="ch-title" data-i18n="ch.title"></span><button type="button" class="info" data-tip="tip.challenges" data-i18n-aria="tip.more">i</button></h2>
+      <ul class="ch-list" id="ch-list"></ul>
+      <p class="ch-full" id="ch-full" hidden></p>
+    </section>
+
     <p id="yesterday" class="muted yesterday" hidden></p>
 
     <section id="empty" class="empty" hidden>
@@ -110,9 +127,11 @@
         <div id="heatmap" class="heatmap" role="group" data-i18n-aria="heatmap.title"></div>
         <div id="heatmap-legend" class="heat-legend" hidden>
           <span class="chip"><i data-zone="warming"></i><span data-i18n="heatmap.z.warming"></span></span>
+          <span class="chip"><i data-zone="rhythm"></i><span data-i18n="heatmap.z.rhythm"></span></span>
           <span class="chip"><i data-zone="good"></i><span data-i18n="heatmap.z.good"></span></span>
           <span class="chip"><i data-zone="fire"></i><span data-i18n="heatmap.z.fire"></span></span>
           <span class="chip"><i data-zone="beating"></i><span data-i18n="heatmap.z.beating"></span></span>
+          <span class="chip"><i data-zone="super"></i><span data-i18n="heatmap.z.super"></span></span>
           <span class="chip more"><i class="ramp"></i><span data-i18n="heatmap.more"></span></span>
         </div>
         <p id="heatmap-note" class="muted heat-note" data-i18n="heatmap.calibrating" hidden></p>
@@ -129,6 +148,22 @@
         <p id="apps-empty" class="muted" data-i18n="apps.empty" hidden></p>
       </section>
     </div>
+
+    <details class="card wardrobe" id="wardrobe">
+      <summary><h2 data-i18n="wd.title"></h2></summary>
+      <p class="hint" data-i18n="wd.hint"></p>
+      <fieldset class="wd-style">
+        <legend data-i18n="wd.style"></legend>
+        <label><input type="radio" name="wd-style" value="bold"><span data-i18n="wd.style.bold"></span></label>
+        <label><input type="radio" name="wd-style" value="subtle"><span data-i18n="wd.style.subtle"></span></label>
+      </fieldset>
+      <p class="hint" data-i18n="wd.style.hint"></p>
+      <h3 data-i18n="wd.skins"></h3>
+      <div class="wd-grid" id="wd-skins"></div>
+      <h3 data-i18n="wd.accessories"></h3>
+      <p class="wd-removed" id="wd-removed" aria-live="polite" hidden></p>
+      <div class="wd-grid" id="wd-accs"></div>
+    </details>
 
     <section class="card" id="settings">
       <h2 data-i18n="settings.title"></h2>
@@ -233,10 +268,27 @@
     </div>
   </div>
 
+  <div id="level-dialog" class="welcome" hidden>
+    <div class="welcome-card lvup-card" role="dialog" aria-modal="true" aria-labelledby="lvup-title" aria-describedby="lvup-text" tabindex="-1">
+      <div class="welcome-body">
+        <h2 id="lvup-title"></h2>
+        <p id="lvup-text"></p>
+        <div class="lvup-items" id="lvup-items"></div>
+        <p class="muted" id="lvup-more" hidden></p>
+        <p class="muted" id="lvup-next" hidden></p>
+      </div>
+      <div class="welcome-nav lvup-nav">
+        <button type="button" id="lvup-ok" data-i18n="lvup.ok"></button>
+      </div>
+    </div>
+  </div>
+
   <script src="i18n.js"></script>
   <script src="mascot.js"></script>
+  <script src="wardrobe.js"></script>
   <script src="tips.js"></script>
   <script src="welcome.js"></script>
+  <script src="xp.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
