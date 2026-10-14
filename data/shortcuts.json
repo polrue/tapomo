@@ -1,6 +1,6 @@
 {
- "_comment": "Tapomo shortcut catalogue v1 (0.4.3). Open data: contributions welcome. mods: c=Ctrl a=Alt w=Win s=Shift; vk = Windows virtual-key code (layout-independent). Sensitive shortcuts (e.g. incognito windows) are never listed: they count as 'other'.",
- "version": 1,
+ "_comment": "Tapomo shortcut catalogue v1 (0.4.3; phase C in 0.5.1: Explorer, VS Code, Photoshop, Slack/Discord). Open data: contributions welcome. mods: c=Ctrl a=Alt w=Win s=Shift; vk = Windows virtual-key code (layout-independent). Sensitive shortcuts (e.g. incognito windows) are never listed: they count as 'other'.",
+ "version": 2,
  "shortcuts": [
   {
    "id": "copy",
@@ -493,6 +493,215 @@
      "label": "Ctrl++"
     }
    }
+  },
+  {
+   "id": "folder_back",
+   "apps": [
+    "explorer.exe"
+   ],
+   "mods": "a",
+   "vk": 37,
+   "label": "Alt+←",
+   "category": "files",
+   "level": "basic",
+   "tip": {
+    "es": "Vuelve a la carpeta anterior.",
+    "en": "Goes back to the previous folder."
+   },
+   "label_en": "Alt+←"
+  },
+  {
+   "id": "folder_up",
+   "apps": [
+    "explorer.exe"
+   ],
+   "mods": "a",
+   "vk": 38,
+   "label": "Alt+↑",
+   "category": "files",
+   "level": "medium",
+   "tip": {
+    "es": "Sube a la carpeta de arriba.",
+    "en": "Goes up to the parent folder."
+   },
+   "label_en": "Alt+↑"
+  },
+  {
+   "id": "file_props",
+   "apps": [
+    "explorer.exe"
+   ],
+   "mods": "a",
+   "vk": 13,
+   "label": "Alt+Intro",
+   "category": "files",
+   "level": "advanced",
+   "tip": {
+    "es": "Abre las propiedades del archivo seleccionado.",
+    "en": "Opens the selected file's properties."
+   },
+   "label_en": "Alt+Enter"
+  },
+  {
+   "id": "toggle_sidebar",
+   "apps": [
+    "Code.exe"
+   ],
+   "mods": "c",
+   "vk": 66,
+   "label": "Ctrl+B",
+   "category": "code",
+   "level": "medium",
+   "tip": {
+    "es": "Muestra u oculta la barra lateral.",
+    "en": "Shows or hides the sidebar."
+   },
+   "label_en": "Ctrl+B"
+  },
+  {
+   "id": "quick_open",
+   "apps": [
+    "Code.exe"
+   ],
+   "mods": "c",
+   "vk": 80,
+   "label": "Ctrl+P",
+   "category": "code",
+   "level": "basic",
+   "tip": {
+    "es": "Abre cualquier archivo escribiendo su nombre.",
+    "en": "Opens any file by typing its name."
+   },
+   "label_en": "Ctrl+P"
+  },
+  {
+   "id": "terminal",
+   "apps": [
+    "Code.exe"
+   ],
+   "mods": "c",
+   "vk": 192,
+   "label": "Ctrl+ñ",
+   "category": "code",
+   "level": "medium",
+   "tip": {
+    "es": "Muestra u oculta el terminal.",
+    "en": "Shows or hides the terminal."
+   },
+   "label_en": "Ctrl+`"
+  },
+  {
+   "id": "next_match",
+   "apps": [
+    "Code.exe"
+   ],
+   "mods": "c",
+   "vk": 68,
+   "label": "Ctrl+D",
+   "category": "code",
+   "level": "medium",
+   "tip": {
+    "es": "Selecciona la siguiente aparición de la palabra.",
+    "en": "Selects the next occurrence of the word."
+   },
+   "label_en": "Ctrl+D"
+  },
+  {
+   "id": "delete_line",
+   "apps": [
+    "Code.exe"
+   ],
+   "mods": "cs",
+   "vk": 75,
+   "label": "Ctrl+Mayús+K",
+   "category": "code",
+   "level": "advanced",
+   "tip": {
+    "es": "Borra la línea entera.",
+    "en": "Deletes the whole line."
+   },
+   "label_en": "Ctrl+Shift+K"
+  },
+  {
+   "id": "move_line",
+   "apps": [
+    "Code.exe"
+   ],
+   "mods": "a",
+   "vk": 38,
+   "label": "Alt+↑",
+   "category": "code",
+   "level": "advanced",
+   "tip": {
+    "es": "Sube la línea (Alt+↓ la baja).",
+    "en": "Moves the line up (Alt+↓ moves it down)."
+   },
+   "label_en": "Alt+↑"
+  },
+  {
+   "id": "duplicate_layer",
+   "apps": [
+    "Photoshop.exe"
+   ],
+   "mods": "c",
+   "vk": 74,
+   "label": "Ctrl+J",
+   "category": "design",
+   "level": "basic",
+   "tip": {
+    "es": "Duplica la capa o la selección.",
+    "en": "Duplicates the layer or selection."
+   },
+   "label_en": "Ctrl+J"
+  },
+  {
+   "id": "free_transform",
+   "apps": [
+    "Photoshop.exe"
+   ],
+   "mods": "c",
+   "vk": 84,
+   "label": "Ctrl+T",
+   "category": "design",
+   "level": "basic",
+   "tip": {
+    "es": "Transformación libre: escala y gira.",
+    "en": "Free transform: scale and rotate."
+   },
+   "label_en": "Ctrl+T"
+  },
+  {
+   "id": "fit_screen",
+   "apps": [
+    "Photoshop.exe"
+   ],
+   "mods": "c",
+   "vk": 48,
+   "label": "Ctrl+0",
+   "category": "design",
+   "level": "medium",
+   "tip": {
+    "es": "Ajusta la imagen a la pantalla.",
+    "en": "Fits the image to the screen."
+   },
+   "label_en": "Ctrl+0"
+  },
+  {
+   "id": "quick_switcher",
+   "apps": [
+    "slack.exe",
+    "Discord.exe"
+   ],
+   "mods": "c",
+   "vk": 75,
+   "label": "Ctrl+K",
+   "category": "chat",
+   "level": "basic",
+   "tip": {
+    "es": "Salta a cualquier canal o conversación.",
+    "en": "Jumps to any channel or conversation."
+   },
+   "label_en": "Ctrl+K"
   }
  ]
 }

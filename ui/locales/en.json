@@ -549,5 +549,9 @@
   "social.err.http_429": "Too many tries in a row. Wait a few minutes.",
   "gloss.social.t": "Online (optional)",
   "gloss.social.d": "Anonymous stats and leagues with friends are the only things that can leave your computer, and only if you turn them on. Nothing you type is ever sent.",
-  "social.gone": "You're no longer in that league (or it expired). You can create another or join with a code."
+  "social.gone": "You're no longer in that league (or it expired). You can create another or join with a code.",
+  "album.cat.files": "File Explorer",
+  "album.cat.code": "VS Code",
+  "album.cat.design": "Photoshop",
+  "album.cat.chat": "Slack and Discord"
 }
