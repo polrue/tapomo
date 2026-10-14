@@ -18,7 +18,9 @@ Estado a 13-10-2026. Aquí se explica cómo se publica Tapomo y qué falta para 
    - Guárdala con `gh secret set VT_API_KEY -R polrue/tapomo`.
    - Sin la clave, este paso se salta.
 
-## Firma de código: SignPath Foundation (solicitud pendiente)
+## Firma de código: SignPath Foundation (rechazada el 14-10-2026)
+
+> SignPath respondió que el proyecto aún no tiene suficiente visibilidad. Se puede volver a pedir cuando tenga más estrellas, descargas o presencia (winget, web). Todo lo de abajo sigue cumpliéndose y vale para la próxima solicitud.
 
 Es gratis para proyectos de código abierto. El certificado aparece a nombre de «SignPath Foundation». Requisitos ([condiciones](https://signpath.org/terms)) y su estado:
 
@@ -54,6 +56,7 @@ Es gratis para proyectos de código abierto. El certificado aparece a nombre de 
 
 - **Azure Artifact Signing** (~10 $/mes): no sirve para particulares fuera de EE. UU. y Canadá; solo para empresas de la UE.
 - **Certum Open Source** (~25–70 €/año): a nombre de Pol, pero difícil de automatizar porque pide un código del móvil, y su reputación empieza de cero.
+- **Decisión del 14-10-2026:** los planes de pago se salen del presupuesto. Solo se consideran vías gratuitas.
 
 ## Microsoft Store
 
