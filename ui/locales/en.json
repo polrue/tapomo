@@ -491,5 +491,9 @@
   "lessons.kind.common-1": "Short words",
   "lessons.kind.common-2": "Long words",
   "lessons.kind.sentences": "Sentences {n}",
-  "lessons.tip.caps": "Tip: make capitals with the Shift of the other hand."
+  "lessons.tip.caps": "Tip: make capitals with the Shift of the other hand.",
+  "lessons.practice.title": "Practise your tricky keys",
+  "lessons.practice.text": "Tapomo noticed which keys are hardest for you in the lessons and made an exercise with them.",
+  "lessons.practice.go": "Practise",
+  "settings.lessons_in_goal": "Lessons count towards the daily goal"
 }

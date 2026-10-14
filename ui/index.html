@@ -44,6 +44,11 @@
       <div id="ls-map">
         <p class="hint" data-i18n="lessons.intro"></p>
         <p class="ls-real" id="ls-real" hidden></p>
+        <div class="ls-practice" id="ls-practice" hidden>
+          <div><strong data-i18n="lessons.practice.title"></strong><p class="hint" data-i18n="lessons.practice.text"></p></div>
+          <span class="ls-practice-keys" id="ls-practice-keys"></span>
+          <button type="button" id="ls-practice-go" data-i18n="lessons.practice.go"></button>
+        </div>
         <div class="ls-units" id="ls-units"></div>
       </div>
       <div id="ls-run" hidden>
@@ -259,6 +264,7 @@
         </select>
       </div>
       <p class="hint" data-i18n="settings.goal.hint"></p>
+      <label class="check"><input id="s-lessons-goal" type="checkbox"><span data-i18n="settings.lessons_in_goal"></span></label>
       <label class="check"><input id="s-weekend" type="checkbox"><span data-i18n="settings.weekend_rest"></span></label>
       <p class="hint" data-i18n="settings.weekend_rest.hint"></p>
 
