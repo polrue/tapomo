@@ -173,6 +173,23 @@
     first_full: (c) => stamp(c, 20.5, 33, 5.2) + stamp(c, 32, 33, 5.2) + stamp(c, 43.5, 33, 5.2),
     full_30: (c) => stamp(c, 20.5, 37, 5.2) + stamp(c, 32, 37, 5.2) + stamp(c, 43.5, 37, 5.2) + star(c, 32, 23.5, 5.6),
     crowned: (c) => crown(c, 32, 41, 26) + spark(c, 18.5, 22, 0.55) + spark(c, 46, 20, 0.6),
+    // 0.3.6 shortcut counter: a mouse asleep on its cable (nobody touched it all day)...
+    shortcuts_day_100: (c) =>
+      `<g transform="rotate(-14 33 35)">` +
+      `<path d="M33 23.5 Q33 18 27 18.5 Q22 19 21 15.5" fill="none" stroke="${c.ink}" stroke-width="1.6" stroke-linecap="round"/>` +
+      `<rect x="24" y="23" width="18" height="24" rx="9" fill="${c.lilac}" stroke="${c.ink}" stroke-width="1.7"/>` +
+      `<path d="M24.3 32.5 H41.7 M33 23.2 V32.5" fill="none" stroke="${c.ink}" stroke-width="1.4" stroke-linecap="round"/>` +
+      `<rect x="31.6" y="25.4" width="2.8" height="4.6" rx="1.4" fill="${c.white}" stroke="${c.ink}" stroke-width="1.1"/>` +
+      `<path d="M26.5 30 Q26.8 26.6 29.4 25.4" fill="none" stroke="${c.white}" stroke-width="1.3" stroke-linecap="round" opacity=".85"/>` +
+      `<g fill="none" stroke="${c.ink}" stroke-width="1.3" stroke-linecap="round"><path d="M27.6 38.4 Q29.3 40 31 38.4"/><path d="M35 38.4 Q36.7 40 38.4 38.4"/></g>` +
+      `<circle cx="27.4" cy="42" r="1.5" fill="${c.blush}" opacity=".55"/><circle cx="38.6" cy="42" r="1.5" fill="${c.blush}" opacity=".55"/></g>` +
+      label(c, 44.6, 29, 'z', 7) + label(c, 47.4, 22.8, 'z', 5.4),
+    // ...and the shortcut master: Ctrl + C keycaps under a little crown.
+    shortcuts_1000: (c) =>
+      key(c, 13.5, 31.5, 20.5, 14) + label(c, 23.75, 39.4, 'Ctrl', 6.6) +
+      `<path d="M34.6 38.5 H37.4 M36 37.1 V39.9" stroke="${c.ink}" stroke-width="1.4" stroke-linecap="round"/>` +
+      key(c, 38.5, 31.5, 13, 14) + label(c, 45, 41, 'C', 9) +
+      crown(c, 32, 28, 16) + spark(c, 17.5, 24, 0.55) + spark(c, 47, 23, 0.55),
   };
   const fallback = (c) => star(c, 32, 32, 10);
 

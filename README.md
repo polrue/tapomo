@@ -17,7 +17,7 @@ Qué se guarda, en una base de datos SQLite local en tu equipo:
 
 Qué **no** se guarda nunca: el texto, las teclas concretas, los títulos de ventana, capturas ni nada que salga de tu equipo. No hay telemetría ([política de privacidad](PRIVACY.md)): la única conexión es, una vez al día, preguntar a GitHub (`github.com`) si hay una versión nueva (se puede desactivar en Ajustes y no envía nada sobre ti). Si aceptas una versión nueva, se descarga de GitHub; y si lo activas en Ajustes, Tapomo puede instalarlas solo cuando no estás escribiendo (viene desactivado).
 
-Además: las pulsaciones inyectadas por macros o autotypers se ignoran, los atajos (Ctrl/Alt/Win + tecla) no cuentan, hay una lista de aplicaciones excluidas (gestores de contraseñas por defecto: KeePass, KeePassXC, 1Password, Bitwarden), los juegos y presentaciones a pantalla completa se ignoran (se puede desactivar) y puedes pausar la medición en cualquier momento desde la bandeja.
+Además: las pulsaciones inyectadas por macros o autotypers se ignoran, los atajos (Ctrl/Alt/Win + tecla) no cuentan como escritura: solo se cuentan por tipos (copiar y pegar, deshacer, guardar, ventanas, otros), sin guardar nunca cuál fue, y se puede desactivar, hay una lista de aplicaciones excluidas (gestores de contraseñas por defecto: KeePass, KeePassXC, 1Password, Bitwarden), los juegos y presentaciones a pantalla completa se ignoran (se puede desactivar) y puedes pausar la medición en cualquier momento desde la bandeja.
 
 Los campos de contraseña se ignoran por completo: ni se cuentan ni se cronometran (se detectan con UI Automation). Los prompts de terminal (ssh/sudo) no se pueden detectar, pero tampoco se registran nunca, porque Tapomo no sabe qué tecla pulsaste.
 
@@ -84,7 +84,7 @@ What is stored, in a local SQLite database on your machine:
 
 What is **never** stored: text, individual keys, window titles, screenshots, or anything that leaves your computer. There is no telemetry ([privacy policy](PRIVACY.md)): the only connection is a once-a-day check with GitHub (`github.com`) for a new version (can be turned off in Settings; it sends nothing about you). If you accept a new version it is downloaded from GitHub, and if you turn it on in Settings Tapomo can install them by itself when you are not typing (off by default).
 
-Also: keystrokes injected by macros or auto-typers are ignored, shortcuts (Ctrl/Alt/Win + key) don't count, there is an excluded-apps list (password managers by default: KeePass, KeePassXC, 1Password, Bitwarden), fullscreen games and presentations are ignored (can be turned off), and you can pause measuring at any time from the tray.
+Also: keystrokes injected by macros or auto-typers are ignored, shortcuts (Ctrl/Alt/Win + key) don't count as typing: they are only counted by kind (copy & paste, undo, save, windows, other), never which one, and this can be turned off, there is an excluded-apps list (password managers by default: KeePass, KeePassXC, 1Password, Bitwarden), fullscreen games and presentations are ignored (can be turned off), and you can pause measuring at any time from the tray.
 
 Password fields are ignored entirely: not counted, not timed (detected via UI Automation). Terminal prompts (ssh/sudo) can't be detected, but they are still never recorded, because Tapomo never knows which key was pressed.
 

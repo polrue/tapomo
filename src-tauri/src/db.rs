@@ -87,6 +87,20 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
              COMMIT;",
         )?;
     }
+    if version < 5 {
+        // Shortcut counter (0.3.6): only a daily count per kind. Additive only.
+        conn.execute_batch(
+            "BEGIN;
+             CREATE TABLE shortcut_days (
+                 day INTEGER NOT NULL,
+                 kind TEXT NOT NULL,
+                 count INTEGER NOT NULL,
+                 PRIMARY KEY (day, kind)
+             );
+             PRAGMA user_version = 5;
+             COMMIT;",
+        )?;
+    }
     Ok(())
 }
 
@@ -117,6 +131,8 @@ pub struct Settings {
     pub skin: String,
     pub accessories: Vec<String>,
     pub wear_style: String,
+    /// Count Ctrl/Alt/Win shortcuts by kind (never which one).
+    pub count_shortcuts: bool,
 }
 
 /// Goal choices offered in the settings; anything else falls back to the default.
@@ -162,6 +178,7 @@ pub fn get_settings(conn: &Connection) -> rusqlite::Result<Settings> {
             .map(|v| v.split(',').map(str::trim).filter(|s| !s.is_empty()).map(String::from).collect())
             .unwrap_or_default(),
         wear_style: get_raw(conn, "wear_style")?.filter(|v| v == "subtle").unwrap_or_else(|| "bold".into()),
+        count_shortcuts: flag("count_shortcuts", true)?,
     })
 }
 
@@ -181,7 +198,8 @@ pub fn set_settings(conn: &Connection, s: &Settings) -> rusqlite::Result<()> {
     let id = |v: &str| v.chars().filter(|c| c.is_ascii_alphanumeric() || *c == '_').take(32).collect::<String>();
     set_raw(conn, "skin", &id(&s.skin))?;
     set_raw(conn, "accessories", &s.accessories.iter().map(|a| id(a)).filter(|a| !a.is_empty()).take(16).collect::<Vec<_>>().join(","))?;
-    set_raw(conn, "wear_style", if s.wear_style == "subtle" { "subtle" } else { "bold" })
+    set_raw(conn, "wear_style", if s.wear_style == "subtle" { "subtle" } else { "bold" })?;
+    set_raw(conn, "count_shortcuts", b(s.count_shortcuts))
 }
 
 /// Saved position of the floating Tapomo (physical px). Kept out of [`Settings`]

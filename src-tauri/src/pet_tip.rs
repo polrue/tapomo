@@ -49,6 +49,8 @@ pub struct Facts {
     pub calibrating: Option<(usize, usize)>,
     /// Daily goal progress; `None` when the goal is off.
     pub goal: Option<GoalFacts>,
+    /// Shortcuts used today (0 when counting is off).
+    pub shortcuts_today: u64,
 }
 
 #[derive(Default, Debug)]
@@ -126,7 +128,10 @@ pub fn gather(conn: &Connection, open_ms: u64) -> rusqlite::Result<Facts> {
         streak_days: g.streak_days,
     });
 
-    Ok(Facts { today, month, all_time_max, prev_max, best_hour, top_app, calibrating, goal })
+    let sc = crate::shortcuts::today(conn)?;
+    let shortcuts_today = if sc.enabled { sc.total } else { 0 };
+
+    Ok(Facts { today, month, all_time_max, prev_max, best_hour, top_app, calibrating, goal, shortcuts_today })
 }
 
 /// Decimal and thousands separators follow the language.
@@ -216,6 +221,9 @@ pub fn candidates(f: &Facts, lang: &str) -> Vec<Candidate> {
         if g.streak_days >= 2 {
             c.push(("tip.goal_streak", vec![("n", num(f64::from(g.streak_days), 0, lang))], 3));
         }
+    }
+    if f.shortcuts_today >= 50 {
+        c.push(("tip.shortcuts_today", vec![("n", num(f.shortcuts_today as f64, 0, lang))], 3));
     }
     for key in ["tip.generic_1", "tip.generic_2", "tip.generic_3"] {
         c.push((key, vec![], 1));

@@ -65,6 +65,7 @@ const Progress = (() => {
     if (c.id === 'beat_avg') return t('ch.beat_avg', { wpm: fmt(c.target) });
     if (c.id === 'early_goal') return t('ch.early_goal');
     if (c.id === 'long_bursts' || c.id === 'bursts') return tn(`ch.${c.id}`, c.target, { n: fmt(c.target) });
+    if (c.id === 'shortcuts') return t('ch.shortcuts', { n: fmt(c.target) });
     return t(`ch.${c.id}`, { n: fmt(c.target) });
   }
 

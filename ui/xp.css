@@ -78,3 +78,11 @@
   .lv-bar i { transition: none; }
   .ch-new .ch-stamp { animation: none; }
 }
+
+/* ------------------------------------------------------------ shortcuts (0.3.6) */
+.sc-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.sc-head h2 { margin-bottom: 4px; }
+.sc-total { font-size: 1.8rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.sc-line { margin: 0 0 6px; }
+.sc-kinds:empty { display: none; }
+.sc-kinds .chip { padding: 4px 10px; font-size: 0.85rem; font-weight: 700; }
