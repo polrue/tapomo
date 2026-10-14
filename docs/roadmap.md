@@ -16,7 +16,7 @@ Reglas que valen para todo el plan:
 |---|---|---|
 | 0.1 | Medición pasiva por ráfagas, estadísticas, calendario, apps | Hecho |
 | 0.2 | Barra de velocidad personal, Tapomo flotante, caras de racha, estrellitas, bienvenida, instalador con Tapomo, aviso de versión nueva | Hecho |
-| 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (hechas: 0.3.0 objetivo diario y días seguidos; 0.3.1 actualizador y caracteres por minuto; 0.3.2 XP, niveles, retos, armario y zonas nuevas; 0.3.3 insignias; 0.3.4 liga contigo mismo; 0.3.5 carta semanal; 0.3.6 atajos por tipos) |
+| 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (hechas: 0.3.0 objetivo diario y días seguidos; 0.3.1 actualizador y caracteres por minuto; 0.3.2 XP, niveles, retos, armario y zonas nuevas; 0.3.3 insignias; 0.3.4 liga contigo mismo; 0.3.5 carta semanal; 0.3.6 atajos por tipos; 0.3.7 récords) |
 | 0.4 | Lecciones de mecanografía (ES + US) y entrenador de atajos | Pendiente |
 | 0.5 | Web tapomo.app, estadísticas anónimas opcionales, ligas entre amigos | Pendiente |
 | Más tarde | Cifrado de la base de datos, más idiomas | Pendiente |
@@ -100,7 +100,9 @@ Pantalla de insignias con las conseguidas en color y las pendientes en silueta s
 - Ajuste «Contar atajos» (activado por defecto) y texto de privacidad actualizado en la app y el README.
 - Insignias: «Maestro de atajos» (1.000), «Ni tocas el ratón» (100 en un día).
 
-### Ver tus récords *(idea de Pol, 13-10-2026)*
+### 0.3.7 Ver tus récords *(idea de Pol, 13-10-2026; hecho 15-10-2026)*
+
+- Hecho con la propuesta de tarjeta + sobre: cada récord es un sobre que se abre con un clic y muestra el día, la hora, el programa, cuánto duró y una equivalencia divertida (tuits, páginas, canciones). Un récord nuevo vuelve a llegar cerrado. Pendiente de que Pol lo vea.
 
 - Que se pueda ver **cuál fue** la mejor racha o el récord, no solo la cifra.
 - Del texto no hay nada que enseñar, porque nunca se guarda. Pero sí hay contexto: el día y la hora, la app, cuánto duró, la velocidad y equivalencias («unas 3 páginas de libro sin borrar»).

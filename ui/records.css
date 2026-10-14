@@ -1,0 +1,20 @@
+/* "Tus récords" (0.3.7). */
+.rc-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.rc { border: 1px solid var(--line); border-radius: 14px; background: var(--bg); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; min-height: 150px; }
+.rc h3 { margin: 0; font-size: 0.9rem; color: var(--muted); }
+.rc-envelope {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  background: none; border: 2px dashed var(--line); border-radius: 12px; color: var(--ink); font: inherit; font-weight: 800; cursor: pointer; padding: 10px;
+}
+.rc-envelope:hover { background: none; border-color: var(--accent); color: var(--ink); }
+.rc-envelope svg { width: 64px; height: 44px; }
+.rc-body { display: none; }
+.rc[data-open] .rc-envelope { display: none; }
+.rc[data-open] .rc-body { display: block; }
+.rc-big { display: block; font-size: 1.5rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.rc-ctx { margin: 2px 0 0; font-size: 0.85rem; color: var(--muted); }
+.rc-fun { margin: 6px 0 0; font-size: 0.9rem; font-weight: 700; color: var(--accent-strong); }
+.rc-pop .rc-body { animation: rc-pop 520ms cubic-bezier(.34, 1.5, .64, 1); }
+@keyframes rc-pop { from { transform: scale(.85) rotate(-2deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .rc-pop .rc-body { animation: none; } }
+.rc-big:focus { outline: none; }
