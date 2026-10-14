@@ -126,6 +126,115 @@ const Keyboard = (() => {
     ],
   };
 
+  // AZERTY/QWERTZ move letters around: physical codes (KeyboardEvent.code) stay the US ones.
+  const CODES = {
+    top: ['KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI', 'KeyO', 'KeyP'],
+    home: ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL'],
+    bottom: ['KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM'],
+  };
+  /** Letters `chars` placed on the physical keys of `row`, with the US row's fingers. */
+  const lettersOn = (row, chars, extra = () => ({})) =>
+    [...chars].map((ch, i) => key(CODES[row][i], ch, ch.toUpperCase(), letterRows[row][i][1], {
+      ...(row === 'home' ? (i === 3 || i === 6 ? BUMP : i === 4 || i === 5 ? {} : HOME) : {}),
+      ...extra(ch),
+    }));
+  /** Number row from [label, shift, altgr?] for 1..9, 0. */
+  const digitRow = (defs) =>
+    defs.map(([label, shift, altgr], i) => {
+      const d = (i + 1) % 10;
+      const finger = [0, 1, 2, 3, 3, 6, 6, 7, 8, 9][i];
+      return key(`Digit${d}`, label, shift, finger, altgr ? { altgr } : {});
+    });
+  const bottomMods = () => [
+    mod('ControlLeft', 'Ctrl', 1.5, 0),
+    mod('MetaLeft', '', 1.25, 4, { icon: 'win' }),
+    mod('AltLeft', 'Alt', 1.5, 4),
+    mod('Space', '', 7.25, 4),
+    mod('AltRight', 'Alt Gr', 1.5, 5),
+    mod('ControlRight', 'Ctrl', 2, 9),
+  ];
+
+  // French AZERTY (Windows, kbdfr): digits need Shift; ^ and ¨ are dead, as are AltGr ~ and `.
+  const FR = {
+    id: 'fr',
+    name: 'Français (AZERTY)',
+    rows: [
+      [
+        key('Backquote', '²', '', 0),
+        ...digitRow([['&', '1'], ['é', '2', '~'], ['"', '3', '#'], ["'", '4', '{'], ['(', '5', '['],
+          ['-', '6', '|'], ['è', '7', '`'], ['_', '8', '\\'], ['ç', '9', '^'], ['à', '0', '@']]),
+        key('Minus', ')', '°', 9, { altgr: ']' }),
+        key('Equal', '=', '+', 9, { altgr: '}' }),
+        mod('Backspace', '', 2, 9, { icon: 'backspace' }),
+      ].map((k) => (k.code === 'Digit2' || k.code === 'Digit7' ? { ...k, dead: { altgr: true } } : k)),
+      [
+        mod('Tab', '', 1.5, 0, { icon: 'tab' }),
+        ...lettersOn('top', 'azertyuiop', (ch) => (ch === 'e' ? { altgr: '€' } : {})),
+        key('BracketLeft', '^', '¨', 9, { dead: { label: true, shift: true } }),
+        key('BracketRight', '$', '£', 9, { altgr: '¤' }),
+        mod('Enter', '', 1.5, 9, { icon: 'enter', iso: true }),
+      ],
+      [
+        mod('CapsLock', '', 1.75, 0, { icon: 'caps' }),
+        ...lettersOn('home', 'qsdfghjkl'),
+        key('Semicolon', 'm', 'M', 9, HOME),
+        key('Quote', 'ù', '%', 9),
+        key('Backslash', '*', 'µ', 9),
+      ],
+      [
+        mod('ShiftLeft', '', 1.25, 0, { icon: 'shift' }),
+        key('IntlBackslash', '<', '>', 0),
+        ...lettersOn('bottom', 'wxcvbn'),
+        key('KeyM', ',', '?', 6),
+        key('Comma', ';', '.', 7),
+        key('Period', ':', '/', 8),
+        key('Slash', '!', '§', 9),
+        mod('ShiftRight', '', 2.75, 9, { icon: 'shift' }),
+      ],
+      bottomMods(),
+    ],
+  };
+
+  // German QWERTZ (Windows, kbdgr): ^ ´ ` are dead keys.
+  const DE = {
+    id: 'de',
+    name: 'Deutsch (QWERTZ)',
+    rows: [
+      [
+        key('Backquote', '^', '°', 0, { dead: { label: true } }),
+        ...digitRow([['1', '!'], ['2', '"', '²'], ['3', '§', '³'], ['4', '$'], ['5', '%'],
+          ['6', '&'], ['7', '/', '{'], ['8', '(', '['], ['9', ')', ']'], ['0', '=', '}']]),
+        key('Minus', 'ß', '?', 9, { altgr: '\\' }),
+        key('Equal', '´', '`', 9, { dead: { label: true, shift: true } }),
+        mod('Backspace', '', 2, 9, { icon: 'backspace' }),
+      ],
+      [
+        mod('Tab', '', 1.5, 0, { icon: 'tab' }),
+        ...lettersOn('top', 'qwertzuiop', (ch) => (ch === 'q' ? { altgr: '@' } : ch === 'e' ? { altgr: '€' } : {})),
+        key('BracketLeft', 'ü', 'Ü', 9),
+        key('BracketRight', '+', '*', 9, { altgr: '~' }),
+        mod('Enter', '', 1.5, 9, { icon: 'enter', iso: true }),
+      ],
+      [
+        mod('CapsLock', '', 1.75, 0, { icon: 'caps' }),
+        ...lettersOn('home', 'asdfghjkl'),
+        key('Semicolon', 'ö', 'Ö', 9, HOME),
+        key('Quote', 'ä', 'Ä', 9),
+        key('Backslash', '#', "'", 9),
+      ],
+      [
+        mod('ShiftLeft', '', 1.25, 0, { icon: 'shift' }),
+        key('IntlBackslash', '<', '>', 0, { altgr: '|' }),
+        ...lettersOn('bottom', 'yxcvbnm', (ch) => (ch === 'm' ? { altgr: 'µ' } : {})),
+        key('Comma', ',', ';', 7),
+        key('Period', '.', ':', 8),
+        key('Slash', '-', '_', 9),
+        mod('ShiftRight', '', 2.75, 9, { icon: 'shift' }),
+      ],
+      bottomMods(),
+    ],
+  };
+
   /** Fills in x/y (in key units) and a code -> key index. ISO Enter spans rows 1 and 2. */
   function finish(layout) {
     layout.byCode = new Map();
@@ -142,7 +251,7 @@ const Keyboard = (() => {
     return Object.freeze(layout);
   }
 
-  const LAYOUTS = { es: finish(ES), us: finish(US) };
+  const LAYOUTS = { es: finish(ES), us: finish(US), fr: finish(FR), de: finish(DE) };
 
   const resolve = (layout) => (typeof layout === 'string' ? LAYOUTS[layout] : layout) || LAYOUTS.us;
 
@@ -266,7 +375,8 @@ const Keyboard = (() => {
     return [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
   }
 
-  const isUpperLetter = (k) => /^Key[A-Z]$/.test(k.code);
+  /** Letter keys (a, ñ, ö, ü...) show one big uppercase glyph; ù/% or é/2 keep both legends. */
+  const isLetterKey = (k) => /\p{L}/u.test(k.label) && k.shift !== k.label && k.shift === k.label.toUpperCase();
   const reduceMotion = () =>
     typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -311,7 +421,7 @@ const Keyboard = (() => {
     }
 
     const deadCls = (lvl) => (k.dead && k.dead[lvl] ? ' kb-dead' : '');
-    if (isUpperLetter(k) || k.code === 'Semicolon' && /\p{L}/u.test(k.label) || k.code === 'Backslash' && /\p{L}/u.test(k.label)) {
+    if (isLetterKey(k)) {
       // Letters: one big uppercase glyph, like a real keycap.
       text('kb-main', k.altgr ? cx - 3 : cx, cy + 0.5, k.shift);
     } else {
