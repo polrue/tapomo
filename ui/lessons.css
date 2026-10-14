@@ -41,3 +41,7 @@ body[data-view="lessons"] #range-tabs { visibility: hidden; }
 .ls-res-stars { font-size: 2.6rem; letter-spacing: .1em; }
 .ls-result h3 { margin: 4px 0; font-size: 1.3rem; }
 .ls-res-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }
+.ls-practice { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 8px 0 4px; padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, var(--accent) 16%, var(--card)); border: 1px solid var(--accent); }
+.ls-practice > div { flex: 1; min-width: 200px; }
+.ls-practice .hint { margin: 2px 0 0; }
+.ls-practice-keys { font-family: ui-monospace, Consolas, monospace; font-size: 1.3rem; font-weight: 800; letter-spacing: .1em; }

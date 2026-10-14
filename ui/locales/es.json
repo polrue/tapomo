@@ -491,5 +491,9 @@
   "lessons.kind.common-1": "Palabras cortas",
   "lessons.kind.common-2": "Palabras largas",
   "lessons.kind.sentences": "Frases {n}",
-  "lessons.tip.caps": "Truco: la mayúscula se hace con el Shift de la otra mano."
+  "lessons.tip.caps": "Truco: la mayúscula se hace con el Shift de la otra mano.",
+  "lessons.practice.title": "Práctica de tus teclas difíciles",
+  "lessons.practice.text": "Tapomo ha visto qué teclas te cuestan más en las lecciones y te ha preparado un ejercicio con ellas.",
+  "lessons.practice.go": "Practicar",
+  "settings.lessons_in_goal": "Las lecciones cuentan para el objetivo diario"
 }

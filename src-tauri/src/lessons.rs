@@ -169,6 +169,23 @@ mod tests {
     }
 
     #[test]
+    fn lesson_time_joins_the_day_once() {
+        let c = mem();
+        let start: i64 = c.query_row("SELECT CAST(strftime('%s', 'now') AS INTEGER) * 1000 - 60000", [], |r| r.get(0)).unwrap();
+        let app = db::intern_app(&c, "test.exe").unwrap();
+        db::insert_burst(&c, &tapomo_core::Burst { app_id: app, start_ms: start as u64, end_ms: start as u64 + 30_000, chars: 100, backspaces: 0, word_deletes: 0, peak_wpm: None, best_streak: 10 }).unwrap();
+        save(&c, &run(0.9, 15.0, vec![])).unwrap(); // 120 s
+        let days = db::daily_active(&c).unwrap();
+        assert_eq!(days.len(), 1, "{days:?}");
+        assert_eq!(days[0].1, 150_000);
+        assert_eq!(db::today_active_ms(&c).unwrap(), 150_000);
+        let mut s = db::get_settings(&c).unwrap();
+        s.lessons_in_goal = false;
+        db::set_settings(&c, &s).unwrap();
+        assert_eq!(db::today_active_ms(&c).unwrap(), 30_000);
+    }
+
+    #[test]
     fn daily_xp_cap() {
         let c = mem();
         for _ in 0..15 {

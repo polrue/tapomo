@@ -107,6 +107,17 @@ const Lessons = (() => {
     return out.join(sep);
   }
 
+  /** Custom practice: half drill on the hard keys, half real words that contain them. */
+  function practiceText(lesson, layout, seed) {
+    const r = rng(seed);
+    const hard = [...lesson.newKeys];
+    const lang = layout === 'us' ? 'en' : 'es';
+    const pool = (LessonWords[lang] || []).filter((w) => hard.some((k) => w.includes(k)));
+    const all = layout === 'us' ? 'asdfghjklqwertyuiopzxcvbnm' : 'asdfghjklñqwertyuiopzxcvbnm';
+    const half = drill({ newKeys: lesson.newKeys, known: all }, seed, 90);
+    return pool.length >= 5 ? `${half} ${fill(r, pool, 100)}` : drill({ newKeys: lesson.newKeys, known: all }, seed, 180);
+  }
+
   const LEFT = 'qwertasdfgzxcvb';
   // Capitalised, very short or interjection-like words look odd ("Ja", "Mas"): capitals use longer words.
   const capWords = (words) => words.filter((w) => w.length >= 4 && !['hala', 'jaja', 'lass', 'lads', 'gals', 'fads'].includes(w));
@@ -119,6 +130,7 @@ const Lessons = (() => {
     const T = LessonTexts[lang];
     switch (lesson.kind) {
       case 'drill': return drill(lesson, seed);
+      case 'practice': return practiceText(lesson, layout, seed);
       case 'words': return wordsText(lesson, layout, seed);
       // Shift with the other hand: capitals of left-hand letters use the right Shift and vice versa.
       case 'caps-left': return fill(r, capWords(words).filter((w) => LEFT.includes(w[0])).map(cap), 150);
@@ -163,6 +175,7 @@ const Lessons = (() => {
   function lessonName(l) {
     if (l.kind === 'drill') return t('lessons.keys', { keys: l.newKeys.split('').join(' ') });
     if (l.kind === 'words') return t('lessons.words');
+    if (l.kind === 'practice') return t('lessons.practice.title');
     if (l.kind.startsWith('sentences')) return t('lessons.kind.sentences', { n: l.index + 1 });
     return t(`lessons.kind.${l.kind}`);
   }
@@ -172,9 +185,11 @@ const Lessons = (() => {
     return [1, 2, 3].map((i) => `<span class="ls-star${i <= n ? ' on' : ''}" aria-hidden="true">★</span>`).join('');
   }
 
+  let hard = [];
+
   async function refresh() {
     layout = layout || defaultLayout();
-    progress = await invoke('get_lessons_progress', { layout });
+    [progress, hard] = await Promise.all([invoke('get_lessons_progress', { layout }), invoke('get_hard_keys', { layout }).catch(() => [])]);
     renderMap();
   }
 
@@ -214,6 +229,14 @@ const Lessons = (() => {
       }
       sec.append(h, keys, ol);
       box.append(sec);
+    }
+    // "Práctica de tus teclas difíciles": once the lessons know a few keys you miss more.
+    const prac = $('ls-practice');
+    const keys = hard.filter((k) => /\S/.test(k)).slice(0, 5);
+    prac.hidden = keys.length < 3;
+    if (!prac.hidden) {
+      $('ls-practice-keys').textContent = keys.join('  ');
+      $('ls-practice-go').onclick = () => start({ id: 'practice', unit: 'practice', index: 0, newKeys: keys.join(''), known: '', kind: 'practice', base: 20 });
     }
     const ba = progress.before_after;
     $('ls-real').hidden = !ba;
@@ -315,7 +338,7 @@ const Lessons = (() => {
     $('ls-res-tip').textContent = saved.stars < 3 ? t(saved.stars < 2 ? 'lessons.tip.acc' : 'lessons.tip.pace', { target: fmt(run.target) }) : (saved.stars > saved.best_before ? t('lessons.tip.new_best') : '');
     const list = catalogue(layout);
     const i = list.findIndex((l) => l.id === run.lesson.id);
-    const next = list[i + 1];
+    const next = i < 0 ? null : list[i + 1];
     $('ls-next').hidden = !next;
     $('ls-next').onclick = () => next && start(next);
     $('ls-again').onclick = () => start(run.lesson);

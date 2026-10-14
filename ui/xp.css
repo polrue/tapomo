@@ -86,3 +86,27 @@
 .sc-line { margin: 0 0 6px; }
 .sc-kinds:empty { display: none; }
 .sc-kinds .chip { padding: 4px 10px; font-size: 0.85rem; font-weight: 700; }
+
+/* ------------------------------------------------- shortcut trainer (0.4.3) */
+.sc-tip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.sc-tip > div { flex: 1; min-width: 220px; }
+.sc-tip h2 { margin: 0 0 2px; font-size: 1rem; }
+.sc-tip p { margin: 0; color: var(--muted); }
+.sc-tip kbd, .al-item kbd {
+  display: inline-block; padding: 4px 10px; border-radius: 8px; border: 2px solid var(--ink); border-bottom-width: 4px;
+  background: var(--bg); font: 800 1rem ui-monospace, Consolas, monospace; white-space: nowrap;
+}
+.sc-tip-nav { display: flex; gap: 8px; }
+.al-count { margin: -4px 0 8px; color: var(--muted); }
+.album h3 { margin: 14px 0 6px; font-size: 0.95rem; }
+.al-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.al-item { display: grid; grid-template-columns: minmax(110px, auto) 1fr auto; gap: 4px 12px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
+.al-item[data-level="0"] { opacity: .55; }
+.al-item[data-level="0"] kbd { border-style: dashed; }
+.al-text { font-size: 0.88rem; min-width: 0; }
+.al-level { font-size: 0.78rem; font-weight: 800; color: var(--muted); text-align: right; }
+.al-item[data-level="4"] .al-level { color: var(--accent-strong); }
+.al-dots { grid-column: 3; display: flex; gap: 3px; justify-content: flex-end; }
+.al-dots i { width: 8px; height: 8px; border-radius: 999px; background: var(--line); }
+.al-dots i.on { background: var(--accent); }
+@media (max-width: 520px) { .al-item { grid-template-columns: 1fr auto; } .al-text { grid-column: 1 / -1; grid-row: 2; } .al-dots { grid-column: 2; } }

@@ -231,6 +231,14 @@ impl Tracker {
                     if let Ok(total) = xp::total(&self.conn) {
                         self.xp_total = total;
                     }
+                    // A lesson may have added goal time: re-read it without re-arming the event, so
+                    // reaching the goal with a lesson is celebrated like reaching it typing.
+                    if let Ok(ms) = db::today_active_ms(&self.conn) {
+                        self.goal_stored_ms = ms;
+                    }
+                    self.sync_goal();
+                    // The goal (and challenges) may now give XP too.
+                    self.settle_xp();
                 }
                 Ok(Msg::PasswordFocus) => {
                     self.shared.last_key_ms.store(now_ms(), Ordering::Relaxed);
