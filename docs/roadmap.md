@@ -16,7 +16,7 @@ Reglas que valen para todo el plan:
 |---|---|---|
 | 0.1 | Medición pasiva por ráfagas, estadísticas, calendario, apps | Hecho |
 | 0.2 | Barra de velocidad personal, Tapomo flotante, caras de racha, estrellitas, bienvenida, instalador con Tapomo, aviso de versión nueva | Hecho |
-| 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (hechas: 0.3.0 objetivo diario y días seguidos; 0.3.1 actualizador y caracteres por minuto; 0.3.2 XP, niveles, retos, armario y zonas nuevas; 0.3.3 insignias; 0.3.4 liga contigo mismo; 0.3.5 carta semanal) |
+| 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (hechas: 0.3.0 objetivo diario y días seguidos; 0.3.1 actualizador y caracteres por minuto; 0.3.2 XP, niveles, retos, armario y zonas nuevas; 0.3.3 insignias; 0.3.4 liga contigo mismo; 0.3.5 carta semanal; 0.3.6 atajos por tipos) |
 | 0.4 | Lecciones de mecanografía (ES + US) y entrenador de atajos | Pendiente |
 | 0.5 | Web tapomo.app, estadísticas anónimas opcionales, ligas entre amigos | Pendiente |
 | Más tarde | Cifrado de la base de datos, más idiomas | Pendiente |
@@ -89,7 +89,9 @@ Pantalla de insignias con las conseguidas en color y las pendientes en silueta s
 
 - Cada lunes, una tarjeta con lo mejor de la semana: hora más rápida, récord, días cumplidos, app donde más escribiste, insignias nuevas. Solo hechos positivos.
 
-### 0.3.6 Atajos: contar por tipos (Fase A)
+### 0.3.6 Atajos: contar por tipos (Fase A) *(hecho, 15-10-2026)*
+
+- La clasificación se hace dentro del gancho (es un `match` instantáneo, `tapomo-core::shortcuts::classify`), así que la tecla no sale nunca de ahí: aún más privado que hacerlo en el hilo de trabajo. Tabla `shortcut_days(day, kind, count)`. Reto «Usa N atajos» solo para quien ya usa 5 o más al día.
 
 - Cinco contadores por día: copiar/pegar/cortar, deshacer/rehacer, guardar, ventanas y escritorio (`Alt+Tab`, `Win+…`), otros. Sin catálogo todavía y sin guardar la tecla.
 - Clasificación en el hilo de trabajo (no en el hook, que debe responder rápido); la combinación solo vive en memoria un instante.

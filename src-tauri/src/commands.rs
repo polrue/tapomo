@@ -93,6 +93,12 @@ pub fn get_weekly_letter(state: State<AppState>, week: i64) -> CmdResult<crate::
     state.with_db(|c| crate::weekly::letter(c, week))
 }
 
+/// Today's shortcuts by kind.
+#[tauri::command]
+pub fn get_shortcuts(state: State<AppState>) -> CmdResult<crate::shortcuts::Today> {
+    state.with_db(crate::shortcuts::today)
+}
+
 #[tauri::command]
 pub fn get_heatmap(state: State<AppState>, range: String) -> CmdResult<Vec<HeatCell>> {
     state.with_db(|c| db::heatmap(c, &range))
@@ -188,6 +194,7 @@ fn changed_settings(old: &Settings, new: &Settings) -> Vec<&'static str> {
         ("skin", old.skin != new.skin),
         ("accessories", old.accessories != new.accessories),
         ("wear_style", old.wear_style != new.wear_style),
+        ("count_shortcuts", old.count_shortcuts != new.count_shortcuts),
     ]
     .into_iter()
     .filter_map(|(name, changed)| changed.then_some(name))

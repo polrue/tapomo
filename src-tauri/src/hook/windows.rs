@@ -28,6 +28,7 @@ const WM_SYSKEYUP: u32 = 0x0105;
 const VK_BACK: u32 = 0x08;
 const VK_RETURN: u32 = 0x0D;
 const VK_SPACE: u32 = 0x20;
+const VK_SHIFT: u16 = 0x10;
 const VK_CONTROL: u16 = 0x11;
 const VK_MENU: u16 = 0x12;
 const VK_LWIN: u16 = 0x5B;
@@ -116,8 +117,17 @@ unsafe fn handle(wparam: WPARAM, lparam: LPARAM) {
             let ctrl = is_down(VK_CONTROL);
             let alt = is_down(VK_MENU);
             let win = is_down(VK_LWIN) || is_down(VK_RWIN);
-            let class = if repeat { KeyClass::Ignored } else { classify(vk, ctrl, alt, win) };
+            if repeat {
+                return;
+            }
+            let class = classify(vk, ctrl, alt, win);
             if class == KeyClass::Ignored {
+                // A Ctrl/Alt/Win combination becomes one of five kinds right here; the key is dropped.
+                if let Some(kind) = tapomo_core::shortcuts::classify(vk, ctrl, alt, win, is_down(VK_SHIFT)) {
+                    if let Some(tx) = SENDER.get() {
+                        let _ = tx.send(Msg::Shortcut(kind, GetForegroundWindow().0 as isize));
+                    }
+                }
                 return;
             }
             if let Some(tx) = SENDER.get() {

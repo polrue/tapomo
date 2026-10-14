@@ -16,12 +16,14 @@ use tapomo_core::{personal_reference, Burst, Config, Engine, KeyClass, KeyEvent,
 use tauri::{AppHandle, Emitter};
 
 use crate::hook::RawKey;
-use crate::{badges, db, pet, platform, xp};
+use crate::{badges, db, pet, platform, shortcuts, xp};
 
 /// Worker tick: closes finished bursts and drives the live bar.
 const TICK: Duration = Duration::from_millis(250);
 const FULLSCREEN_CHECK: Duration = Duration::from_millis(500);
 const EXE_CACHE_TTL: Duration = Duration::from_secs(30);
+/// How often counted shortcuts are turned into XP.
+const SHORTCUT_SETTLE: Duration = Duration::from_secs(30);
 
 /// Messages for the worker thread.
 pub enum Msg {
@@ -30,6 +32,8 @@ pub enum Msg {
     Reload,
     /// A key was dropped because a password field has focus: close the open burst.
     PasswordFocus,
+    /// A shortcut of this kind was used in the window with this handle (the key itself is never sent).
+    Shortcut(tapomo_core::shortcuts::ShortcutKind, isize),
     /// Flush the open burst, save and stop. The sender is acknowledged when done.
     Shutdown(SyncSender<()>),
 }
@@ -155,6 +159,11 @@ struct Tracker {
     goal_refreshed: Instant,
     /// Total XP after the last settle.
     xp_total: u64,
+    /// Setting `count_shortcuts`.
+    count_shortcuts: bool,
+    /// Shortcuts counted since the last XP settle, and when that was.
+    shortcuts_pending: bool,
+    last_settle: Instant,
 }
 
 impl Tracker {
@@ -186,6 +195,9 @@ impl Tracker {
             goal_fired_day: None,
             goal_refreshed: Instant::now(),
             xp_total: 0,
+            count_shortcuts: true,
+            shortcuts_pending: false,
+            last_settle: Instant::now(),
         };
         // Converts the history the first time and catches up on days the app was closed. Silent: the
         // main window reveals any level reached meanwhile.
@@ -212,6 +224,7 @@ impl Tracker {
                     self.on_key(key);
                 }
                 Ok(Msg::Reload) => self.reload(),
+                Ok(Msg::Shortcut(kind, hwnd)) => self.on_shortcut(kind, hwnd),
                 Ok(Msg::PasswordFocus) => {
                     self.shared.last_key_ms.store(now_ms(), Ordering::Relaxed);
                     self.last_key_ms = None;
@@ -242,6 +255,10 @@ impl Tracker {
                 self.shared.streak.store(self.engine.current_streak(), Ordering::Relaxed);
                 self.emit_live(now);
                 self.watch_fullscreen();
+                // Shortcut XP is folded in now and then, not on every Ctrl+C.
+                if self.shortcuts_pending && self.last_settle.elapsed() >= SHORTCUT_SETTLE {
+                    self.settle_xp();
+                }
             }
         }
     }
@@ -252,6 +269,7 @@ impl Tracker {
                 let was_paused = self.paused;
                 self.paused = s.paused;
                 self.ignore_fullscreen = s.ignore_fullscreen;
+                self.count_shortcuts = s.count_shortcuts;
                 let flushed = if self.paused && !was_paused { self.last_key_ms = None; self.engine.flush() } else { None };
                 self.engine.set_config(Config::default().with_pause_ms(s.pause_ms));
                 self.finish_burst(flushed);
@@ -297,6 +315,26 @@ impl Tracker {
         self.sync_goal();
     }
 
+    /// Counts a shortcut under the same rules as typing: not while paused, in a fullscreen game or in an
+    /// excluded app. Only its kind is stored, as a daily count.
+    fn on_shortcut(&mut self, kind: tapomo_core::shortcuts::ShortcutKind, hwnd: isize) {
+        if self.paused || !self.count_shortcuts || (self.ignore_fullscreen && self.fullscreen_busy()) {
+            return;
+        }
+        let Some(exe) = self.exe_for(hwnd) else { return };
+        if self.excluded.contains(&exe.to_lowercase()) {
+            return;
+        }
+        if let Err(e) = shortcuts::add(&self.conn, kind) {
+            log::error!("could not count a shortcut: {e}");
+            return;
+        }
+        self.shortcuts_pending = true;
+        if self.shared.ui_visible() {
+            let _ = self.app.emit("tapomo://shortcut", kind.id());
+        }
+    }
+
     fn finish_burst(&mut self, burst: Option<Burst>) {
         let Some(burst) = burst else { return };
         if let Err(e) = db::insert_burst(&self.conn, &burst) {
@@ -325,6 +363,8 @@ impl Tracker {
 
     /// Updates the XP ledger and tells the windows when it changed.
     fn settle_xp(&mut self) {
+        self.shortcuts_pending = false;
+        self.last_settle = Instant::now();
         let mut settled = match xp::settle(&self.conn) {
             Ok(s) => s,
             Err(e) => {
