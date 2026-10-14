@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="badges.css">
   <link rel="stylesheet" href="league.css">
   <link rel="stylesheet" href="records.css">
+  <link rel="stylesheet" href="keyboard.css">
+  <link rel="stylesheet" href="lessons.css">
 </head>
 <body>
   <header class="top">
@@ -21,6 +23,7 @@
       <p class="hide-note" id="hide-note" aria-live="polite" hidden><span id="hide-text"></span><button type="button" class="pill" id="hide-btn" hidden></button></p>
       <p class="tagline" id="paused-banner" hidden data-i18n="paused.banner"></p>
     </div>
+    <button type="button" class="lessons-btn" id="lessons-btn" aria-pressed="false" data-i18n="lessons.button"></button>
     <nav class="tabs" id="range-tabs" role="tablist">
       <button role="tab" data-range="today" data-i18n="range.today"></button>
       <button role="tab" data-range="7d" data-i18n="range.7d"></button>
@@ -30,6 +33,40 @@
   </header>
 
   <main>
+    <section class="card lessons" id="lessons" aria-labelledby="ls-title">
+      <div class="ls-head">
+        <h2 id="ls-title" data-i18n="lessons.title"></h2>
+        <label class="ls-layout-pick"><span data-i18n="lessons.layout"></span>
+          <select id="ls-layout"><option value="es" data-i18n="lessons.layout.es"></option><option value="us" data-i18n="lessons.layout.us"></option></select>
+        </label>
+        <button type="button" class="ghost" id="ls-close" data-i18n="lessons.close"></button>
+      </div>
+      <div id="ls-map">
+        <p class="hint" data-i18n="lessons.intro"></p>
+        <p class="ls-real" id="ls-real" hidden></p>
+        <div class="ls-units" id="ls-units"></div>
+      </div>
+      <div id="ls-run" hidden>
+        <div class="ls-run-head"><h3 id="ls-run-title"></h3><span class="ls-live"><span data-i18n="unit.wpm"></span> <strong id="ls-wpm">–</strong> · <span data-i18n="lessons.accuracy"></span> <strong id="ls-acc">100 %</strong></span></div>
+        <div class="ls-progress"><i id="ls-bar"></i></div>
+        <div class="ls-text" id="ls-text" aria-live="off"></div>
+        <input class="ls-input" id="ls-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-i18n-aria="lessons.input">
+        <p class="hint" data-i18n="lessons.run_hint"></p>
+        <div class="ls-kb" id="ls-kb"></div>
+      </div>
+      <div id="ls-result" class="ls-result" hidden aria-live="polite">
+        <div class="ls-res-stars" id="ls-res-stars"></div>
+        <h3 id="ls-res-title"></h3>
+        <p id="ls-res-line"></p>
+        <p class="hint" id="ls-res-tip"></p>
+        <div class="ls-res-nav">
+          <button type="button" class="ghost" id="ls-back" data-i18n="lessons.back"></button>
+          <button type="button" class="ghost" id="ls-again" data-i18n="lessons.again"></button>
+          <button type="button" id="ls-next" data-i18n="lessons.next"></button>
+        </div>
+      </div>
+    </section>
+
     <section class="card live" id="live" data-zone="idle" aria-live="off">
       <div class="live-head">
         <h2><span data-i18n="live.title"></span><button type="button" class="info" data-tip="tip.live" data-tip-speed="live" data-i18n-aria="tip.more">i</button></h2>
@@ -364,6 +401,9 @@
   <script src="welcome.js"></script>
   <script src="badges-art.js"></script>
   <script src="badges.js"></script>
+  <script src="keyboard.js"></script>
+  <script src="lesson-words.js"></script>
+  <script src="lessons.js"></script>
   <script src="records.js"></script>
   <script src="shortcuts.js"></script>
   <script src="weekly.js"></script>

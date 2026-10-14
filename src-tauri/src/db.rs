@@ -101,6 +101,34 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
              COMMIT;",
         )?;
     }
+    if version < 6 {
+        // Typing lessons (0.4): results and per-key stats of OUR lesson texts only. Additive only.
+        conn.execute_batch(
+            "BEGIN;
+             CREATE TABLE lesson_results (
+                 id INTEGER PRIMARY KEY,
+                 lesson_id TEXT NOT NULL,
+                 layout TEXT NOT NULL,
+                 ts INTEGER NOT NULL,
+                 day INTEGER NOT NULL,
+                 duration_ms INTEGER NOT NULL,
+                 wpm REAL NOT NULL,
+                 accuracy REAL NOT NULL,
+                 stars INTEGER NOT NULL
+             );
+             CREATE INDEX idx_lesson_results_lesson ON lesson_results(lesson_id, layout);
+             CREATE TABLE key_stats (
+                 layout TEXT NOT NULL,
+                 key TEXT NOT NULL,
+                 hits INTEGER NOT NULL,
+                 misses INTEGER NOT NULL,
+                 total_ms INTEGER NOT NULL,
+                 PRIMARY KEY (layout, key)
+             );
+             PRAGMA user_version = 6;
+             COMMIT;",
+        )?;
+    }
     Ok(())
 }
 

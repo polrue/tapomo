@@ -341,6 +341,7 @@ async function onLanguageChange() {
   Badges.render();
   League.render();
   Records.render();
+  if (document.body.dataset.view === 'lessons') Lessons.refresh().catch(showError);
   paintLive(lastLive || {});
   renderPetState();
   renderVersion();
@@ -765,7 +766,7 @@ async function bindEvents() {
 
 // ----------------------------------------------------------------- glossary
 
-const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak', 'xp', 'challenges', 'wardrobe', 'badges', 'league', 'shortcuts', 'records'];
+const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak', 'xp', 'challenges', 'wardrobe', 'badges', 'league', 'shortcuts', 'records', 'lessons'];
 
 function renderGlossary() {
   const dl = $('glossary-list');
@@ -801,6 +802,7 @@ async function init() {
   paintLive({});
   bindControls();
   Progress.bind();
+  Lessons.bind();
   $('hide-btn').addEventListener('click', comeOut);
   Tips.init({
     vars: () => ({
