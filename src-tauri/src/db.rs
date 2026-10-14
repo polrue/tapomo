@@ -161,6 +161,8 @@ pub struct Settings {
     pub wear_style: String,
     /// Count Ctrl/Alt/Win shortcuts by kind (never which one).
     pub count_shortcuts: bool,
+    /// Time spent in lessons counts towards the daily goal.
+    pub lessons_in_goal: bool,
 }
 
 /// Goal choices offered in the settings; anything else falls back to the default.
@@ -207,6 +209,7 @@ pub fn get_settings(conn: &Connection) -> rusqlite::Result<Settings> {
             .unwrap_or_default(),
         wear_style: get_raw(conn, "wear_style")?.filter(|v| v == "subtle").unwrap_or_else(|| "bold".into()),
         count_shortcuts: flag("count_shortcuts", true)?,
+        lessons_in_goal: flag("lessons_in_goal", true)?,
     })
 }
 
@@ -227,7 +230,8 @@ pub fn set_settings(conn: &Connection, s: &Settings) -> rusqlite::Result<()> {
     set_raw(conn, "skin", &id(&s.skin))?;
     set_raw(conn, "accessories", &s.accessories.iter().map(|a| id(a)).filter(|a| !a.is_empty()).take(16).collect::<Vec<_>>().join(","))?;
     set_raw(conn, "wear_style", if s.wear_style == "subtle" { "subtle" } else { "bold" })?;
-    set_raw(conn, "count_shortcuts", b(s.count_shortcuts))
+    set_raw(conn, "count_shortcuts", b(s.count_shortcuts))?;
+    set_raw(conn, "lessons_in_goal", b(s.lessons_in_goal))
 }
 
 /// Saved position of the floating Tapomo (physical px). Kept out of [`Settings`]
@@ -325,14 +329,36 @@ pub fn daily_active(conn: &Connection) -> rusqlite::Result<Vec<(i64, u64)>> {
     let sql = format!("SELECT {DAY_OF_START}, SUM(end_ms - start_ms) FROM bursts GROUP BY 1");
     let mut stmt = conn.prepare(&sql)?;
     let rows = stmt.query_map([], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?.max(0) as u64)))?;
-    rows.collect()
+    let mut days = rows.collect::<rusqlite::Result<Vec<_>>>()?;
+    // Lesson time counts towards the daily goal too (setting, on by default); repeated days add up.
+    if lessons_in_goal(conn)? {
+        let mut stmt = conn.prepare("SELECT day, SUM(duration_ms) FROM lesson_results GROUP BY day")?;
+        let rows = stmt.query_map([], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?.max(0) as u64)))?;
+        days.extend(rows.collect::<rusqlite::Result<Vec<_>>>()?);
+        // One entry per day: callers compare each entry with the goal.
+        let mut merged: std::collections::BTreeMap<i64, u64> = std::collections::BTreeMap::new();
+        for (d, ms) in days {
+            *merged.entry(d).or_insert(0) += ms;
+        }
+        return Ok(merged.into_iter().collect());
+    }
+    Ok(days)
+}
+
+fn lessons_in_goal(conn: &Connection) -> rusqlite::Result<bool> {
+    Ok(get_raw(conn, "lessons_in_goal")?.is_none_or(|v| v == "1"))
 }
 
 /// Active time of today alone (cheap: uses the start-of-day index range).
 pub fn today_active_ms(conn: &Connection) -> rusqlite::Result<u64> {
     let since = range_start_ms(conn, "today")?;
     let ms: i64 = conn.query_row("SELECT COALESCE(SUM(end_ms - start_ms), 0) FROM bursts WHERE start_ms >= ?1", [since], |r| r.get(0))?;
-    Ok(ms.max(0) as u64)
+    let lessons: i64 = if lessons_in_goal(conn)? {
+        conn.query_row("SELECT COALESCE(SUM(duration_ms), 0) FROM lesson_results WHERE day = ?1", [today_day(conn)?], |r| r.get(0))?
+    } else {
+        0
+    };
+    Ok((ms + lessons).max(0) as u64)
 }
 
 #[derive(Debug, Serialize)]

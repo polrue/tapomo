@@ -279,6 +279,7 @@ function renderSettings() {
   $('s-goal').value = String(settings.daily_goal_min);
   $('s-weekend').checked = settings.weekend_rest;
   $('s-shortcuts').checked = settings.count_shortcuts;
+  $('s-lessons-goal').checked = settings.lessons_in_goal;
   $('s-updates').checked = settings.check_updates;
   $('s-auto-update').checked = settings.auto_update;
   $('s-auto-update').disabled = !settings.check_updates;
@@ -368,6 +369,7 @@ function bindControls() {
   $('s-goal').addEventListener('change', () => saveSettings({ daily_goal_min: Number($('s-goal').value) }).then(() => renderGoal()).catch(showError));
   $('s-weekend').addEventListener('change', () => saveSettings({ weekend_rest: $('s-weekend').checked }).then(() => renderGoal()).catch(showError));
   $('s-pet').addEventListener('change', () => saveSettings({ show_pet: $('s-pet').checked }));
+  $('s-lessons-goal').addEventListener('change', () => saveSettings({ lessons_in_goal: $('s-lessons-goal').checked }).then(() => renderGoal()).catch(showError));
   $('s-shortcuts').addEventListener('change', () => saveSettings({ count_shortcuts: $('s-shortcuts').checked }).then(() => Shortcuts.refresh()).catch(showError));
   $('s-updates').addEventListener('change', async () => {
     await saveSettings({ check_updates: $('s-updates').checked });
