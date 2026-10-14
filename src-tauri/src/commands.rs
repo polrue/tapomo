@@ -87,6 +87,12 @@ pub fn ack_league(state: State<AppState>, week: i64) -> CmdResult<()> {
     state.with_db(|c| crate::league::ack(c, week))
 }
 
+/// The best of the week starting on Monday `week` (local day number).
+#[tauri::command]
+pub fn get_weekly_letter(state: State<AppState>, week: i64) -> CmdResult<crate::weekly::Letter> {
+    state.with_db(|c| crate::weekly::letter(c, week))
+}
+
 #[tauri::command]
 pub fn get_heatmap(state: State<AppState>, range: String) -> CmdResult<Vec<HeatCell>> {
     state.with_db(|c| db::heatmap(c, &range))

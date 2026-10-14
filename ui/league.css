@@ -11,4 +11,11 @@
 .lg-bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: inherit; transition: width 600ms ease; }
 .lgup-emblem { margin: 0 auto 4px; width: 88px; height: 88px; }
 .lgup-letter:empty { display: none; }
+.lgup-letter { text-align: left; margin-top: 12px; }
+.lgup-letter h3 { margin: 0 0 6px; font-size: 1rem; text-align: center; }
+.wk-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.wk-list li { display: flex; gap: 10px; align-items: baseline; padding: 6px 10px; border-radius: 10px; background: var(--bg); }
+.wk-icon { flex: none; width: 1.4em; text-align: center; }
+.lg-letter { margin-top: 6px; padding: 0; background: none; border: none; color: var(--accent-strong); font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.lg-letter:hover { background: none; color: var(--ink); }
 @media (prefers-reduced-motion: reduce) { .lg-bar i { transition: none; } }

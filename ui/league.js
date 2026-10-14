@@ -41,6 +41,7 @@ const League = (() => {
       bar.setAttribute('aria-valuenow', String(Math.min(st.week_xp, goal)));
     }
     $('lg-days').textContent = tn('league.days_left', st.days_left);
+    $('lg-letter').onclick = () => WeeklyCard.open(st.last_week).catch(showError);
   }
 
   async function refresh() {
@@ -51,14 +52,14 @@ const League = (() => {
 
   /** The finished week's result, once (after the level and badge dialogs). */
   function maybeReveal() {
-    const busy = ['level-dialog', 'badge-dialog', 'welcome', 'update-dialog'].some((id) => !$(id).hidden);
+    const busy = ['level-dialog', 'badge-dialog', 'welcome', 'update-dialog', 'weekly-dialog'].some((id) => !$(id).hidden);
     if (!st || !st.result || revealing || busy || document.hidden) return;
     revealing = true;
     const r = st.result;
     $('lgup-emblem').innerHTML = emblem(r.league);
     $('lgup-title').textContent = r.up ? t('league.up.title', { league: t(`league.${r.league}`) }) : t('league.stay.title', { league: t(`league.${r.league}`) });
     $('lgup-text').textContent = t(r.up ? 'league.up.text' : 'league.stay.text', { xp: fmt(r.xp) });
-    if (window.WeeklyCard) WeeklyCard.fill($('lgup-letter'), r.week).catch(showError);
+    WeeklyCard.fill($('lgup-letter'), r.week).catch(showError);
     const close = () => {
       $('league-dialog').hidden = true;
       document.querySelectorAll('.top, main').forEach((n) => (n.inert = false));

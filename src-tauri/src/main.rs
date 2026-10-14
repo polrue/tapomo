@@ -12,6 +12,7 @@ mod pet_tip;
 mod platform;
 mod tracker;
 mod updater;
+mod weekly;
 mod xp;
 
 use std::sync::atomic::Ordering;
@@ -69,6 +70,7 @@ fn main() {
             commands::mark_badges_seen,
             commands::get_league,
             commands::ack_league,
+            commands::get_weekly_letter,
             commands::get_heatmap,
             commands::get_apps,
             commands::set_alias,
