@@ -231,7 +231,8 @@ Idea de Pol, 13-10-2026. Es una página estática y divertida, llena de animacio
 
 ## Más tarde
 
-- **Atajos, Fase C**: más programas en el catálogo (Explorador, Office con excepciones por idioma, VS Code, Photoshop…), abierto a contribuciones de la comunidad.
+- **Atajos, Fase C** *(hecho en la 0.5.1, 15-10-2026)*: Explorador, VS Code, Photoshop, Slack y Discord en el catálogo, abierto a contribuciones. Office se queda fuera de momento: sus atajos de formato cambian según el idioma (en Word en español Ctrl+S es subrayado) y harían falta las deducciones por uso. Lista fija de combinaciones sensibles que el gancho nunca reconoce.
+- **winget** *(preparado)*: `packaging/winget/make-manifest.sh` genera los manifiestos de una versión publicada; el PR a microsoft/winget-pkgs lo abre Pol.
 
 - Cifrado opcional de la base de datos (SQLCipher + clave DPAPI) antes del lanzamiento público.
 - Firma de código o Microsoft Store; con firma, actualización automática (Tauri updater).
