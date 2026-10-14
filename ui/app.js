@@ -819,10 +819,10 @@ async function init() {
       pause: fmt((settings ? settings.pause_ms : 2000) / 1000, 1),
       need: (lastLive && lastLive.calibrating && lastLive.calibrating.need) || 20,
     }),
-    // Spanish speakers often know typing speed in keystrokes per minute: show it, subtly.
+    // Spanish and Catalan speakers often know typing speed in keystrokes per minute: show it, subtly.
     extra: (btn) => {
       const v = speeds[btn.dataset.tipSpeed];
-      return document.documentElement.lang === 'es' && v > 0 ? t('tip.keystrokes', { k: fmt(Math.round(v * 5)) }) : '';
+      return ['es', 'ca'].includes(document.documentElement.lang) && v > 0 ? t('tip.keystrokes', { k: fmt(Math.round(v * 5)) }) : '';
     },
     onClick: openGlossary,
   });

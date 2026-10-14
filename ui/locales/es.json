@@ -475,7 +475,7 @@
   "lessons.unit.caps": "Mayúsculas",
   "lessons.unit.numbers": "Números",
   "lessons.unit.punct": "Puntuación",
-  "lessons.unit.accents": "Acentos, ü y más",
+  "lessons.unit.accents": "Acentos y letras especiales",
   "lessons.unit.common": "Palabras frecuentes",
   "lessons.unit.sentences": "Frases",
   "lessons.kind.caps-left": "Mayúsculas con la mano izquierda",
@@ -486,8 +486,8 @@
   "lessons.kind.num-words": "Números y palabras",
   "lessons.kind.punct-drill": "Signos",
   "lessons.kind.punct-phrases": "Frases cortas con signos",
-  "lessons.kind.accent-vowels": "Vocales con tilde",
-  "lessons.kind.accent-words": "Palabras con tilde",
+  "lessons.kind.accent-vowels": "Letras acentuadas",
+  "lessons.kind.accent-words": "Palabras con acentos",
   "lessons.kind.common-1": "Palabras cortas",
   "lessons.kind.common-2": "Palabras largas",
   "lessons.kind.sentences": "Frases {n}",
@@ -553,5 +553,7 @@
   "album.cat.files": "Explorador de archivos",
   "album.cat.code": "VS Code",
   "album.cat.design": "Photoshop",
-  "album.cat.chat": "Slack y Discord"
+  "album.cat.chat": "Slack y Discord",
+  "lessons.layout.fr": "Francés (AZERTY)",
+  "lessons.layout.de": "Alemán (QWERTZ)"
 }

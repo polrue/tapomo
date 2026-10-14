@@ -39,6 +39,16 @@ pub struct Saved {
     pub xp: u32,
 }
 
+/// Known lesson keyboard layouts; anything else counts as Spanish (the first one shipped).
+fn layout_id(s: &str) -> &'static str {
+    match s {
+        "us" => "us",
+        "fr" => "fr",
+        "de" => "de",
+        _ => "es",
+    }
+}
+
 fn clean_id(s: &str) -> String {
     s.chars().filter(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.')).take(48).collect()
 }
@@ -46,7 +56,7 @@ fn clean_id(s: &str) -> String {
 /// Stores a finished lesson and gives its XP (capped per day). Returns the stars and XP.
 pub fn save(conn: &Connection, run: &LessonRun) -> rusqlite::Result<Saved> {
     let id = clean_id(&run.lesson_id);
-    let layout = if run.layout == "us" { "us" } else { "es" };
+    let layout = layout_id(&run.layout);
     let accuracy = run.accuracy.clamp(0.0, 1.0);
     let wpm = if run.wpm.is_finite() { run.wpm.clamp(0.0, 300.0) } else { 0.0 };
     let stars = core::stars(accuracy, wpm, run.target_wpm);
@@ -110,7 +120,7 @@ fn avg_wpm(conn: &Connection, from: i64, to: i64) -> rusqlite::Result<Option<f64
 }
 
 pub fn progress(conn: &Connection, layout: &str) -> rusqlite::Result<Progress> {
-    let layout = if layout == "us" { "us" } else { "es" };
+    let layout = layout_id(layout);
     let mut stmt = conn.prepare("SELECT lesson_id, MAX(stars), COUNT(*) FROM lesson_results WHERE layout = ?1 GROUP BY lesson_id")?;
     let lessons = stmt.query_map([layout], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?.collect::<rusqlite::Result<Vec<_>>>()?;
     let now = now_ms();
@@ -126,7 +136,7 @@ pub fn progress(conn: &Connection, layout: &str) -> rusqlite::Result<Progress> {
 
 /// Keys of OUR lesson texts with the most misses or slowest times, hardest first.
 pub fn hard_keys(conn: &Connection, layout: &str, n: usize) -> rusqlite::Result<Vec<String>> {
-    let layout = if layout == "us" { "us" } else { "es" };
+    let layout = layout_id(layout);
     let mut stmt = conn.prepare(
         "SELECT key, (misses + 1.0) / (hits + misses + 2.0) AS miss_rate, total_ms * 1.0 / MAX(hits, 1) AS avg_ms
          FROM key_stats WHERE layout = ?1 AND hits + misses >= 5 AND key <> ' '",

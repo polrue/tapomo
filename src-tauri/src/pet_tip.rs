@@ -138,7 +138,7 @@ pub fn gather(conn: &Connection, open_ms: u64) -> rusqlite::Result<Facts> {
 fn num(n: f64, decimals: usize, lang: &str) -> String {
     let s = format!("{n:.decimals$}");
     let (int, frac) = s.split_once('.').map_or((s.as_str(), None), |(i, f)| (i, Some(f)));
-    let (group, dec) = if lang == "es" { ('.', ',') } else { (',', '.') };
+    let (group, dec) = if matches!(lang, "es" | "ca") { ('.', ',') } else { (',', '.') };
     let mut out = String::new();
     for (i, ch) in int.chars().enumerate() {
         if i > 0 && (int.len() - i) % 3 == 0 {
@@ -159,7 +159,7 @@ type Candidate = (&'static str, Vec<(&'static str, String)>, u32);
 pub fn candidates(f: &Facts, lang: &str) -> Vec<Candidate> {
     let mut c: Vec<Candidate> = Vec::new();
     // Speed unit of the language (ES: ppm = palabras por minuto).
-    let unit = if lang == "es" { "ppm" } else { "WPM" };
+    let unit = if matches!(lang, "es" | "ca") { "ppm" } else { "WPM" };
     let t = &f.today;
     let m = &f.month;
     if t.bursts == 0 {
@@ -327,6 +327,7 @@ mod tests {
     fn numbers_follow_language() {
         assert_eq!(num(12345.0, 0, "es"), "12.345");
         assert_eq!(num(0.5, 1, "es"), "0,5");
+        assert_eq!(num(12345.0, 0, "ca"), "12.345");
         assert_eq!(num(12345.0, 0, "en"), "12,345");
     }
 }

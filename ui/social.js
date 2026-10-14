@@ -35,7 +35,8 @@ const Social = (() => {
     return res.status === 204 ? null : res.json();
   }
 
-  const lang = () => (document.documentElement.lang === 'es' ? 'es' : 'en');
+  // The server only knows 'es' and 'en': Catalan typists share the Spanish keyboard, so they count as 'es'.
+  const lang = () => (['es', 'ca'].includes(document.documentElement.lang) ? 'es' : 'en');
 
   // ------------------------------------------------------- anonymous stats
 

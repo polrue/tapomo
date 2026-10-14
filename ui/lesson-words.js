@@ -17,6 +17,41 @@ punto que queso quien rato rey rico risa rojo ropa rosa rueda sabe saber sala sa
 seda seis semana ser si siempre siete silla sobre sol solo sopa su sur taza te tela tema tener tiempo
 tierra toda todo tomar tos trabajo tren tres tu un una uno uva vaca valle vaso vez viaje vida viejo
 viento vino voz y ya yo zapato zona`,
+  // French: accent-free words first-class (early units filter by learnt letters); accented ones
+  // only show up once those letters are known (practice of hard keys).
+  fr: `a as la le les de des du un une et est il elle on nous vous ils elles je tu me te se ce ces cet cette
+mon ton son ma ta sa mes tes ses lui leur leurs qui que quoi dans sur sous avec sans pour par mais ou donc
+car si oui non bien mal bon bonne beau belle grand grande petit petite jeune vieux nouveau chaud froid
+rouge bleu vert noir blanc gris jaune rose jour nuit matin soir midi temps heure an ans mois semaine lundi
+mardi mercredi jeudi vendredi samedi dimanche maison jardin porte table chaise lit livre papier stylo sac
+main pied bras dos nez bouche yeux chat chien cheval oiseau poisson vache lapin souris loup ours fleur
+arbre feuille herbe soleil lune ciel nuage pluie neige vent mer lac montagne plage ville village rue route
+pont gare train bus voiture avion bateau pain lait eau vin sel sucre beurre fromage pomme poire fraise
+orange citron salade soupe riz ami amie amis famille fils fille enfant homme femme dame monsieur madame
+nom aller venir faire dire voir savoir pouvoir vouloir prendre mettre donner parler manger boire dormir
+lire jouer chanter danser marcher courir sauter aimer chercher trouver regarder penser croire partir
+sortir rester tomber ouvrir fermer finir choisir ici loin vite trop assez beaucoup peu plus moins tout
+tous toute rien jamais toujours souvent encore aussi alors puis demain hier deux trois quatre cinq six
+sept huit neuf dix onze douze vingt cent mille merci bonjour salut voici chose fois jeu fin mot phrase
+lettre clavier doigt musique film photo sport hiver automne printemps sel sale salle sa sas sac
+à où là déjà très après près été école élève étoile idée bébé café thé fête tête fenêtre forêt même
+père mère frère garçon leçon français ça goût août âge gâteau château île dîner boîte bientôt drôle`,
+  // German: lowercase like every early-unit word list (nouns get their capital in the sentences).
+  de: `da das ja als lag lass fall hall sah kahl aal saal gas glas hals fass öl
+und oder aber nicht auch noch schon nur sehr mehr viel wenig gut klein alt neu jung lang kurz warm kalt
+hell dunkel rot blau gelb schwarz braun grau der die ein eine einen dem den des ich du er sie es wir ihr
+mein dein sein unser euer mit ohne unter vor nach bei aus von zu in an auf um bis seit wenn weil dass ob
+wie was wer wo wann warum hier dort heute morgen gestern immer nie oft jetzt bald gern nein bitte danke
+hallo tag nacht abend woche monat jahr zeit uhr stunde haus garten fenster tisch stuhl bett buch papier
+stift tasche hand kopf arm auge nase mund herz katze hund pferd vogel fisch kuh maus baum blume blatt gras
+sonne mond stern himmel wolke regen schnee wind meer see fluss berg strand stadt dorf bahn zug auto rad
+schiff brot milch wasser wein salz zucker butter apfel birne kaffee tee suppe reis kuchen schule freund
+familie mutter vater bruder schwester sohn tochter kind baby mann frau name spiel musik film foto sport
+fest sommer winter herbst gehen kommen machen sagen sehen wissen wollen nehmen geben sprechen essen
+trinken schlafen lesen schreiben spielen singen tanzen laufen lieben suchen finden denken glauben bleiben
+fallen eins zwei drei vier sechs sieben acht neun zehn elf hundert tausend
+schön können hören öffnen möchte böse
+groß heiß weiß fuß straße grün für über tür brücke käse müde glück spät fünf zwölf frühling schließen`,
   en: `a add all ask as ash dad fad fall flask glad gas had hall half has lad lag lass sad salad shall dash lash gash sash flash hash lads gal gals fads alas alfalfa
 about after again air all also always and animal another answer any apple are around as at away back
 bad ball be bear because bed been before begin best better big bird black blue boat book both box boy
