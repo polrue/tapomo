@@ -1,0 +1,166 @@
+/* Copied verbatim from ui/mascot.css (Tapomo app) so the website stays self-contained. */
+/* Mascot parts: only the chosen variant of each part is drawn. All motion is transform/opacity. */
+:root { --speed: 1; } /* global animation speed; the lab changes it */
+
+.mascot { overflow: visible; }
+/* Pivot at the middle of the body's bottom edge (the body rect is x 30-130, y 40-138). Fixed in the
+   view box, so layers drawn around the body (Supermochi aura, accessories) never move the pivot. */
+.mascot-body, .m-hop, .m-bob, .m-lift, .m-breath { transform-box: view-box; transform-origin: 80px 138px; }
+.m-shadow, .m-shadow-g, .m-glow ellipse, .m-zzz .z { transform-box: fill-box; transform-origin: 50% 50%; }
+.mascot .eyes-blink { transform-origin: 80px 84px; }
+
+.mascot .m-extras { display: none; }
+/* Eye and mouth variants cross-fade (never pop): only the chosen one is opaque. */
+.mascot .eyes-blink > g, .mascot [data-part="mouth"] > * { opacity: 0; transition: opacity calc(240ms / var(--speed)) ease; }
+.mascot[data-eyes="round"] .eyes-round,
+.mascot[data-eyes="sparkle"] .eyes-sparkle,
+.mascot[data-eyes="wide"] .eyes-wide,
+.mascot[data-eyes="star"] .eyes-star,
+.mascot[data-eyes="dots"] .eyes-dots,
+.mascot[data-eyes="closed"] .eyes-closed,
+.mascot[data-mouth="smile"] .mouth-smile,
+.mascot[data-mouth="small"] .mouth-small,
+.mascot[data-mouth="o"] .mouth-o,
+.mascot[data-mouth="big"] .mouth-big,
+.mascot[data-mouth="open"] .mouth-open,
+.mascot[data-mouth="wavy"] .mouth-wavy { opacity: 1; }
+
+/* "Don't lose it!": raised eyebrows slide in, and the whole face trembles very slightly (12 Hz, ~1 px). */
+.mascot .m-brows { opacity: 0; transform: translateY(5px); transition: opacity calc(240ms / var(--speed)) ease, transform calc(240ms / var(--speed)) ease; }
+.mascot[data-brows="up"] .m-brows { opacity: 1; transform: none; }
+.mascot.tense .m-shake { animation: m-tense calc(332ms / var(--speed)) step-end infinite; }
+@keyframes m-tense {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(.8px, -.5px); }
+  50% { transform: translate(-.6px, .4px); }
+  75% { transform: translate(.4px, .7px); }
+}
+
+/* The record crown sits on top of the head; pop-on and fly-off are animated from JS. */
+.mascot[data-crown="on"] .m-crown { display: inline; }
+.m-crown { transform-box: fill-box; transform-origin: 50% 100%; }
+
+.cheek { opacity: .45; transition: opacity 300ms ease; }
+.mascot.blush .cheek, .mascot.hover .cheek { opacity: .95; }
+
+/* Where the eyes look (set by Mascot.look): short ease so they glide. */
+.eyes-look, [data-part="mouth"], .m-cheeks { transition: transform calc(110ms / var(--speed)) ease-out; }
+
+/* Hover lift / held in the hand. */
+.m-lift { transition: transform calc(170ms / var(--speed)) cubic-bezier(.34, 1.56, .64, 1); }
+.mascot.hover .m-lift { transform: translateY(-3.5px); }
+.mascot.held .m-lift { transform: translateY(-7px) rotate(-2deg); }
+.m-shadow { transition: transform calc(170ms / var(--speed)) ease-out, opacity calc(170ms / var(--speed)) ease-out; }
+.mascot.hover .m-shadow { transform: scale(.94); }
+.mascot.held .m-shadow { transform: scale(.78); opacity: .7; }
+
+/* Idle breathing: a slow, tiny scaleY anchored at the bottom. */
+.m-breath { animation: m-breathe calc(3.2s / var(--speed)) ease-in-out infinite; }
+.mascot.sleeping .m-breath { animation-duration: calc(5.4s / var(--speed)); animation-name: m-breathe-deep; }
+@keyframes m-breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.015); } }
+@keyframes m-breathe-deep { 0%, 100% { transform: scaleY(.99); } 50% { transform: scaleY(1.03); } }
+
+/* Zones (warming < rhythm < good < fire < beating < super). Speed reads through motion, never fire:
+   tapered speed lines from "good" on (4 / 7 / 10 lines, faster per zone), a forward lean that grows
+   (mascot.js, LEAN), faint afterimages at beating (1) and super (2), the gold glow and sunglasses at
+   beating, and the golden aura, tuft and bolts in Supermochi. Everything fades (opacity), never pops. */
+.mascot .m-lines, .mascot .m-glow { display: inline; opacity: 0; transition: opacity calc(320ms / var(--speed)) ease; }
+.mascot[data-zone="good"] .m-lines, .mascot[data-zone="fire"] .m-lines,
+.mascot[data-zone="beating"] .m-lines, .mascot[data-zone="super"] .m-lines { opacity: 1; }
+.mascot[data-zone="beating"] .m-glow, .mascot[data-zone="super"] .m-glow { opacity: 1; }
+.mascot[data-shades="on"] .m-shades { display: inline; }
+.m-lines .ln { opacity: 0; fill: var(--zl, #ff9e7a); transform-box: fill-box; transform-origin: 100% 50%; }
+.mascot[data-zone="good"] { --zl: #ff9e7a; --zk: 1; }
+.mascot[data-zone="fire"] { --zl: #f0553a; --zk: .7; }
+.mascot[data-zone="beating"] { --zl: #ffb81c; --zk: .55; }
+.mascot[data-zone="super"] { --zl: #ffc93c; --zk: .48; }
+.mascot[data-zone="good"] .ln.t1,
+.mascot[data-zone="fire"] .ln.t1, .mascot[data-zone="fire"] .ln.t2,
+.mascot[data-zone="beating"] .ln, .mascot[data-zone="super"] .ln {
+  animation: m-streak calc(var(--d) * var(--zk, 1) / var(--speed)) linear infinite; animation-delay: calc(var(--dl) / var(--speed)); }
+@keyframes m-streak {
+  0% { transform: translateX(12px) scaleX(.35); opacity: 0; }
+  25% { opacity: .95; }
+  100% { transform: translateX(-26px) scaleX(1.2); opacity: 0; }
+}
+.m-glow ellipse { animation: m-glow calc(1.6s / var(--speed)) ease-in-out infinite; }
+@keyframes m-glow { 0%, 100% { transform: scale(.96); opacity: .55; } 50% { transform: scale(1.05); opacity: 1; } }
+/* Afterimages trailing behind (mascot.js only links them to the body in beating and super). The
+   clones do not match rules that need a `.mascot` ancestor, so the body's extras (crown, shades) are
+   hidden by a display="none" attribute in the markup that these rules override in the real body. */
+.m-ghost { opacity: 0; pointer-events: none; transition: opacity calc(220ms / var(--speed)) ease; }
+.mascot[data-zone="beating"] .m-ghost.g1 { opacity: .2; }
+.mascot[data-zone="super"] .m-ghost.g1 { opacity: .24; }
+.mascot[data-zone="super"] .m-ghost.g2 { opacity: .11; }
+/* Wind: the ninja band's tails (wardrobe) flap faster as the zone rises. */
+.mascot[data-zone="fire"] .rw-flutter { animation-duration: calc(450ms / var(--speed)); }
+.mascot[data-zone="beating"] .rw-flutter, .mascot[data-zone="super"] .rw-flutter { animation-duration: calc(300ms / var(--speed)); }
+
+/* Supermochi: golden aura and spiky tuft behind/over the body, little bolts blinking around. */
+.sm-layer { opacity: 0; visibility: hidden; transition: opacity calc(260ms / var(--speed)) ease, visibility 0s linear calc(260ms / var(--speed)); }
+.mascot[data-zone="super"] .sm-layer { opacity: 1; visibility: visible; transition: opacity calc(200ms / var(--speed)) ease; }
+.sm-a1, .sm-a2, .sm-tuft { transform-box: fill-box; transform-origin: 50% 100%; }
+.mascot[data-zone="super"] .sm-a1 { animation: sm-flick calc(240ms / var(--speed)) steps(2) infinite; }
+.mascot[data-zone="super"] .sm-a2 { animation: sm-flick2 calc(300ms / var(--speed)) steps(2) infinite; }
+.mascot[data-zone="super"] .sm-tuft { animation: sm-tuft calc(360ms / var(--speed)) ease-in-out infinite; }
+@keyframes sm-flick { 0% { transform: scale(1, 1); opacity: .8; } 50% { transform: scale(1.03, 1.07); opacity: .62; } }
+@keyframes sm-flick2 { 0% { transform: scale(1.02, 1.04); opacity: .5; } 50% { transform: scale(.98, .97); opacity: .7; } }
+@keyframes sm-tuft { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.07) skewX(-1.5deg); } }
+.sm-spark { opacity: 0; }
+.mascot[data-zone="super"] .sm-spark { animation: sm-spark calc(900ms / var(--speed)) steps(1) infinite; animation-delay: calc(var(--dl) / var(--speed)); }
+@keyframes sm-spark { 0% { opacity: 1; } 22% { opacity: 0; } 55% { opacity: 1; } 70% { opacity: 0; } }
+.mascot.rw-head-on .sm-tuft { display: none; } /* a hat or helmet is on: only the aura stays */
+/* A backspace swallowed by Supermochi: the aura pulses once (no "oops"). */
+.mascot.sm-absorb .sm-a1 { animation: sm-absorb calc(420ms / var(--speed)) ease-out; }
+@keyframes sm-absorb { 0% { transform: scale(1); opacity: .8; } 40% { transform: scale(1.12, 1.16); opacity: 1; } 100% { transform: scale(1); opacity: .8; } }
+
+/* Sleeping: z's float up with a drift, staggered, and fade. */
+.mascot.sleeping .m-zzz { display: inline; }
+.mascot.sleeping .m-lines, .mascot.sleeping .m-glow, .mascot.sleeping .m-ghost { opacity: 0 !important; }
+.mascot.sleeping .sm-layer { opacity: 0 !important; visibility: hidden !important; }
+.m-zzz .z { opacity: 0; animation: m-z calc(3.4s / var(--speed)) ease-in-out infinite; animation-delay: calc(var(--dl, 0s) / var(--speed)); }
+.m-zzz .z { paint-order: stroke; stroke: #fff8f3; stroke-width: 3px; stroke-linejoin: round; } /* readable on dark desktops too */
+@keyframes m-z {
+  0% { transform: translate(-5px, 10px) scale(.6) rotate(-10deg); opacity: 0; }
+  25% { opacity: 1; }
+  60% { transform: translate(3px, -3px) scale(1) rotate(5deg); opacity: 1; }
+  100% { transform: translate(-3px, -17px) scale(1.15) rotate(-7deg); opacity: 0; }
+}
+
+.mascot-wrap { position: relative; width: 76px; height: 76px; flex: none; }
+.mascot-wrap .mascot { width: 76px; height: 76px; }
+
+.mascot { width: 76px; height: 76px; flex: none; }
+
+/* Hiding: Tapomo peeks over the bottom edge of its box; only the top of the head and the eyes show.
+   The clip only cuts the bottom, so jumps and stars can still leave the box upwards and sideways. */
+.mascot-wrap .mascot { transition: transform 520ms cubic-bezier(.34, 1.56, .64, 1); }
+.mascot-wrap.hiding { clip-path: inset(-60px -60px 0 -60px); }
+.mascot-wrap.hiding .mascot { transform: translateY(31px); transition-duration: 380ms; transition-timing-function: ease-in-out; }
+.mascot-wrap::after {
+  content: ""; position: absolute; left: 8px; right: 8px; bottom: 0; height: 3px; border-radius: 3px;
+  background: var(--line); opacity: 0; transition: opacity 300ms ease;
+}
+.mascot-wrap.hiding::after { opacity: 1; }
+
+.hide-note { margin: 2px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; color: var(--muted); font-weight: 700; font-size: 0.9rem; }
+.pill {
+  border: 0; border-radius: 999px; padding: 4px 14px; font: inherit; font-weight: 800;
+  background: var(--accent); color: #23202b; cursor: pointer;
+}
+.pill:hover { background: var(--accent-strong); }
+.pill:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+
+/* Offscreen or minimised: every loop stops. */
+.is-hidden .mascot * { animation-play-state: paused !important; }
+
+/* Less motion: faces still change, nothing moves. */
+@media (prefers-reduced-motion: reduce) {
+  .mascot *, .mascot { animation: none !important; transition: none !important; }
+  .mascot.sleeping .m-zzz .z { opacity: 1; }
+  /* No speed lines, lean or afterimages; Supermochi keeps its colours and still bolts. */
+  .mascot .m-lines, .mascot .m-ghost { display: none; }
+  .mascot[data-zone="super"] .sm-spark { opacity: 1; }
+  .m-fx { display: none; }
+}
