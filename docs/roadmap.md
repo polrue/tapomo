@@ -16,9 +16,9 @@ Reglas que valen para todo el plan:
 |---|---|---|
 | 0.1 | Medición pasiva por ráfagas, estadísticas, calendario, apps | Hecho |
 | 0.2 | Barra de velocidad personal, Tapomo flotante, caras de racha, estrellitas, bienvenida, instalador con Tapomo, aviso de versión nueva | Hecho |
-| 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | En curso (hechas: 0.3.0 objetivo diario y días seguidos; 0.3.1 actualizador y caracteres por minuto; 0.3.2 XP, niveles, retos, armario y zonas nuevas; 0.3.3 insignias; 0.3.4 liga contigo mismo; 0.3.5 carta semanal; 0.3.6 atajos por tipos; 0.3.7 récords) |
-| 0.4 | Lecciones de mecanografía (ES + US) y entrenador de atajos | En curso (0.4.0 motor y filas; 0.4.1 todas las unidades; 0.4.2 práctica a medida y objetivo; 0.4.3 entrenador de atajos) |
-| 0.5 | Web tapomo.app, estadísticas anónimas opcionales, ligas entre amigos | Pendiente |
+| 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | Hecho (hechas: 0.3.0 objetivo diario y días seguidos; 0.3.1 actualizador y caracteres por minuto; 0.3.2 XP, niveles, retos, armario y zonas nuevas; 0.3.3 insignias; 0.3.4 liga contigo mismo; 0.3.5 carta semanal; 0.3.6 atajos por tipos; 0.3.7 récords) |
+| 0.4 | Lecciones de mecanografía (ES + US) y entrenador de atajos | Hecho (0.4.0 motor y filas; 0.4.1 todas las unidades; 0.4.2 práctica a medida y objetivo; 0.4.3 entrenador de atajos) |
+| 0.5 | Web tapomo.app, estadísticas anónimas opcionales, ligas entre amigos | Hecho en código (0.5.0: app + `server/` + `web/`); falta que Pol cree la cuenta de Cloudflare, el DNS de tapomo.app y publique |
 | Más tarde | Cifrado de la base de datos, más idiomas | Pendiente |
 | Aparte | Firma de código (SignPath), web tapomo.app, Microsoft Store y winget. Ver [`distribution.md`](distribution.md) | En curso |
 

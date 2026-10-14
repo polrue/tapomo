@@ -18,6 +18,15 @@ jobs:
       - run: cargo test -p tapomo-core
       - run: cargo clippy -p tapomo-core -- -D warnings
 
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: node --test server/test
+
   windows:
     runs-on: windows-latest
     steps:

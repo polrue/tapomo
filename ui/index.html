@@ -159,6 +159,7 @@
       <p class="ch-full" id="ch-full" hidden></p>
     </section>
 
+    <p id="social-percentile" class="social-percentile" hidden></p>
     <p id="yesterday" class="muted yesterday" hidden></p>
 
     <section id="empty" class="empty" hidden>
@@ -242,6 +243,30 @@
       <div id="al-grid"></div>
     </details>
 
+    <details class="card friends" id="friends">
+      <summary><h2 data-i18n="social.leagues"></h2></summary>
+      <p class="hint" data-i18n="social.leagues.hint"></p>
+      <div id="lf-join">
+        <div class="lf-form">
+          <label><span data-i18n="social.nickname"></span><input id="lf-nick" maxlength="24" autocomplete="off"></label>
+          <label><span data-i18n="social.league_name"></span><input id="lf-name" maxlength="40" autocomplete="off"></label>
+          <button type="button" id="lf-create" data-i18n="social.create"></button>
+        </div>
+        <div class="lf-form">
+          <label><span data-i18n="social.code"></span><input id="lf-code" maxlength="8" autocomplete="off" spellcheck="false"></label>
+          <button type="button" class="ghost" id="lf-join-btn" data-i18n="social.join"></button>
+        </div>
+        <p class="lf-error" id="lf-error" role="alert" hidden></p>
+      </div>
+      <div id="lf-board" hidden>
+        <h3 id="lf-title"></h3>
+        <p class="hint"><span data-i18n="social.share_code"></span> <strong class="lf-code" id="lf-code-show"></strong> <button type="button" class="pill" id="lf-copy" data-i18n="social.copy"></button></p>
+        <ol class="lf-list" id="lf-list"></ol>
+        <p class="hint" id="lf-offline" data-i18n="social.offline" hidden></p>
+        <button type="button" class="ghost" id="lf-leave" data-i18n="social.leave"></button>
+      </div>
+    </details>
+
     <details class="card wardrobe" id="wardrobe">
       <summary><h2 data-i18n="wd.title"></h2></summary>
       <p class="hint" data-i18n="wd.hint"></p>
@@ -299,6 +324,12 @@
       <p class="hint" data-i18n="settings.check_updates.hint"></p>
       <label class="check"><input id="s-auto-update" type="checkbox"><span data-i18n="settings.auto_update"></span></label>
       <p class="hint" data-i18n="settings.auto_update.hint"></p>
+
+      <h3 data-i18n="social.title"></h3>
+      <label class="check"><input id="s-social-stats" type="checkbox"><span data-i18n="social.stats"></span></label>
+      <p class="hint" data-i18n="social.stats.hint"></p>
+      <p><button type="button" class="ghost" id="social-delete" data-i18n="social.delete"></button></p>
+      <p class="hint" id="social-note" aria-live="polite" hidden></p>
 
       <h3 data-i18n="settings.logs"></h3>
       <p class="hint" data-i18n="settings.logs.hint"></p>
@@ -433,6 +464,7 @@
   <script src="records.js"></script>
   <script src="shortcuts.js"></script>
   <script src="album.js"></script>
+  <script src="social.js"></script>
   <script src="weekly.js"></script>
   <script src="league.js"></script>
   <script src="xp.js"></script>

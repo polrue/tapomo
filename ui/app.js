@@ -308,6 +308,7 @@ async function refreshAll() {
     Progress.refresh(range).then(() => Badges.refresh()).then(() => League.refresh()).catch(showError);
     Shortcuts.refresh(range).catch(showError);
     Album.refreshTip(range).catch(showError);
+    Social.refresh().catch(() => {});
     Records.refresh().catch(showError);
     const s = await renderSummary();
     if (s.bursts > 0) await Promise.all([renderHeatmap(s.reference), renderApps()]);
@@ -773,7 +774,7 @@ async function bindEvents() {
 
 // ----------------------------------------------------------------- glossary
 
-const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak', 'xp', 'challenges', 'wardrobe', 'badges', 'league', 'shortcuts', 'records', 'lessons', 'album'];
+const GLOSSARY = ['pet', 'wpm', 'cpm', 'burst', 'peak', 'streak', 'pace', 'calibration', 'net', 'goal', 'daystreak', 'xp', 'challenges', 'wardrobe', 'badges', 'league', 'shortcuts', 'records', 'lessons', 'album', 'social'];
 
 function renderGlossary() {
   const dl = $('glossary-list');
@@ -811,6 +812,7 @@ async function init() {
   Progress.bind();
   Lessons.bind();
   Album.bind();
+  Social.bind();
   $('hide-btn').addEventListener('click', comeOut);
   Tips.init({
     vars: () => ({

@@ -156,6 +156,25 @@ pub fn get_shortcut_album(state: State<AppState>, lang: String) -> CmdResult<Vec
     state.with_db(|c| crate::catalog::album(c, &lang))
 }
 
+/// Summary of a past week for the optional anonymous stats: `weeks_ago` = 1 is last week.
+#[tauri::command]
+pub fn get_week_summary(state: State<AppState>, weeks_ago: u32) -> CmdResult<Option<crate::social::WeekSummary>> {
+    state.with_db(|c| {
+        let monday = crate::social::this_monday(c)? - 7 * i64::from(weeks_ago);
+        crate::social::week_summary(c, monday)
+    })
+}
+
+#[tauri::command]
+pub fn social_get(state: State<AppState>, key: String) -> CmdResult<Option<String>> {
+    state.with_db(|c| crate::social::get(c, &key))
+}
+
+#[tauri::command]
+pub fn social_set(state: State<AppState>, key: String, value: Option<String>) -> CmdResult<()> {
+    state.with_db(|c| crate::social::set(c, &key, value.as_deref()))
+}
+
 #[tauri::command]
 pub fn get_heatmap(state: State<AppState>, range: String) -> CmdResult<Vec<HeatCell>> {
     state.with_db(|c| db::heatmap(c, &range))
