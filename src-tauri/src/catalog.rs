@@ -64,6 +64,10 @@ fn mods_bits(s: &str) -> u8 {
     })
 }
 
+/// Combinations the hook must never recognise, whatever the catalogue says: private/incognito
+/// windows (Chrome/Edge/Brave/Opera Ctrl+Shift+N, Firefox Ctrl+Shift+P) and similar. They stay "other".
+const SENSITIVE: [(u8, u32); 3] = [(CTRL | SHIFT, 0x4E), (CTRL | SHIFT, 0x50), (CTRL | SHIFT, 0x42)];
+
 /// One recognisable combination: which entry, and for which apps (an override is limited to its apps).
 struct Combo {
     entry: usize,
@@ -89,10 +93,16 @@ fn catalogue() -> &'static Catalogue {
                 Apps::All(_) => None,
                 Apps::Some(list) => Some(list.iter().map(|a| a.to_lowercase()).collect()),
             };
-            combos.entry((mods_bits(&e.mods), e.vk)).or_default().push(Combo { entry: i, apps });
+            let mut add = |key: (u8, u32), apps| {
+                if SENSITIVE.contains(&key) {
+                    log::warn!("shortcut catalogue lists a sensitive combination ({}); ignored", e.id);
+                } else {
+                    combos.entry(key).or_default().push(Combo { entry: i, apps });
+                }
+            };
+            add((mods_bits(&e.mods), e.vk), apps);
             for o in e.overrides.values() {
-                let apps = Some(o.apps.iter().map(|a| a.to_lowercase()).collect());
-                combos.entry((mods_bits(&o.mods), o.vk)).or_default().push(Combo { entry: i, apps });
+                add((mods_bits(&o.mods), o.vk), Some(o.apps.iter().map(|a| a.to_lowercase()).collect()));
             }
         }
         Catalogue { entries, combos }
@@ -328,6 +338,11 @@ mod tests {
         assert!(resolve(ctrl_g, "notepad.exe").is_empty());
         // Not in the catalogue: incognito (sensitive) and random combinations are never recognised.
         assert_eq!(known_combo(CTRL | SHIFT, 0x4E), None);
+        assert_eq!(known_combo(CTRL | SHIFT, 0x50), None, "Firefox private window");
+        // Phase C: same keys, different apps, different meanings.
+        let ctrl_t = known_combo(CTRL, 0x54).unwrap();
+        assert_eq!(resolve(ctrl_t, "Photoshop.exe"), ["free_transform"]);
+        assert_eq!(resolve(known_combo(ALT, 0x26).unwrap(), "Code.exe"), ["move_line"]);
         assert_eq!(known_combo(CTRL | ALT | WIN, 0x51), None);
     }
 

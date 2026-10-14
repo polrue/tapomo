@@ -549,5 +549,9 @@
   "social.err.http_429": "Demasiados intentos seguidos. Espera unos minutos.",
   "gloss.social.t": "En línea (opcional)",
   "gloss.social.d": "Las estadísticas anónimas y las ligas con amigos son lo único que puede salir de tu ordenador, y solo si tú lo activas. Nunca se envía nada de lo que escribes.",
-  "social.gone": "Ya no estás en esa liga (o ha caducado). Puedes crear otra o unirte con un código."
+  "social.gone": "Ya no estás en esa liga (o ha caducado). Puedes crear otra o unirte con un código.",
+  "album.cat.files": "Explorador de archivos",
+  "album.cat.code": "VS Code",
+  "album.cat.design": "Photoshop",
+  "album.cat.chat": "Slack y Discord"
 }
