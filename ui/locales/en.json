@@ -555,5 +555,12 @@
   "album.cat.design": "Photoshop",
   "album.cat.chat": "Slack and Discord",
   "lessons.layout.fr": "French (AZERTY)",
-  "lessons.layout.de": "German (QWERTZ)"
+  "lessons.layout.de": "German (QWERTZ)",
+  "crypt.title": "Encrypting your data",
+  "crypt.off": "Your data already stays on your computer. If you like, Tapomo can also encrypt its database so only your Windows user can read it.",
+  "crypt.on": "🔒 The database is encrypted: only your Windows user can read it.",
+  "crypt.button": "Encrypt the database",
+  "crypt.confirm": "Tapomo will encrypt its database and restart in a few seconds. It can't be undone, but you lose nothing. Go ahead? Note: the key is tied to your Windows user; if it's deleted or reset from another account, the data can't be recovered.",
+  "crypt.working": "Encrypting… Tapomo will restart in a moment.",
+  "crypt.failed": "Couldn't encrypt. Your data is as it was; you can try again."
 }

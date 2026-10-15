@@ -175,6 +175,41 @@ pub fn social_set(state: State<AppState>, key: String, value: Option<String>) ->
     state.with_db(|c| crate::social::set(c, &key, value.as_deref()))
 }
 
+fn db_path(app: &AppHandle) -> CmdResult<std::path::PathBuf> {
+    Ok(app.path().app_data_dir().map_err(|e| e.to_string())?.join("tapomo.db"))
+}
+
+/// Whether the database is encrypted (SQLCipher + DPAPI-protected key).
+#[tauri::command]
+pub fn get_encrypted(app: AppHandle) -> CmdResult<bool> {
+    Ok(crate::keystore::is_encrypted(&db_path(&app)?))
+}
+
+/// Encrypts the database: stops the tracker (saving the open burst), writes an encrypted copy and
+/// restarts Tapomo, which swaps it in before opening anything.
+#[tauri::command]
+pub fn encrypt_database(app: AppHandle, state: State<AppState>) -> CmdResult<()> {
+    let path = db_path(&app)?;
+    if crate::keystore::is_encrypted(&path) {
+        return Ok(());
+    }
+    // The copy is made while everything keeps running, so a failure changes nothing. Only the last
+    // seconds of typing between the copy and the restart are not carried over.
+    {
+        let conn = state.db.lock().map_err(|_| "database lock poisoned".to_string())?;
+        crate::keystore::prepare(&conn, &path).map_err(|e| {
+            log::error!("could not encrypt the database: {e}");
+            e.to_string()
+        })?;
+    }
+    let (ack_tx, ack_rx) = mpsc::sync_channel(1);
+    if state.tx.send(Msg::Shutdown(ack_tx)).is_ok() {
+        let _ = ack_rx.recv_timeout(Duration::from_secs(2));
+    }
+    log::info!("database encrypted copy ready; restarting");
+    app.restart();
+}
+
 #[tauri::command]
 pub fn get_heatmap(state: State<AppState>, range: String) -> CmdResult<Vec<HeatCell>> {
     state.with_db(|c| db::heatmap(c, &range))
