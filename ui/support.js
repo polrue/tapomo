@@ -4,6 +4,9 @@
 const Support = (() => {
   const KOFI = 'https://ko-fi.com/polrue';
   const SPONSORS = 'https://github.com/sponsors/polrue';
+  // Off until the Ko-fi and GitHub Sponsors accounts exist: no button may lead nowhere. Turn on here
+  // (and the #apoyar section of web/index.html) once both pages are live.
+  const OPEN = false;
   const ASK_EVERY_MS = 30 * 24 * 3600 * 1000;
   const KEY = 'tapomo.support.asked';
   const $ = (id) => document.getElementById(id);
@@ -14,6 +17,7 @@ const Support = (() => {
     const was = window.Wardrobe && Wardrobe.unlocked(0).includes('mecenas');
     if (window.Wardrobe && Wardrobe.setSupporter) Wardrobe.setSupporter(supporter);
     if (supporter !== was) Progress.applyLook(); // the saved «Mecenas» skin can be worn now
+    $('support').hidden = !OPEN && !supporter; // a supporter still sees the thanks
     $('sp-thanks').hidden = !supporter;
     $('sp-ask').hidden = supporter;
   }
@@ -45,7 +49,7 @@ const Support = (() => {
    * never in the first week of use, at most once a month.
    */
   function happyMoment(daysUsed) {
-    if (supporter || daysUsed < 7 || Date.now() - lastAsked() < ASK_EVERY_MS) return;
+    if (!OPEN || supporter || daysUsed < 7 || Date.now() - lastAsked() < ASK_EVERY_MS) return;
     if (['level-dialog', 'badge-dialog', 'league-dialog', 'welcome', 'update-dialog'].some((id) => !$(id).hidden)) return;
     try { localStorage.setItem(KEY, String(Date.now())); } catch (_) { /* optional */ }
     const close = () => {
