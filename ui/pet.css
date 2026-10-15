@@ -100,3 +100,13 @@ html, body {
   .pet[data-zone="super"] .livebar i { animation: none; }
   .livebar i { transition: none; }
 }
+
+/* A shortcut: its kind's icon floats up from the head and fades (pet.js onShortcut). */
+.sc-pop { position: absolute; left: 50%; top: 4px; font-size: 22px; line-height: 1; pointer-events: none;
+  transform: translate(-50%, 0); animation: sc-pop calc(900ms / var(--speed, 1)) ease-out forwards; }
+@keyframes sc-pop {
+  0% { opacity: 0; transform: translate(-50%, 6px) scale(.6); }
+  20% { opacity: 1; transform: translate(calc(-50% + var(--dx) * .3), -6px) scale(1.1); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), -46px) scale(.9); }
+}
+@media (prefers-reduced-motion: reduce) { .sc-pop { display: none; } }

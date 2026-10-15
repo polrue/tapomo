@@ -48,6 +48,8 @@ async function renderSummary() {
 
   speeds.avg = s.avg_wpm;
   speeds.peak = s.peak_wpm;
+  speeds.reference = s.reference || 0; // the bar's 100 %, also when nothing is being typed
+  paintLive(lastLive || {});
   $('t-avg').innerHTML = withUnit(fmt(s.avg_wpm), 'unit.wpm');
   $('t-cpm').textContent = t('tile.cpm', { n: fmt(cpm(s.avg_wpm)) });
   $('t-net').textContent = t('tile.net', { n: fmt(s.avg_net_wpm) });
@@ -429,7 +431,7 @@ let liveStale = null;
 let lastLive = null;
 // What the live card shows right now, and how it is moving.
 const disp = { pct: 0, wpm: 0, tpct: 0, twpm: 0, mode: 'idle', raf: 0, last: 0 };
-const speeds = { avg: 0, peak: 0, live: 0 }; // for the keystroke equivalents in the tooltips
+const speeds = { avg: 0, peak: 0, live: 0, reference: 0 }; // for the keystroke equivalents in the tooltips
 
 // Same thresholds as `Zone::of` in tapomo-core.
 const zoneOfPct = (p) =>
@@ -522,6 +524,10 @@ function paintLive(p) {
   }
   $('live-burst-info').hidden = !cal;
 
+  // The two marks carry their value: "tu ritmo · 62 ppm", "récord · 84 ppm".
+  const ref = p.reference || speeds.reference || null;
+  $('live-pace-label').textContent = ref && !cal ? `${t('live.pace')} · ${fmt(ref)} ${t('unit.wpm')}` : t('live.pace');
+
   // Record marker: only once there is a reference to compare against.
   const rec = $('live-record');
   const recLabel = $('live-record-label');
@@ -533,7 +539,9 @@ function paintLive(p) {
     rec.style.left = recLabel.style.left = left;
     rec.toggleAttribute('data-pinned', pinned);
     recLabel.toggleAttribute('data-pinned', pinned);
-    recLabel.textContent = pinned ? `${t('live.record')} →` : t('live.record');
+    const recWpm = ref ? (p.record_percent * ref) / 100 : null;
+    const recText = recWpm ? `${t('live.record')} · ${fmt(recWpm)} ${t('unit.wpm')}` : t('live.record');
+    recLabel.textContent = pinned ? `${recText} →` : recText;
   }
 }
 

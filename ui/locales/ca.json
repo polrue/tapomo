@@ -587,5 +587,12 @@
   "nav.level": "Nivell",
   "nav.shortcuts": "Dreceres",
   "nav.stats": "Estadístiques",
-  "nav.league": "Lliga"
+  "nav.league": "Lliga",
+  "pet.super": "Mode Supermochi! Vas al {p} % del teu ritme 🚀",
+  "pet.super.first": "Mode Supermochi! Més ràpid que mai ✨",
+  "pet.zone.rhythm": "Agafant ritme!",
+  "pet.zone.good": "Bon ritme!",
+  "pet.zone.fire": "Ratxa!",
+  "pet.zone.beating": "T'estàs superant!",
+  "pet.super.first2": "Durant 35 s, ni els esborrats t'aturen"
 }

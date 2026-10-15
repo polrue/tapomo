@@ -587,5 +587,12 @@
   "nav.level": "Niveau",
   "nav.shortcuts": "Raccourcis",
   "nav.stats": "Statistiques",
-  "nav.league": "Ligue"
+  "nav.league": "Ligue",
+  "pet.super": "Mode Supermochi ! Tu es à {p} % de ton rythme 🚀",
+  "pet.super.first": "Mode Supermochi ! Plus vite que jamais ✨",
+  "pet.zone.rhythm": "Tu prends le rythme !",
+  "pet.zone.good": "Bon rythme !",
+  "pet.zone.fire": "En pleine forme !",
+  "pet.zone.beating": "Tu te dépasses !",
+  "pet.super.first2": "Pendant 35 s, même les erreurs ne t'arrêtent pas"
 }

@@ -227,7 +227,7 @@ a { color: var(--accent-strong); font-weight: 700; }
 .live[data-zone="super"] .live-fill { animation: live-glow 1.6s ease-in-out infinite, live-shimmer 700ms linear infinite; }
 @keyframes live-shimmer { to { background-position: -200% 0; } }
 .live-tick { position: absolute; top: -5px; bottom: -5px; left: 76.92%; width: 3px; margin-left: -1.5px; border-radius: 2px; background: var(--ink); }
-.live-record { position: absolute; top: calc(100% + 2px); left: 100%; width: 0; height: 0; margin-left: -6px;
+.live-record { position: absolute; top: calc(100% + 7px); left: 100%; width: 0; height: 0; margin-left: -6px;
   border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 9px solid #e6a800; }
 .live-label { position: absolute; font-size: 0.72rem; line-height: 1.2; font-weight: 800; color: var(--muted); white-space: nowrap; transform: translateX(-50%); }
 .live-label-pace { top: 0; left: 76.92%; color: var(--ink); }
