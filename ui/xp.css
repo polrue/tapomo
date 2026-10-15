@@ -124,3 +124,11 @@
 .lf-list li[data-me] { outline: 2px solid var(--accent); }
 .lf-xp { float: right; font-variant-numeric: tabular-nums; }
 .lf-up { margin-left: 6px; }
+
+/* Hair colour swatches (0.7.0) */
+.wd-hair { display: flex; align-items: center; gap: 10px; margin: 8px 0 4px; flex-wrap: wrap; }
+.wd-hair-label { font-weight: 700; }
+.wd-hair-row { display: flex; gap: 8px; }
+.wd-swatch { width: 30px; height: 30px; border-radius: 999px; padding: 0; background: var(--sw); border: 3px solid var(--card); box-shadow: 0 0 0 2px var(--line); cursor: pointer; }
+.wd-swatch:hover { box-shadow: 0 0 0 2px var(--accent); background: var(--sw); }
+.wd-swatch[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--accent-strong); }

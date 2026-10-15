@@ -601,5 +601,10 @@
   "item.flequillo": "Serrell",
   "item.tupe": "Tupè",
   "item.melenita": "Melena curta",
-  "pet.mash": "Ep, això és picar a l'atzar! 😄 No compta"
+  "pet.mash": "Ep, això és picar a l'atzar! 😄 No compta",
+  "wd.hair": "Color del cabell",
+  "wd.hair.negro": "Negre",
+  "wd.hair.castano": "Castany",
+  "wd.hair.rubio": "Ros",
+  "lessons.key": "Tecla {keys}"
 }

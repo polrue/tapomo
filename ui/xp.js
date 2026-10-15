@@ -28,6 +28,7 @@ const Progress = (() => {
       skin: open.has(s.skin) ? s.skin : 'clasico',
       acc: (s.accessories || []).filter((a) => open.has(a)),
       style: s.wear_style === 'subtle' ? 'subtle' : 'bold',
+      hair: s.hair_color || 'castano',
     };
   }
 
@@ -38,7 +39,7 @@ const Progress = (() => {
   }
 
   async function saveLook(look) {
-    await saveSettings({ skin: look.skin, accessories: look.acc, wear_style: look.style });
+    await saveSettings({ skin: look.skin, accessories: look.acc, wear_style: look.style, hair_color: look.hair || 'castano' });
     applyLook();
   }
 
@@ -178,6 +179,28 @@ const Progress = (() => {
 
   function syncStyle(look) {
     document.querySelectorAll('input[name="wd-style"]').forEach((r) => (r.checked = r.value === look.style));
+    // Hair colour: only once a hairstyle is unlocked.
+    const box = $('wd-hair');
+    const hairOpen = st && Wardrobe.unlocked(st.level).some((id) => ['flequillo', 'tupe', 'melenita'].includes(id));
+    box.hidden = !hairOpen || !Wardrobe.HAIR_COLORS;
+    if (box.hidden) return;
+    const row = $('wd-hair-row');
+    if (!row.childElementCount) {
+      for (const c of Wardrobe.HAIR_COLORS) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'wd-swatch';
+        b.dataset.hair = c;
+        b.style.setProperty('--sw', Wardrobe.hairSwatch(c));
+        b.addEventListener('click', () => saveLook({ ...Wardrobe.get(), hair: c }).catch(showError));
+        row.append(b);
+      }
+    }
+    for (const b of row.children) {
+      b.setAttribute('aria-pressed', String(b.dataset.hair === (look.hair || 'castano')));
+      b.setAttribute('aria-label', t(`wd.hair.${b.dataset.hair}`));
+      b.title = t(`wd.hair.${b.dataset.hair}`);
+    }
   }
 
   function onItem(id) {
