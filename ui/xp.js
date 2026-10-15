@@ -12,6 +12,8 @@ const Progress = (() => {
   const joinNames = (ids) => ids.map(itemName).join(t('level.and'));
   const kindOf = (id) => (Wardrobe.ITEMS.find((i) => i.id === id) || {}).kind;
   const levelOf = (id) => (Wardrobe.ITEMS.find((i) => i.id === id) || {}).level || 1;
+  /** Locked items say how to get them: a level, or "for supporters". */
+  const lockText = (id) => ((Wardrobe.ITEMS.find((i) => i.id === id) || {}).supporter ? t('wd.supporter') : t('wd.locked', { lv: fmt(levelOf(id)) }));
 
   // ------------------------------------------------------------------ look
 
@@ -154,8 +156,8 @@ const Progress = (() => {
       b.toggleAttribute('data-locked', !unlocked);
       b.setAttribute('aria-pressed', String(on && unlocked));
       b.querySelector('.wd-name').textContent = unlocked ? itemName(id) : '?';
-      b.querySelector('.wd-lock').textContent = unlocked ? (on ? t('wd.wearing') : '') : t('wd.locked', { lv: fmt(levelOf(id)) });
-      b.setAttribute('aria-label', unlocked ? itemName(id) : t('wd.locked', { lv: fmt(levelOf(id)) }));
+      b.querySelector('.wd-lock').textContent = unlocked ? (on ? t('wd.wearing') : '') : lockText(id);
+      b.setAttribute('aria-label', unlocked ? itemName(id) : lockText(id));
     });
     // Thumbnails follow the chosen style (redrawn only when it changes).
     if (thumbStyle === look.style) return syncStyle(look);
@@ -202,7 +204,11 @@ const Progress = (() => {
     $('level-dialog').hidden = true;
     document.querySelectorAll('.top, main').forEach((n) => (n.inert = false));
     revealing = false;
-    invoke('ack_xp', { level }).then(() => { st.seen_level = Math.max(st.seen_level, level); Badges.maybeReveal(); }).catch(showError);
+    invoke('ack_xp', { level }).then(() => {
+      st.seen_level = Math.max(st.seen_level, level);
+      Badges.maybeReveal();
+      if (level >= 4) setTimeout(() => Support.happyMoment(level * 2), 600); // a level ≥ 4 means a week or more of use
+    }).catch(showError);
   }
 
   /** Shows the level reached (or the history message) once, with its rewards and "put it on" buttons. */

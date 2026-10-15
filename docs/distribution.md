@@ -83,3 +83,24 @@ Investigado el 13-10-2026 con fuentes de Microsoft Learn. Lo marcado «sin confi
   2. Store por la opción A con el `.exe` firmado (unos 2–4 días de trabajo).
   3. winget.
   4. MSIX solo si la firma da problemas.
+
+## Cómo se sostiene Tapomo (decidido por Pol el 15-10-2026)
+
+Todo el código sigue siendo GPL-3.0 y la app es gratis en GitHub, sin nada bloqueado. Tapomo se sostiene de tres formas a la vez:
+
+1. **Apoyo voluntario, visible y con cariño:**
+   - Hay una tarjeta grande «Apoya a Tapomo» en la app y una sección en la web, con Ko-fi como botón principal y GitHub Sponsors para desarrolladores.
+   - En momentos felices (premio de nivel, lección de tres estrellas) aparece una invitación amable: como mucho una vez al mes, nunca la primera semana y siempre se puede cerrar.
+2. **Código de mecenas:**
+   - Quien apoya recibe un código firmado (ed25519, `packaging/supporter/`) que la app comprueba sin conexión.
+   - Desbloquea solo agradecimientos cosméticos: la skin «Mecenas» y la insignia.
+   - Es un sistema de confianza: como el código es abierto, se podría saltar, y es aceptable.
+3. **Versión de pago en Microsoft Store (5–9 €):**
+   - Es la misma app; se paga por la comodidad de instalarla y actualizarla desde la Store. Es un modelo habitual en software libre (Krita, por ejemplo) y compatible con la GPL.
+   - Requiere antes la firma de código (SignPath o un certificado), porque la Store exige el `.exe` firmado.
+
+Se descartó un curso de pago cerrado. Rompería la confianza que necesita una app que escucha el teclado, y SignPath exige no tener componentes cerrados.
+
+**Pendiente de Pol:**
+- Crear la página de Ko-fi (`ko-fi.com/polrue`) y el perfil de GitHub Sponsors. Los enlaces de la app y la web ya apuntan ahí.
+- Hacer una copia de seguridad de `~/data/secrets/tapomo-supporter-ed25519.pem` fuera del servidor.
