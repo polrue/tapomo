@@ -15,6 +15,9 @@ use serde::Serialize;
 use tapomo_core::{personal_reference, Burst, Config, Engine, KeyClass, KeyEvent, Zone, REFERENCE_MIN_PEAKS};
 use tauri::{AppHandle, Emitter};
 
+/// Highest live percentage before the burst has settled: just under Supermochi (108 %).
+const SUPER_UNSETTLED_MAX: f64 = 107.0;
+
 use crate::hook::RawKey;
 use crate::{badges, db, pet, platform, shortcuts, xp};
 
@@ -506,7 +509,12 @@ impl Tracker {
             return;
         }
         let wpm = if active { self.engine.live_wpm(now) } else { None };
-        let percent = wpm.zip(self.reference).map(|(w, r)| w / r * 100.0);
+        let mut percent = wpm.zip(self.reference).map(|(w, r)| w / r * 100.0);
+        // Supermochi only once the burst's speed has settled (a full peak window): never from a fast
+        // first word. Until then the bar can reach "beating" but stops just short of Supermochi.
+        if !self.engine.live_settled(now) {
+            percent = percent.map(|p| p.min(SUPER_UNSETTLED_MAX));
+        }
         let payload = Live {
             wpm,
             reference: self.reference,
