@@ -23,16 +23,18 @@ const Mascot = (() => {
   const goldStar = (cx, cy) =>
     `<polygon points="${starPoints(cx, cy, 11.5, 4.9)}" fill="#ffcc4d" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/>`;
 
-  // Supermochi: a spiky golden aura behind the body, soft golden flame-hair on the head (below)
-  // and little bolts around. Drawn once, shown by data-zone="super".
-  const aura = (k, extra) => {
+  // Supermochi: a spiky golden aura behind the body that swells upward to wrap soft golden flame-hair
+  // (below), its pale inner glow drawn over the hair so both read as one silhouette, and little bolts around. Drawn once, shown by data-zone="super".
+  // `swell` = 1: the top half grows to wrap the flame-hair; 0: a compact aura when there is no hair.
+  const aura = (k, extra, swell = 1) => {
     const N = 26;
     let d = '';
     for (let i = 0; i <= N * 2; i++) {
       const a = (i / (N * 2)) * Math.PI * 2;
-      const up = Math.max(0, -Math.sin(a));
+      const up = Math.max(0, -Math.sin(a)) * swell;
       const tip = i % 2 === 1;
-      const r = tip ? 1 + (extra + 16 * up) / 62 : 1;
+      // The top half swells (up to +25 %) so the glow wraps the flame-hair too, tips included.
+      const r = (1 + 0.25 * up ** 1.5) * (tip ? 1 + (extra + 8 * up) / 62 : 1);
       const x = 80 + Math.cos(a) * 62 * k * r;
       let y = 92 + Math.sin(a) * 60 * k * r;
       if (tip) y -= 7 * (0.4 + up); // the spikes lean upward
@@ -66,18 +68,22 @@ const Mascot = (() => {
   const superBack = `
       <g class="sm-layer sm-back" aria-hidden="true">
         <g class="sm-aura">
-          <path class="sm-a1" d="${aura(1.02, 12)}" fill="url(#sm-aura-g)" opacity=".8"/>
-          <path class="sm-a2" d="${aura(0.93, 8)}" fill="#fff3a0" opacity=".55"/>
+          <path class="sm-a1 sm-with-hair" d="${aura(1.02, 12)}" fill="url(#sm-aura-g)" opacity=".8"/>
+          <path class="sm-a1 sm-no-hair" d="${aura(1.02, 12, 0)}" fill="url(#sm-aura-g)" opacity=".8"/>
         </g>
         <g class="sm-tuft" stroke-linejoin="round" stroke-linecap="round">
           ${LOCKS_BACK.map((l) => lockG(l, 'url(#sm-tuft-b)')).join('')}
           ${LOCKS_FRONT.map((l) => lockG(l, 'url(#sm-tuft-g)', true)).join('')}
           ${ember(58, 18, 1.4, 0)}${ember(102, 12, 1.2, -0.45)}${ember(124, 28, 1.05, -0.8)}
         </g>
+        <g class="sm-aura sm-aura-over" opacity=".3">
+          <path class="sm-a2 sm-with-hair" d="${aura(0.93, 8)}" fill="#fff3a0" opacity=".55"/>
+          <path class="sm-a2 sm-no-hair" d="${aura(0.93, 8, 0)}" fill="#fff3a0" opacity=".55"/>
+        </g>
       </g>`;
   const superFront = `<g class="sm-layer sm-sparks" aria-hidden="true">${bolt(16, 62, 1.1, 0)}${bolt(145, 74, 1.25, 0.25)}${bolt(20, 124, 0.95, 0.5)}${bolt(140, 128, 1, 0.15)}${bolt(134, 34, 0.85, 0.4)}${bolt(26, 34, 0.85, 0.6)}</g>`;
 
-  // Speed lines: tapered anime streaks, thick end at Tapomo's back and a needle tail behind.
+  // Speed lines: straight bars with round caps streaking out behind Tapomo.
   // [tier, x, y, length, duration s, delay s]. Tier 1 shows from "good", 2 from "fire", 3 from "beating".
   const LINES = [
     [1, 26, 64, 30, 0.5, 0], [1, 22, 88, 38, 0.44, -0.2], [1, 26, 112, 32, 0.52, -0.33], [1, 30, 130, 26, 0.46, -0.1],
@@ -85,7 +91,7 @@ const Mascot = (() => {
     [3, 20, 52, 54, 0.34, -0.15], [3, 12, 94, 60, 0.32, -0.3], [3, 18, 138, 50, 0.36, -0.08],
   ];
   const speedLines = LINES.map(([tier, x, y, len, d, dl]) =>
-    `<path class="ln t${tier}" style="--d:${d}s;--dl:${dl}s" d="M${x} ${y - 1.9} Q${x - len * 0.45} ${y - 0.7} ${x - len} ${y} Q${x - len * 0.45} ${y + 0.7} ${x} ${y + 1.9} Q${x + 1.6} ${y} ${x} ${y - 1.9} Z"/>`).join('');
+    `<path class="ln t${tier}" style="--d:${d}s;--dl:${dl}s" d="M${x - 4} ${y}h-${len - 4}"/>`).join('');
 
   const markup = `
     <defs>
@@ -104,7 +110,7 @@ const Mascot = (() => {
       <linearGradient id="sm-tuft-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc53d"/><stop offset="1" stop-color="#f08a1c"/></linearGradient>
     </defs>
     <g class="m-extras m-glow" aria-hidden="true"><ellipse cx="80" cy="92" rx="84" ry="76" fill="url(#m-glow-grad)"/></g>
-    <g class="m-extras m-lines" aria-hidden="true">${speedLines}</g>
+    <g class="m-extras m-lines" aria-hidden="true" fill="none" stroke-width="4" stroke-linecap="round">${speedLines}</g>
     <g class="m-shadow-g"><ellipse class="m-shadow" cx="80" cy="142" rx="46" ry="7.5" fill="url(#m-shadow-grad)"/></g>
     <use class="m-ghost g2" aria-hidden="true" transform="translate(-26 0)"/>
     <use class="m-ghost g1" aria-hidden="true" transform="translate(-13 0)"/>
@@ -182,9 +188,13 @@ const Mascot = (() => {
   const run = (el, frames, opts) => (el && !reduced() ? el.animate(frames, { fill: 'none', ...opts, duration: dur(opts.duration) }) : null);
 
   let mounts = 0;
+  let gradMounts = 0;
   function mount(svg) {
     svg.classList.add('mascot');
-    svg.innerHTML = markup;
+    // Gradient ids are made unique per mascot: with repeated ids, url(#id) resolves to the first one in
+    // the page, and if that mascot is hidden (a closed dialog) the others lose their fills.
+    const n = ++gradMounts;
+    svg.innerHTML = markup.replace(/id="((?:m|sm)-[a-z0-9-]+)"/g, `id="$1-u${n}"`).replace(/url\(#((?:m|sm)-[a-z0-9-]+)\)/g, `url(#$1-u${n})`);
     // A page can hold several mascots: the afterimages must clone this one's body.
     const runId = `m-run-${++mounts}`;
     part(svg, '.m-run').id = runId;
@@ -552,6 +562,16 @@ const Mascot = (() => {
     }
   }
 
+  /** Supermochi flame-hair on (default) or off; aura, bolts and glow stay either way. */
+  function setSuperHair(svg, on) {
+    svg.classList.toggle('sm-nohair', on === false);
+    // Also as SVG attributes: the afterimages are <use> clones, and page CSS can't reach inside them.
+    const set = (sel, visible) => svg.querySelectorAll(sel).forEach((el) => (visible ? el.removeAttribute('display') : el.setAttribute('display', 'none')));
+    set('.sm-tuft', on !== false);
+    set('.sm-with-hair', on !== false);
+    set('.sm-no-hair', on === false);
+  }
+
   /** Supermochi swallowed a backspace: the aura pulses once. */
   function superAbsorb(svg) {
     if (reduced()) return;
@@ -649,5 +669,5 @@ const Mascot = (() => {
   // Loops (breathing, z's, speed lines, glow) pause while nothing is on screen.
   document.addEventListener('visibilitychange', () => document.documentElement.classList.toggle('is-hidden', document.hidden));
 
-  return { mount, setFace, keyTick, keyRate, squish, tilt, jump, wake, blink, setZone, superAbsorb, setShades, setSleeping, setHover, setHeld, setCrown, crownFlyOff, setHiding, isHiding: (svg) => !!svg.__hiding, look, lookAtPoint, burstStars, reduced };
+  return { mount, setFace, keyTick, keyRate, squish, tilt, jump, wake, blink, setZone, setSuperHair, superAbsorb, setShades, setSleeping, setHover, setHeld, setCrown, crownFlyOff, setHiding, isHiding: (svg) => !!svg.__hiding, look, lookAtPoint, burstStars, reduced };
 })();

@@ -587,5 +587,12 @@
   "nav.level": "Level",
   "nav.shortcuts": "Tastenkürzel",
   "nav.stats": "Statistik",
-  "nav.league": "Liga"
+  "nav.league": "Liga",
+  "pet.super": "Supermochi-Modus! Du bist bei {p} % deines Tempos 🚀",
+  "pet.super.first": "Supermochi-Modus! Schneller denn je ✨",
+  "pet.zone.rhythm": "Du kommst in Fahrt!",
+  "pet.zone.good": "Gutes Tempo!",
+  "pet.zone.fire": "Du bist im Flow!",
+  "pet.zone.beating": "Du übertriffst dich!",
+  "pet.super.first2": "35 s lang stoppen dich nicht mal Fehler"
 }

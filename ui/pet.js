@@ -110,6 +110,27 @@ function sayText(text, ms, big = false, tip = false) {
 
 // --------------------------------------------------------------- handlers
 
+/**
+ * A shortcut was used: a small nod and its kind's icon floats up from Tapomo's head and fades. Only the
+ * kind is known (never which shortcut). At most one every 700 ms, so a burst of Alt+Tab stays calm.
+ */
+const SHORTCUT_ICON = { clipboard: '📋', undo: '↩️', save: '💾', windows: '🪟', other: '⚡' };
+let lastShortcutAt = 0;
+function onShortcut(kind) {
+  state.lastKeyAt = Date.now();
+  if (state.paused || state.asleep || Date.now() - lastShortcutAt < 700) return;
+  lastShortcutAt = Date.now();
+  Mascot.squish(svg);
+  if (Mascot.reduced()) return;
+  const el = document.createElement('span');
+  el.className = 'sc-pop';
+  el.setAttribute('aria-hidden', 'true');
+  el.textContent = SHORTCUT_ICON[kind] || SHORTCUT_ICON.other;
+  el.style.setProperty('--dx', `${Math.round((Math.random() - 0.5) * 36)}px`);
+  $('stage').append(el);
+  el.addEventListener('animationend', () => el.remove());
+}
+
 function onKey(cls) {
   state.lastKeyAt = Date.now();
   if (state.asleep) {
@@ -144,6 +165,33 @@ function onKey(cls) {
 const zoneOfPct = (p) =>
   p >= 108 ? 'super' : p >= 95 ? 'beating' : p >= 80 ? 'fire' : p >= 60 ? 'good' : p >= 40 ? 'rhythm' : 'warming';
 
+/**
+ * Supermochi explains itself: the first time ever with a longer line (what it means and the 35 s
+ * shield), afterwards with how far above the usual pace you are.
+ */
+function announceSuper() {
+  let first = false;
+  try { first = !localStorage.getItem('tapomo.super.explained'); localStorage.setItem('tapomo.super.explained', '1'); } catch (_) { /* optional */ }
+  lastZoneSaidAt = Date.now();
+  // The real pace right now (the displayed value is still easing up to it).
+  const p = Math.round(Math.max(state.target || 0, state.display));
+  if (first) {
+    // Two short bubbles instead of a long one that would cover Tapomo's face.
+    sayText(t('pet.super.first'), 2600);
+    setTimeout(() => { if (state.superSince) sayText(t('pet.super.first2'), 3200, false, true); }, 2550);
+  } else sayText(t('pet.super', { p }), 2800);
+}
+
+/** Going UP a zone gets a short line ("¡Buen ritmo!"), at most one every 8 s so it never chatters. */
+const ZONE_SAY_GAP_MS = 8000;
+let lastZoneSaidAt = 0;
+function announceZone(zone) {
+  if (!['rhythm', 'good', 'fire', 'beating'].includes(zone)) return;
+  if (Date.now() - lastZoneSaidAt < ZONE_SAY_GAP_MS) return;
+  lastZoneSaidAt = Date.now();
+  say(`pet.zone.${zone}`, 1800);
+}
+
 /** Zone shown by the pet: the pace zone, except that Supermochi holds for at least SUPER_MIN_MS. */
 function petZone(paceZone) {
   if (!paceZone || state.asleep || state.paused) {
@@ -154,7 +202,7 @@ function petZone(paceZone) {
   if (paceZone === 'super') {
     if (!state.superSince) {
       state.superSince = now;
-      say('zone.super', 1800, true);
+      announceSuper();
     }
     return 'super';
   }
@@ -232,6 +280,7 @@ function paintBar() {
   const zr = ZONE_RANK[state.zone] ?? -1;
   // Positive change only (level or zone going up) earns a burst, sized by importance; the biggest wins.
   const rank = Math.max(level > prevLevel ? LEVEL_BURST[level] : 0, zr > prevZoneRank ? ZONE_BURST[zr] : 0);
+  if (zr > prevZoneRank && prevZoneRank >= 0 && !state.asleep && !state.paused) announceZone(state.zone);
   prevLevel = level;
   prevZoneRank = zr;
   if (rank && !state.asleep && !state.paused) celebrate(rank);
@@ -502,6 +551,7 @@ async function init() {
   window.addEventListener('resize', reportHit);
   await Promise.all([
     listen('tapomo://key', (e) => onKey(e.payload)),
+    listen('tapomo://shortcut', (e) => onShortcut(e.payload)),
     listen('tapomo://live', (e) => onLive(e.payload)),
     listen('tapomo://record', onRecord),
     listen('tapomo://goal', onGoal),
