@@ -5,7 +5,8 @@ const Album = (() => {
   const LEVELS = ['undiscovered', 'learning', 'getting', 'almost', 'mastered'];
   let built = false;
 
-  // The catalogue only has Spanish and English text; Catalan users get Spanish (same keyboard and Office labels).
+  // The catalogue only has Spanish and English text; Catalan users get Spanish (same keyboard and Office labels),
+  // French and German users get English.
   const lang = () => (['es', 'ca'].includes(document.documentElement.lang) ? 'es' : 'en');
 
   async function refreshTip(range = 'today') {

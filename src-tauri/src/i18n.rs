@@ -8,6 +8,8 @@ const LOCALES: &[(&str, &str)] = &[
     ("es", include_str!("../../ui/locales/es.json")),
     ("ca", include_str!("../../ui/locales/ca.json")),
     ("en", include_str!("../../ui/locales/en.json")),
+    ("fr", include_str!("../../ui/locales/fr.json")),
+    ("de", include_str!("../../ui/locales/de.json")),
 ];
 
 const FALLBACK: &str = "en";
