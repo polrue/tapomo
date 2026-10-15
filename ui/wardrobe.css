@@ -49,3 +49,18 @@
 .rw-pop { animation: rw-pop calc(420ms / var(--speed)) cubic-bezier(.34,1.56,.64,1); transform-box: view-box; }
 @keyframes rw-pop { 0% { opacity: 0; transform: translateY(-6px); } 100% { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .rw-halo, .mascot .tw, .rw-pop, .rw-bicep, .rw-flutter, .rw-rgb { animation: none !important; } .rw-bb-l, .rw-bb-r, .rw-arm-u, .rw-arm-f { transition: none !important; } }
+/* Supermochi: a temporary golden transformation with a sweep of light, back to the skin afterwards. */
+.rw-supergold { opacity: 0; transition: opacity calc(450ms / var(--speed, 1)) ease; pointer-events: none; }
+svg[data-zone="super"] .rw-supergold { opacity: 1; }
+svg.rw-gold .rw-supergold { display: none; } /* already the real gold skin */
+.rw-supergold-sweep { transform-box: view-box; opacity: 0; }
+svg[data-zone="super"] .rw-supergold-sweep { animation: rw-gold-sweep calc(900ms / var(--speed, 1)) ease-out 1 both; }
+@keyframes rw-gold-sweep {
+  0% { opacity: 0; transform: translateX(0) rotate(18deg); }
+  15% { opacity: .75; }
+  100% { opacity: 0; transform: translateX(150px) rotate(18deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rw-supergold { transition: none; }
+  svg[data-zone="super"] .rw-supergold-sweep { animation: none; }
+}

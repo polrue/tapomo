@@ -16,6 +16,7 @@ mod platform;
 mod records;
 mod shortcuts;
 mod social;
+mod supporter;
 mod tracker;
 mod updater;
 mod weekly;
@@ -90,6 +91,8 @@ fn main() {
             commands::social_set,
             commands::get_encrypted,
             commands::encrypt_database,
+            commands::redeem_supporter,
+            commands::get_supporter,
             commands::get_heatmap,
             commands::get_apps,
             commands::set_alias,

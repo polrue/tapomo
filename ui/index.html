@@ -13,8 +13,11 @@
   <link rel="stylesheet" href="records.css">
   <link rel="stylesheet" href="keyboard.css">
   <link rel="stylesheet" href="lessons.css">
+  <link rel="stylesheet" href="support.css">
+  <link rel="stylesheet" href="nav.css">
 </head>
 <body>
+  <div class="sticky-head" id="sticky-head">
   <header class="top">
     <div class="mascot-wrap" id="mascot-wrap"><svg id="mascot" viewBox="0 0 160 160" role="img" aria-label="Tapomo"></svg></div>
     <div class="brand">
@@ -31,6 +34,8 @@
       <button role="tab" data-range="all" data-i18n="range.all"></button>
     </nav>
   </header>
+  <nav class="section-nav" id="section-nav" data-i18n-aria="nav.sections"><ul class="sn-list" id="sn-list"></ul></nav>
+  </div>
 
   <main>
     <section class="card lessons" id="lessons" aria-labelledby="ls-title">
@@ -283,6 +288,27 @@
       <div class="wd-grid" id="wd-accs"></div>
     </details>
 
+    <section class="card support" id="support" aria-labelledby="sp-title">
+      <div class="sp-art"><svg id="sp-mascot" viewBox="0 0 160 160" aria-hidden="true"></svg><span class="sp-heart" aria-hidden="true">💗</span></div>
+      <div class="sp-body">
+        <h2 id="sp-title" data-i18n="support.title"></h2>
+        <div id="sp-ask">
+          <p data-i18n="support.text"></p>
+          <p class="sp-buttons">
+            <a class="sp-btn" id="sp-kofi" href="#" target="_blank" rel="noopener" data-i18n="support.kofi"></a>
+            <a class="sp-btn ghost" id="sp-sponsors" href="#" target="_blank" rel="noopener" data-i18n="support.sponsors"></a>
+          </p>
+          <p class="hint" data-i18n="support.perk"></p>
+        </div>
+        <p class="sp-thanks" id="sp-thanks" data-i18n="support.thanks" hidden></p>
+        <details class="sp-code-box">
+          <summary data-i18n="support.have_code"></summary>
+          <div class="sp-code-row"><input id="sp-code" autocomplete="off" spellcheck="false" data-i18n-placeholder="support.code_ph"><button type="button" id="sp-redeem" data-i18n="support.redeem"></button></div>
+          <p class="hint" id="sp-msg" aria-live="polite" hidden></p>
+        </details>
+      </div>
+    </section>
+
     <section class="card" id="settings">
       <h2 data-i18n="settings.title"></h2>
 
@@ -363,7 +389,6 @@
       <p class="links">
         <a href="https://github.com/polrue/tapomo" target="_blank" rel="noopener" data-i18n="about.source"></a>
         <a href="https://github.com/polrue/tapomo/blob/main/PRIVACY.md" target="_blank" rel="noopener" data-i18n="about.privacy_policy"></a>
-        <a class="coffee" href="https://github.com/sponsors/polrue" target="_blank" rel="noopener" data-i18n="about.coffee"></a>
       </p>
     </section>
   </main>
@@ -454,6 +479,21 @@
     </div>
   </div>
 
+  <div id="support-dialog" class="welcome" hidden>
+    <div class="welcome-card lvup-card" role="dialog" aria-modal="true" aria-labelledby="spd-title" aria-describedby="spd-text" tabindex="-1">
+      <div class="welcome-body">
+        <div class="sp-dialog-heart" aria-hidden="true">💗</div>
+        <h2 id="spd-title" data-i18n="support.ask_title"></h2>
+        <p id="spd-text" data-i18n="support.ask_text"></p>
+      </div>
+      <div class="welcome-nav lvup-nav sp-dialog-nav">
+        <button type="button" class="ghost" id="spd-later" data-i18n="support.later"></button>
+        <button type="button" class="ghost" id="spd-have" data-i18n="support.already"></button>
+        <a class="sp-btn" id="spd-go" href="#" target="_blank" rel="noopener" data-i18n="support.kofi"></a>
+      </div>
+    </div>
+  </div>
+
   <script src="i18n.js"></script>
   <script src="mascot.js"></script>
   <script src="wardrobe.js"></script>
@@ -469,6 +509,8 @@
   <script src="shortcuts.js"></script>
   <script src="album.js"></script>
   <script src="social.js"></script>
+  <script src="support.js"></script>
+  <script src="nav.js"></script>
   <script src="weekly.js"></script>
   <script src="league.js"></script>
   <script src="xp.js"></script>

@@ -5,7 +5,7 @@
 // mochi, never its shape or face. Styles live in wardrobe.css. Load after mascot.js.
 //
 // API: Wardrobe.ITEMS, REWARD_LEVELS, itemsAt, unlocked, nextReward, clashes, wear, set, get,
-//      decorate, preview. Display names are NOT here: the app uses the i18n keys `item.<id>`.
+//      decorate, preview, setSupporter. Display names are NOT here: the app uses the i18n keys `item.<id>`.
 (() => {
   'use strict';
   if (window.Wardrobe) return;
@@ -102,6 +102,12 @@
 
   // Skin textures: only inside the body outline (clip), never on the face area.
   const dots = (pts, fn) => pts.map(fn).join('');
+  /** A tiny five-petal cherry blossom (each petal with its little notch) for the mecenas skin. */
+  const sakura = (x, y, rot) => {
+    let s = `<g transform="translate(${x} ${y}) rotate(${rot})">`;
+    for (let i = 0; i < 5; i++) s += `<path transform="rotate(${i * 72})" d="M0 0 C-2.2 -1 -2.3 -3.6 -0.9 -4.3 L0 -3.6 L0.9 -4.3 C2.3 -3.6 2.2 -1 0 0 Z" fill="#ff9dbb" stroke="#e46d93" stroke-width=".5" stroke-linejoin="round"/>`;
+    return s + `<circle r="1" fill="#fff3b0"/></g>`;
+  };
   const EDGE = [[42, 56], [57, 47.5], [103, 47.5], [118, 57], [37, 77], [123, 79], [39, 103], [121, 105], [50, 127], [110, 127], [80, 46.5], [66, 131], [94, 131], [36, 92], [124, 93]];
   const TEX = {
     clasico: '',
@@ -115,6 +121,11 @@
       i % 4 === 3
         ? `<ellipse cx="${x}" cy="${y}" rx=".9" ry="1.6" transform="rotate(${(i * 53) % 80 - 40} ${x} ${y})" fill="#d8d1de" opacity=".8"/>`
         : `<ellipse cx="${x}" cy="${y}" rx="1" ry="1.8" transform="rotate(${(i * 41) % 80 - 40} ${x} ${y})" fill="#2a2630"/>`),
+    // Sakura mochi (supporter skin): a soft pink blush at the bottom, a few tiny cherry blossoms and loose petals.
+    mecenas: `<rect x="30" y="40" width="100" height="98" fill="url(#rw-sakura-ID)"/>`
+      + [[57, 48.5, 0], [117, 59, 30], [40, 104, 50], [109, 127, 15]].map(([x, y, r]) => sakura(x, y, r)).join('')
+      + [[103, 48, 40], [38, 72, -30], [123, 85, 70], [52, 127, -60], [122, 108, 10], [81, 46.5, 95]].map(([x, y, r]) =>
+        `<path transform="translate(${x} ${y}) rotate(${r})" d="M0 -2.6 C1.9 -1.6 1.9 1.4 0 2.6 C-1.9 1.4 -1.9 -1.6 0 -2.6 Z" fill="#ffb3c9" stroke="#e9789c" stroke-width=".5"/>`).join(''),
     dorado: `<rect x="30" y="40" width="100" height="98" rx="30" fill="none" stroke="#b8741a" stroke-width="7" opacity=".42"/>
       <ellipse cx="72" cy="50" rx="30" ry="6.5" fill="#fffbe0" opacity=".5"/><ellipse cx="62" cy="49" rx="10" ry="3" fill="#ffffff" opacity=".65"/>
       <g class="rw-glint" opacity="0"><path d="M24 40 L44 40 L4 138 L-16 138 Z" fill="#ffffff" opacity=".55"/><path d="M50 40 L56 40 L16 138 L10 138 Z" fill="#ffffff" opacity=".4"/></g>
@@ -435,11 +446,11 @@
 
   // ------------------------------------------------------------------ catalogue
   const ACC_IDS = ['lacito', 'gafas', 'bufanda', 'auris', 'gorrito', 'pajarita', 'capa', 'chef', 'flores', 'aureola'];
-  const SKIN_IDS = ['clasico', 'fresa', 'matcha', 'mango', 'arandano', 'sesamo', 'dorado'];
+  const SKIN_IDS = ['clasico', 'fresa', 'matcha', 'mango', 'arandano', 'sesamo', 'dorado', 'mecenas'];
   const SKIN_DEF = {
     clasico: { base: '#ff9e7a', hi: 0.28 }, fresa: { base: '#ff8fab', hi: 0.3 }, matcha: { base: '#a8cc84', hi: 0.3 },
     mango: { base: '#ffbf4f', hi: 0.3 }, arandano: { base: '#9aa3ec', hi: 0.3 }, sesamo: { base: '#6d6773', hi: 0.26 },
-    dorado: { base: 'gold', hi: 0.34 },
+    dorado: { base: 'gold', hi: 0.34 }, mecenas: { base: '#ffd6e1', hi: 0.4 },
   };
   // [level, approved item, second item]; the original lab "PAIRS" table, now all real rewards.
   const PAIRS = [
@@ -453,7 +464,7 @@
     auris: 'cute', gamer: 'canero', matcha: 'cute', parche: 'broma', gorrito: 'cute', ninja: 'canero', pajarita: 'cute', barba: 'broma',
     mango: 'cute', pesa: 'fuerza', capa: 'cute', superheroe: 'disfraz', chef: 'cute', vikingo: 'canero', arandano: 'cute',
     musculitos: 'fuerza', flores: 'cute', dino: 'disfraz', sesamo: 'cute', cicatriz: 'canero', aureola: 'cute', astronauta: 'disfraz',
-    dorado: 'cute', clasico: 'cute',
+    dorado: 'cute', clasico: 'cute', mecenas: 'cute',
   };
   // Where Tapomo's head item ends, per style: how far the record crown and the halo rise above it.
   const LIFT_SUBTLE = { lacito: 0, gorrito: 26, chef: 40, flores: 5 };
@@ -514,13 +525,19 @@
       ITEMS.push({ id, kind: skin ? 'skin' : 'acc', level, theme: THEME[id], slots: skin ? [] : slotsOf(id).slice() });
     }
   }
+  // Thank-you skin for supporters: not a level reward (never in PAIRS / REWARD_LEVELS / itemsAt);
+  // unlocked() only lists it after setSupporter(true).
+  ITEMS.push({ id: 'mecenas', kind: 'skin', level: 0, supporter: true, theme: THEME.mecenas, slots: [] });
   const BY_ID = Object.fromEntries(ITEMS.map((i) => [i.id, i]));
   const REWARD_LEVELS = PAIRS.map((p) => p[0]);
   const isAcc = (id) => typeof id === 'string' && BY_ID[id] !== undefined && BY_ID[id].kind === 'acc';
   const isSkin = (id) => typeof id === 'string' && BY_ID[id] !== undefined && BY_ID[id].kind === 'skin';
 
-  const itemsAt = (level) => ITEMS.filter((i) => i.level === level && i.id !== 'clasico').map((i) => i.id);
-  const unlocked = (level) => ITEMS.filter((i) => i.level <= level).map((i) => i.id);
+  let supporter = false;
+  /** Marks this user as a supporter (unlocks the mecenas skin in unlocked()). */
+  const setSupporter = (on) => { supporter = !!on; return supporter; };
+  const itemsAt = (level) => ITEMS.filter((i) => i.level === level && i.id !== 'clasico' && !i.supporter).map((i) => i.id);
+  const unlocked = (level) => ITEMS.filter((i) => (i.supporter ? supporter : i.level <= level)).map((i) => i.id);
   function nextReward(level) {
     const lv = REWARD_LEVELS.find((l) => l > level);
     return lv === undefined ? null : { level: lv, ids: itemsAt(lv) };
@@ -570,6 +587,7 @@
       <linearGradient id="rw-straw-${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ec3f58"/><stop offset=".55" stop-color="#f4566c"/><stop offset="1" stop-color="#ff8796"/></linearGradient>
       <radialGradient id="rw-face-${id}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffffff" stop-opacity=".26"/><stop offset=".7" stop-color="#ffffff" stop-opacity=".14"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
       <linearGradient id="rw-aviator-${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b2540"/><stop offset=".6" stop-color="#5a3fa8" stop-opacity=".92"/><stop offset="1" stop-color="#ff7aa8" stop-opacity=".85"/></linearGradient>
+      <linearGradient id="rw-sakura-${id}" x1="0" y1="0" x2="0" y2="1"><stop offset=".5" stop-color="#ff8fb3" stop-opacity="0"/><stop offset="1" stop-color="#ff8fb3" stop-opacity=".32"/></linearGradient>
       <radialGradient id="rw-bloom-${id}" cx=".5" cy=".55" r=".7"><stop offset=".55" stop-color="#5d63c4" stop-opacity="0"/><stop offset="1" stop-color="#5d63c4" stop-opacity=".35"/></radialGradient>`);
     const g = (cls) => { const el = document.createElementNS(NS, 'g'); el.setAttribute('class', `rw-layer ${cls}`); el.setAttribute('aria-hidden', 'true'); return el; };
     const back = g('rw-back');
@@ -578,6 +596,13 @@
     const front = g('rw-front');
     body.insertBefore(back, base);
     hi.after(tex);
+    // Supermochi turns Tapomo golden for a while (any skin; the real «Tapomo dorado» keeps its glints).
+    const gold = g('rw-supergold');
+    gold.setAttribute('clip-path', `url(#rw-clip-${id})`);
+    gold.innerHTML = `<rect x="30" y="40" width="100" height="98" rx="30" fill="url(#rw-gold-${id})"/>
+      <rect x="40" y="46" width="80" height="72" rx="22" fill="#fff8d8" opacity=".3"/>
+      <rect class="rw-supergold-sweep" x="-10" y="20" width="26" height="140" fill="#fffbe8" opacity=".75" transform="rotate(18 80 90)"/>`;
+    tex.after(gold);
     body.append(front);
     // The record crown moves to the very top of the stack, inside a wrapper that rises over hats.
     const lift = document.createElementNS(NS, 'g');
@@ -716,5 +741,5 @@
     setTimeout(glint, 2500 + Math.random() * 2500);
   }
 
-  window.Wardrobe = { ITEMS, REWARD_LEVELS, itemsAt, unlocked, nextReward, clashes, wear, set, get, decorate, preview };
+  window.Wardrobe = { ITEMS, REWARD_LEVELS, itemsAt, unlocked, nextReward, clashes, wear, set, get, decorate, preview, setSupporter };
 })();

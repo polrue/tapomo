@@ -28,7 +28,7 @@ const Album = (() => {
   }
 
   async function renderAlbum() {
-    const items = await invoke('get_shortcut_album', { lang: lang() });
+    const items = (await invoke('get_shortcut_album', { lang: lang() })) || [];
     const known = items.filter((i) => i.level > 0).length;
     $('al-count').textContent = known ? tn('album.count', known, { n: fmt(known), total: fmt(items.length) }) : t('album.none');
     const grid = $('al-grid');

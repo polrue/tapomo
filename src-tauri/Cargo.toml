@@ -1,6 +1,6 @@
 [package]
 name = "tapomo"
-version = "0.6.2"
+version = "0.7.0"
 description = "Passive typing speed tracker. Never records what you type."
 edition.workspace = true
 license.workspace = true
@@ -23,6 +23,8 @@ tokio = { version = "1", features = ["time"] }
 # encrypts them when the user turns on "Cifrar la base de datos" (keystore.rs).
 rusqlite = { version = "0.32", features = ["bundled-sqlcipher-vendored-openssl"] }
 getrandom = "0.2"
+# Already in the tree through rustls; used to check supporter codes (ed25519).
+ring = "0.17"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 log = "0.4"

@@ -1,0 +1,23 @@
+/* "Apoya a Tapomo" (0.7.0): big, warm and visible, never pushy. */
+.support { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 22px 24px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, var(--card)), color-mix(in srgb, #ff8fb5 18%, var(--card)));
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+.sp-art { position: relative; flex: none; width: 120px; height: 120px; }
+.sp-art svg { width: 100%; height: 100%; overflow: visible; }
+.sp-heart { position: absolute; right: -4px; bottom: 6px; font-size: 2rem; animation: sp-beat 1.6s ease-in-out infinite; }
+@keyframes sp-beat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.18); } 30% { transform: scale(1); } 45% { transform: scale(1.1); } }
+.sp-body { flex: 1 1 280px; min-width: 0; }
+.sp-body h2 { margin: 0 0 6px; font-size: 1.35rem; }
+.sp-body p { margin: 0 0 10px; }
+.sp-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
+.sp-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: 999px; font-weight: 800; text-decoration: none;
+  background: var(--accent-strong); color: #fff; border: 2px solid var(--accent-strong); }
+.sp-btn:hover { filter: brightness(1.05); }
+.sp-btn.ghost { background: var(--card); color: var(--ink); border-color: var(--line); }
+.sp-thanks { font-weight: 800; color: var(--accent-strong); }
+.sp-code-box summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; font-weight: 700; }
+.sp-code-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.sp-code-row input { flex: 1 1 220px; min-width: 0; font: inherit; font-family: ui-monospace, Consolas, monospace; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.sp-dialog-heart { font-size: 3rem; animation: sp-beat 1.6s ease-in-out infinite; }
+.sp-dialog-nav { flex-wrap: wrap; justify-content: center; gap: 8px; }
+@media (prefers-reduced-motion: reduce) { .sp-heart, .sp-dialog-heart { animation: none; } }
