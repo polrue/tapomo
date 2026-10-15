@@ -128,6 +128,8 @@ window.I18N = {
     'f.a6': 'Sí. Están solo en tu equipo y, al desinstalar Tapomo desde Configuración → Aplicaciones, puedes borrarlos también.',
 
     'nav.support': 'Apoyar',
+    'hdr.replay': 'Intro',
+    'hdr.replay_aria': 'Ver la intro otra vez',
     's.kicker': 'Hecho a mano',
     's.title': 'Tapomo vive gracias a ti.',
     's.lead': 'Tapomo es gratis, de código abierto y sin anuncios. Lo hace una sola persona, con muchas horas y mucho cariño. Si te ayuda a escribir mejor, tu apoyo es lo que hace que siga creciendo.',
@@ -294,6 +296,8 @@ window.I18N = {
     'f.a6': 'Yes. It lives only on your computer and, when you uninstall Tapomo from Settings → Apps, you can delete it too.',
 
     'nav.support': 'Support',
+    'hdr.replay': 'Intro',
+    'hdr.replay_aria': 'Watch the intro again',
     's.kicker': 'Handmade',
     's.title': 'Tapomo lives thanks to you.',
     's.lead': "Tapomo is free, open source and ad-free. It's made by one person, with many hours and lots of love. If it helps you type better, your support is what keeps it growing.",
