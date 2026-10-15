@@ -1,0 +1,38 @@
+/* Sticky header and section bar (0.7.0). */
+.sticky-head {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
+  -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  transition: box-shadow 200ms ease;
+}
+body.scrolled .sticky-head { box-shadow: 0 6px 18px -12px rgba(35, 32, 43, .35); }
+/* Smaller once you scroll: the mascot shrinks and the extra lines fold away. */
+.sticky-head .top { transition: padding 200ms ease; }
+body.scrolled .sticky-head .top { padding-top: 8px; padding-bottom: 4px; }
+.sticky-head .mascot-wrap { transition: width 200ms ease, height 200ms ease; }
+body.scrolled .sticky-head .mascot-wrap { width: 52px; height: 52px; }
+body.scrolled .sticky-head .mascot-wrap svg { width: 52px; height: 52px; }
+body.scrolled .sticky-head h1 { font-size: 1.3rem; }
+body.scrolled .sticky-head .ver-line, body.scrolled .sticky-head .hide-note { display: none; }
+
+.section-nav { padding: 0 24px 8px; }
+.sn-list {
+  list-style: none; margin: 0 auto; padding: 2px; max-width: 960px;
+  display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth;
+  mask-image: linear-gradient(90deg, #000 92%, transparent);
+}
+.sn-list::-webkit-scrollbar { display: none; }
+.sn-list a {
+  display: block; white-space: nowrap; padding: 5px 12px; border-radius: 999px; font-size: 0.85rem; font-weight: 700;
+  color: var(--muted); text-decoration: none; background: var(--card); border: 1px solid var(--line);
+}
+.sn-list a:hover { color: var(--ink); border-color: var(--accent); }
+.sn-list a[aria-current] { color: #23202b; background: var(--accent); border-color: var(--accent); }
+main > section, main > details, main > div#data { scroll-margin-top: calc(var(--head-h, 120px) + 10px); }
+@media (prefers-reduced-motion: reduce) {
+  .sticky-head, .sticky-head .top, .sticky-head .mascot-wrap { transition: none; }
+  .sn-list { scroll-behavior: auto; }
+}
+body { padding-top: var(--head-full, 150px); }
+body.nav-measure .sticky-head, body.nav-measure .sticky-head * { transition: none !important; }

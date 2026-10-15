@@ -313,6 +313,7 @@ async function refreshAll() {
     Shortcuts.refresh(range).catch(showError);
     Album.refreshTip(range).catch(showError);
     Social.refresh().catch(() => {});
+    Support.refresh().catch(() => {});
     Records.refresh().catch(showError);
     const s = await renderSummary();
     if (s.bursts > 0) await Promise.all([renderHeatmap(s.reference), renderApps()]);
@@ -347,6 +348,7 @@ async function onLanguageChange() {
   renderGlossary();
   renderGoal().catch(showError);
   Progress.relabel();
+  SectionNav.render();
   Badges.render();
   League.render();
   Records.render();
@@ -829,6 +831,8 @@ async function init() {
   Lessons.bind();
   Album.bind();
   Social.bind();
+  Support.bind();
+  SectionNav.bind();
   $('hide-btn').addEventListener('click', comeOut);
   Tips.init({
     vars: () => ({

@@ -48,23 +48,39 @@
     }
     return d + 'Z';
   };
-  // Flame tuft: thin, sharp, tapered tongues (no rounded blobs), the middle ones tallest.
-  const TONGUES = [[44, 30, -6], [56, 12, -4], [68, -2, -2], [80, -16, 0], [92, -2, 2], [104, 12, 4], [116, 30, 6]];
-  const tongue = ([bx, ty, lean], w = 9) => {
-    const tx = bx + lean;
-    const my = (58 + ty) / 2 + 4;
-    return `M${bx - w} 58 Q${bx - w * 0.85 + lean * 0.4} ${my} ${tx} ${ty} Q${bx + w * 0.85 + lean * 0.4} ${my} ${bx + w} 58 Z`;
+  // Flame-hair: a few chunky locks rooted behind the top of the head (y 60, hidden by the body) that
+  // sweep up and back and end in a soft curled tip, never a point. Back locks deep amber, front locks
+  // bright gold with a pale inner streak; each lock sways at its own phase (mascot.css, sm-lock).
+  // [base x, half width, height, sweep back, delay s]
+  const LOCKS_BACK = [[50, 13, 36, -16, -0.25], [80, 15, 52, -20, -0.5], [110, 13, 40, -15, -0.1]];
+  const LOCKS_FRONT = [[64, 14, 44, -18, -0.35], [96, 14, 46, -18, 0], [121, 10, 28, -11, -0.6]];
+  // A flame lock: round body bulging well above the head line, then an S-curve that flicks the tip
+  // back, ending in a small round cap that curls down a touch (never a point).
+  const lock = (bx, w, h, s, Y0 = 60, r = 1.6) => {
+    const ax = bx + s, ay = Y0 - h;
+    const f = (n) => n.toFixed(1);
+    return `M${f(bx + w)} ${Y0} C${f(bx + w * 1.5)} ${f(Y0 - h * 0.6)} ${f(ax + w * 0.8)} ${f(ay + h * 0.28)} ${f(ax + r * 0.5)} ${f(ay)} `
+      + `A${r} ${r} 0 0 0 ${f(ax - r * 0.6)} ${f(ay + r * 1.8)} `
+      + `C${f(ax + w * 0.3)} ${f(ay + h * 0.4)} ${f(bx - w * 1.6)} ${f(Y0 - h * 0.45)} ${f(bx - w)} ${Y0} Z`;
   };
+  const lockG = ([bx, w, h, s, dl], fill, streak) =>
+    `<g class="sm-lock" style="--dl:${dl}s"><path d="${lock(bx, w, h, s)}" fill="${fill}" stroke="${INK}" stroke-width="2.2"/>`
+    + (streak ? `<path d="${lock(bx - w * 0.1, w * 0.3, h * 0.62, s * 0.8, 54, 1.4)}" fill="#fff6c2" opacity=".9"/>` : '') + '</g>';
+  // Rising embers: tiny upright flame drops (a droplet with a round bottom).
+  const ember = (x, y, k, dl) =>
+    `<g class="sm-ember" style="--dl:${dl}s"><path transform="translate(${x} ${y}) scale(${k})" d="M0 -4.5 C2.2 -1.8 3 0 3 1.4 A3 3 0 0 1 -3 1.4 C-3 0 -2.2 -1.8 0 -4.5 Z" fill="#ffe066" stroke="${INK}" stroke-width="${(1.2 / k).toFixed(2)}"/></g>`;
   const bolt = (x, y, s, dl) => `<g class="sm-spark" style="--dl:${dl}s"><path transform="translate(${x} ${y}) scale(${s})" d="M1 -7 L-4 1 L0 1 L-2 7 L5 -1.5 L1 -1.5 L3 -7 Z" fill="#fff1a6" stroke="${INK}" stroke-width="${(1.3 / s).toFixed(2)}" stroke-linejoin="round"/></g>`;
   const BACK = `
     <g class="sm-aura">
       <path class="sm-a1" d="${aura(1.02, 12)}" fill="url(#sm-aura-g)" opacity=".8"/>
       <path class="sm-a2" d="${aura(0.93, 8)}" fill="#fff3a0" opacity=".55"/>
     </g>
-    <g class="sm-tuft" stroke-linejoin="round">
-      <path d="${TONGUES.map((t) => tongue(t)).join(' ')}" fill="url(#sm-tuft-g)" stroke="#b86a00" stroke-width="1.6"/>
-      <path d="${TONGUES.map((t) => tongue(t, 3.2)).join(' ')}" fill="#fffbe0" opacity=".8"/>
-    </g>`;
+    <g class="sm-tuft" stroke-linejoin="round" stroke-linecap="round">
+      ${LOCKS_BACK.map((l) => lockG(l, 'url(#sm-tuft-b)')).join('')}
+      ${LOCKS_FRONT.map((l) => lockG(l, 'url(#sm-tuft-g)', true)).join('')}
+      ${ember(58, 18, 1.4, 0)}${ember(102, 12, 1.2, -0.45)}${ember(124, 28, 1.05, -0.8)}
+    </g>
+`;
   const FRONT = `<g class="sm-sparks">${bolt(16, 62, 1.1, 0)}${bolt(145, 74, 1.25, 0.25)}${bolt(20, 124, 0.95, 0.5)}${bolt(140, 128, 1, 0.15)}${bolt(134, 34, 0.85, 0.4)}${bolt(26, 34, 0.85, 0.6)}</g>`;
 
   // Speed lines: tapered (thick end at Tapomo's back, needle tail behind). Tier 1 shows from Buen ritmo,
@@ -85,13 +101,16 @@
   css.textContent = `
     .sm-layer { opacity: 0; visibility: hidden; transition: opacity calc(260ms / var(--speed)) ease, visibility 0s linear calc(260ms / var(--speed)); }
     .mascot[data-super="on"] .sm-layer { opacity: 1; visibility: visible; transition: opacity calc(200ms / var(--speed)) ease; }
-    .sm-a1, .sm-a2, .sm-tuft { transform-box: fill-box; transform-origin: 50% 100%; }
+    .sm-a1, .sm-a2, .sm-lock, .sm-ember { transform-box: fill-box; transform-origin: 50% 100%; }
     .mascot[data-super="on"] .sm-a1 { animation: sm-flick calc(240ms / var(--speed)) steps(2) infinite; }
     .mascot[data-super="on"] .sm-a2 { animation: sm-flick2 calc(300ms / var(--speed)) steps(2) infinite; }
-    .mascot[data-super="on"] .sm-tuft { animation: sm-tuft calc(360ms / var(--speed)) ease-in-out infinite; }
+    .mascot[data-super="on"] .sm-lock { animation: sm-lock calc(620ms / var(--speed)) ease-in-out infinite; animation-delay: calc(var(--dl) / var(--speed)); }
+    .sm-ember { opacity: 0; }
+    .mascot[data-super="on"] .sm-ember { animation: sm-ember calc(1100ms / var(--speed)) ease-out infinite; animation-delay: calc(var(--dl) / var(--speed)); }
     @keyframes sm-flick { 0% { transform: scale(1, 1); opacity: .8; } 50% { transform: scale(1.03, 1.07); opacity: .62; } }
     @keyframes sm-flick2 { 0% { transform: scale(1.02, 1.04); opacity: .5; } 50% { transform: scale(.98, .97); opacity: .7; } }
-    @keyframes sm-tuft { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.07) skewX(-1.5deg); } }
+    @keyframes sm-lock { 0%, 100% { transform: rotate(0deg) scale(1, 1); } 50% { transform: rotate(-5deg) scale(.97, 1.07); } }
+    @keyframes sm-ember { 0% { transform: translate(0, 8px) scale(.6); opacity: 0; } 25% { opacity: 1; } 100% { transform: translate(-6px, -16px) scale(.3); opacity: 0; } }
     .sm-spark { opacity: 0; }
     .mascot[data-super="on"] .sm-spark { animation: sm-spark calc(900ms / var(--speed)) steps(1) infinite; animation-delay: calc(var(--dl) / var(--speed)); }
     @keyframes sm-spark { 0% { opacity: 1; } 22% { opacity: 0; } 55% { opacity: 1; } 70% { opacity: 0; } }
@@ -144,7 +163,7 @@
     @keyframes zn-sheen { from { transform: translateX(-110%); } to { transform: translateX(240%); } }
     @keyframes zn-flow { to { transform: translateX(-14.14px); } }
     @media (prefers-reduced-motion: reduce) {
-      .sm-a1, .sm-a2, .sm-tuft, .sm-spark, .zl, .pet.pz .livebar i::after, .zn-ring, .rw-flutter { animation: none !important; }
+      .sm-a1, .sm-a2, .sm-lock, .sm-ember, .sm-spark, .zl, .pet.pz .livebar i::after, .zn-ring, .rw-flutter { animation: none !important; }
       .zn-lean { transition: none; }
       .mascot[data-super="on"] .sm-spark { opacity: 1; }
       .mascot[data-pz="good"] .zl.t1, .mascot[data-pz="fire"] .zl.t1, .mascot[data-pz="fire"] .zl.t2, .mascot[data-pz="beating"] .zl, .mascot[data-pz="super"] .zl { opacity: .8; }
@@ -159,7 +178,8 @@
     if (!body || !hop) return;
     svg.querySelector('defs').insertAdjacentHTML('beforeend', `
       <radialGradient id="sm-aura-g" cx=".5" cy=".55" r=".55"><stop offset=".55" stop-color="#fff3a0"/><stop offset=".8" stop-color="#ffd23f"/><stop offset="1" stop-color="#ff9f1c" stop-opacity=".7"/></radialGradient>
-      <linearGradient id="sm-tuft-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6b8"/><stop offset=".5" stop-color="#ffd23f"/><stop offset="1" stop-color="#ff9f1c"/></linearGradient>`);
+      <linearGradient id="sm-tuft-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe98a"/><stop offset=".55" stop-color="#ffd23f"/><stop offset="1" stop-color="#ffb52e"/></linearGradient>
+      <linearGradient id="sm-tuft-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc53d"/><stop offset="1" stop-color="#f08a1c"/></linearGradient>`);
     const g = (html, cls = 'sm-layer') => { const el = document.createElementNS(NS, 'g'); el.setAttribute('class', cls); el.setAttribute('aria-hidden', 'true'); el.innerHTML = html; return el; };
     body.insertBefore(g(BACK), body.firstChild);
     body.insertBefore(g(FRONT), body.querySelector('.rw-crown-lift') || null);

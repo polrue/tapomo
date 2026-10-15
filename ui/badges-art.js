@@ -24,7 +24,7 @@
     ink: INK, white: '#fff',
     peach: '#ff9e7a', peachDark: '#f07f5e', cream: '#fff8ee', gold: '#ffcc4d', goldDark: '#f2a93b',
     flame: '#ff8a5c', flameIn: '#ffd56b', mint: '#8fd49a', sky: '#9fc8ff', lilac: '#c9b8ff',
-    night: '#5d5a8a', blush: '#ff6f61', track: '#ffffff',
+    night: '#5d5a8a', blush: '#ff6f61', track: '#ffffff', heart: '#ff7f96', heartIn: '#ffb3c1',
   };
   const GHOST_FILL = '#b7b0c4';
   const GHOST_LINE = '#8d86a0';
@@ -200,6 +200,18 @@
       `<g transform="rotate(20 32 50)">${key(c, 23.5, 21.5, 17, 17)}</g>` +
       key(c, 22.5, 22, 19, 17) + label(c, 32, 33, '10', 9.5) +
       star(c, 32, 45.5, 4.2) + spark(c, 17, 21, 0.55) + spark(c, 47, 21, 0.55),
+    // 0.7.0 "Apoya a Tapomo": a warm, smiling heart that thanks supporters.
+    supporter: (c) => {
+      const H = 'M32 46.5 C20.5 39 16 33 16 26.8 C16 21.6 19.8 18.4 24 18.4 C27.6 18.4 30.5 20.4 32 23.6 C33.5 20.4 36.4 18.4 40 18.4 C44.2 18.4 48 21.6 48 26.8 C48 33 43.5 39 32 46.5 Z';
+      const mini = (x, y, k) => `<path transform="translate(${x} ${y}) scale(${k})" d="M0 3.2 C-3.2 1.2 -4.4 -0.4 -4.4 -1.9 C-4.4 -3.3 -3.3 -4.2 -2.2 -4.2 C-1.2 -4.2 -0.4 -3.6 0 -2.7 C0.4 -3.6 1.2 -4.2 2.2 -4.2 C3.3 -4.2 4.4 -3.3 4.4 -1.9 C4.4 -0.4 3.2 1.2 0 3.2 Z" fill="${c.heartIn}" stroke="${c.ink}" stroke-width="${f2(1.1 / k)}" stroke-linejoin="round"/>`;
+      return `<path d="${H}" fill="${c.heart}" stroke="${c.ink}" stroke-width="1.8" stroke-linejoin="round"/>` +
+        `<path d="M20.2 26.6 Q20.4 22.6 24 22.2" fill="none" stroke="${c.white}" stroke-width="1.8" stroke-linecap="round" opacity=".85"/>` +
+        `<circle cx="27" cy="31.2" r="1.6" fill="${c.ink}"/><circle cx="37" cy="31.2" r="1.6" fill="${c.ink}"/>` +
+        `<circle cx="27.6" cy="30.6" r=".55" fill="${c.white}"/><circle cx="37.6" cy="30.6" r=".55" fill="${c.white}"/>` +
+        `<path d="M29.8 34.4 Q32 36.6 34.2 34.4" fill="none" stroke="${c.ink}" stroke-width="1.4" stroke-linecap="round"/>` +
+        `<circle cx="24" cy="35.4" r="1.9" fill="${c.heartIn}" opacity=".9"/><circle cx="40" cy="35.4" r="1.9" fill="${c.heartIn}" opacity=".9"/>` +
+        mini(46.5, 42, 0.95) + spark(c, 17.5, 40.5, 0.55) + spark(c, 45.5, 18.5, 0.5);
+    },
     // ...and the shortcut master: Ctrl + C keycaps under a little crown.
     shortcuts_1000: (c) =>
       key(c, 13.5, 31.5, 20.5, 14) + label(c, 23.75, 39.4, 'Ctrl', 6.6) +

@@ -374,6 +374,7 @@ const Lessons = (() => {
     $('ls-again').onclick = () => start(run.lesson);
     $('ls-back').onclick = () => renderMap();
     Mascot.jump($('mascot'), { big: saved.stars === 3 });
+    if (saved.stars === 3) setTimeout(() => Support.happyMoment(progress.lessons.length >= 5 ? 7 : 0), 1200);
     Mascot.setFace($('mascot'), { eyes: saved.stars === 3 ? 'sparkle' : 'round', mouth: 'big' });
     $('ls-again').focus();
   }
@@ -381,11 +382,13 @@ const Lessons = (() => {
   // ------------------------------------------------------------- the view
   function open() {
     document.body.dataset.view = 'lessons';
+    SectionNav.render();
     $('lessons-btn').setAttribute('aria-pressed', 'true');
     refresh().catch(showError);
   }
   function close() {
     document.body.dataset.view = '';
+    SectionNav.render();
     $('lessons-btn').setAttribute('aria-pressed', 'false');
     run = null;
     if (kb) kb.clear();

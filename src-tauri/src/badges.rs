@@ -67,6 +67,7 @@ fn facts(conn: &Connection) -> rusqlite::Result<Facts> {
             .query_row("SELECT COALESCE(MAX(n), 0) FROM (SELECT SUM(count) AS n FROM shortcut_days GROUP BY day)", [], |r| r.get::<_, i64>(0))?
             .max(0) as u64,
         mastered_shortcuts: crate::catalog::mastered_count(conn)?,
+        supporter: crate::supporter::is_supporter(conn)?,
     })
 }
 

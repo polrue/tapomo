@@ -95,16 +95,20 @@
 .mascot[data-zone="fire"] .rw-flutter { animation-duration: calc(450ms / var(--speed)); }
 .mascot[data-zone="beating"] .rw-flutter, .mascot[data-zone="super"] .rw-flutter { animation-duration: calc(300ms / var(--speed)); }
 
-/* Supermochi: golden aura and spiky tuft behind/over the body, little bolts blinking around. */
+/* Supermochi: golden aura and flame-hair behind/over the body, little bolts blinking around. */
 .sm-layer { opacity: 0; visibility: hidden; transition: opacity calc(260ms / var(--speed)) ease, visibility 0s linear calc(260ms / var(--speed)); }
 .mascot[data-zone="super"] .sm-layer { opacity: 1; visibility: visible; transition: opacity calc(200ms / var(--speed)) ease; }
-.sm-a1, .sm-a2, .sm-tuft { transform-box: fill-box; transform-origin: 50% 100%; }
+.sm-a1, .sm-a2, .sm-lock, .sm-ember { transform-box: fill-box; transform-origin: 50% 100%; }
 .mascot[data-zone="super"] .sm-a1 { animation: sm-flick calc(240ms / var(--speed)) steps(2) infinite; }
 .mascot[data-zone="super"] .sm-a2 { animation: sm-flick2 calc(300ms / var(--speed)) steps(2) infinite; }
-.mascot[data-zone="super"] .sm-tuft { animation: sm-tuft calc(360ms / var(--speed)) ease-in-out infinite; }
+.mascot[data-zone="super"] .sm-lock { animation: sm-lock calc(620ms / var(--speed)) ease-in-out infinite; animation-delay: calc(var(--dl) / var(--speed)); }
+.sm-ember { opacity: 0; } /* only while animated: still embers would read as dots */
+.mascot[data-zone="super"] .sm-ember { animation: sm-ember calc(1100ms / var(--speed)) ease-out infinite; animation-delay: calc(var(--dl) / var(--speed)); }
 @keyframes sm-flick { 0% { transform: scale(1, 1); opacity: .8; } 50% { transform: scale(1.03, 1.07); opacity: .62; } }
 @keyframes sm-flick2 { 0% { transform: scale(1.02, 1.04); opacity: .5; } 50% { transform: scale(.98, .97); opacity: .7; } }
-@keyframes sm-tuft { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.07) skewX(-1.5deg); } }
+/* Flame-hair: each lock sways back a little and stretches, at its own phase (soft flicker, no pop). */
+@keyframes sm-lock { 0%, 100% { transform: rotate(0deg) scale(1, 1); } 50% { transform: rotate(-5deg) scale(.97, 1.07); } }
+@keyframes sm-ember { 0% { transform: translate(0, 8px) scale(.6); opacity: 0; } 25% { opacity: 1; } 100% { transform: translate(-6px, -16px) scale(.3); opacity: 0; } }
 .sm-spark { opacity: 0; }
 .mascot[data-zone="super"] .sm-spark { animation: sm-spark calc(900ms / var(--speed)) steps(1) infinite; animation-delay: calc(var(--dl) / var(--speed)); }
 @keyframes sm-spark { 0% { opacity: 1; } 22% { opacity: 0; } 55% { opacity: 1; } 70% { opacity: 0; } }

@@ -290,7 +290,8 @@ function goToSleep() {
 
 /** What Tapomo wears: the saved look, limited to what the current level has unlocked. */
 async function applyLook(settings) {
-  const xp = await invoke('get_xp');
+  const [xp, supporter] = await Promise.all([invoke('get_xp'), invoke('get_supporter').catch(() => false)]);
+  if (Wardrobe.setSupporter) Wardrobe.setSupporter(supporter);
   const open = new Set(Wardrobe.unlocked(xp.level));
   Wardrobe.set({
     skin: open.has(settings.skin) ? settings.skin : 'clasico',

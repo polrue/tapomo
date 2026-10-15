@@ -210,6 +210,28 @@ pub fn encrypt_database(app: AppHandle, state: State<AppState>) -> CmdResult<()>
     app.restart();
 }
 
+/// Checks and stores a supporter code; `None` if it is not valid.
+#[tauri::command]
+pub fn redeem_supporter(app: AppHandle, state: State<AppState>, code: String) -> CmdResult<Option<u32>> {
+    let n = state.with_db(|c| {
+        let n = crate::supporter::redeem(c, &code)?;
+        if n.is_some() {
+            crate::badges::check(c)?;
+        }
+        Ok(n)
+    })?;
+    if n.is_some() {
+        log::info!("supporter code redeemed");
+        let _ = app.emit("tapomo://settings", ());
+    }
+    Ok(n)
+}
+
+#[tauri::command]
+pub fn get_supporter(state: State<AppState>) -> CmdResult<bool> {
+    state.with_db(crate::supporter::is_supporter)
+}
+
 #[tauri::command]
 pub fn get_heatmap(state: State<AppState>, range: String) -> CmdResult<Vec<HeatCell>> {
     state.with_db(|c| db::heatmap(c, &range))

@@ -55,6 +55,8 @@ pub struct Facts {
     pub best_day_shortcuts: u64,
     /// Catalogue shortcuts at "Dominado".
     pub mastered_shortcuts: u32,
+    /// Redeemed a supporter code: a thank-you badge.
+    pub supporter: bool,
 }
 
 /// A badge: id (also the i18n key `badge.<id>`), rarity, and the test that unlocks it.
@@ -100,6 +102,7 @@ pub const BADGES: &[Badge] = &[
     Badge { id: "shortcuts_1000", rarity: Rarity::Gold, progress: |f| (f.shortcuts, 1_000) },
     Badge { id: "first_mastered", rarity: Rarity::Bronze, progress: |f| (u64::from(f.mastered_shortcuts.min(1)), 1) },
     Badge { id: "mastered_10", rarity: Rarity::Gold, progress: |f| (u64::from(f.mastered_shortcuts), 10) },
+    Badge { id: "supporter", rarity: Rarity::Gold, progress: |f| flag(f.supporter) },
 ];
 
 pub fn find(id: &str) -> Option<&'static Badge> {
