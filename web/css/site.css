@@ -539,3 +539,12 @@ html.intro-on.intro-built body::before { display: none; }
 .support-list li { position: relative; padding-left: 30px; }
 .support-list li::before { content: "💗"; position: absolute; left: 0; top: 0; font-size: .95em; }
 @media (prefers-reduced-motion: reduce) { .support-heart span { animation: none; } }
+
+/* Header: watch the intro again */
+.replay-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; min-height: 36px; min-width: 36px; justify-content: center; border-radius: 999px; border: 1.5px solid var(--line);
+  background: var(--card-bg); color: var(--ink); font: inherit; font-size: .85rem; font-weight: 800; cursor: pointer; }
+.replay-btn:hover { border-color: var(--accent, #ff9e7a); }
+.replay-btn span[aria-hidden] { font-size: .7rem; color: var(--accent-strong, #f0764a); }
+@media (max-width: 520px) { .replay-txt { display: none; } }
+
+@media (prefers-reduced-motion: reduce) { .scroll-cue svg { animation: none !important; } }
