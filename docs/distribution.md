@@ -102,5 +102,5 @@ Todo el código sigue siendo GPL-3.0 y la app es gratis en GitHub, sin nada bloq
 Se descartó un curso de pago cerrado. Rompería la confianza que necesita una app que escucha el teclado, y SignPath exige no tener componentes cerrados.
 
 **Pendiente de Pol:**
-- Crear la página de Ko-fi (`ko-fi.com/polrue`) y el perfil de GitHub Sponsors. Los enlaces de la app y la web ya apuntan ahí.
+- Crear la página de Ko-fi (`ko-fi.com/tapomo`) y el perfil de GitHub Sponsors. Los enlaces de la app y la web ya apuntan ahí.
 - Hacer una copia de seguridad de `~/data/secrets/tapomo-supporter-ed25519.pem` fuera del servidor.
