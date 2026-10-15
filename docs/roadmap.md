@@ -20,6 +20,7 @@ Reglas que valen para todo el plan:
 | 0.4 | Lecciones de mecanografía (ES + US) y entrenador de atajos | Hecho (0.4.0 motor y filas; 0.4.1 todas las unidades; 0.4.2 práctica a medida y objetivo; 0.4.3 entrenador de atajos) |
 | 0.5 | Web tapomo.app, estadísticas anónimas opcionales, ligas entre amigos | Hecho en código (0.5.0: app + `server/` + `web/`); falta que Pol cree la cuenta de Cloudflare, el DNS de tapomo.app y publique |
 | Más tarde | Cifrado de la base de datos, más idiomas, atajos fase C, licencia de arte | Hecho: cifrado (0.6.1), catalán, francés y alemán (0.6.0–0.6.2), atajos fase C (0.5.1). Pendiente de Pol: licencia de arte ([propuesta](art-license.md)) |
+| 0.7.0 | Apoyo (Ko-fi, GitHub Sponsors, código de mecenas), Supermochi, peinados con color, atajos de Office, retos que faltaban, antiaporreo, lecciones graduales, cabecera fija | Hecho (15-10-2026) |
 | Aparte | Firma de código (SignPath), web tapomo.app, Microsoft Store y winget. Ver [`distribution.md`](distribution.md) | Preparado en el repositorio: web (`web/` + flujo de Pages), servidor (`server/`), manifiestos de winget (`packaging/winget/`). Depende de Pol: DNS, cuenta de Cloudflare, activar Pages, PR a winget, volver a pedir SignPath y la Store (exige firma) |
 
 ---
