@@ -79,7 +79,22 @@ pub fn challenges(conn: &Connection, day: i64, settings: &db::Settings) -> rusql
     let bursts = day_bursts(conn, day - xp::CALIBRATION_DAYS, day)?;
     let goal_ms = u64::from(settings.daily_goal_min) * 60_000;
     let shortcuts = if settings.count_shortcuts { crate::shortcuts::daily(conn)? } else { Vec::new() };
-    Ok(xp::daily_challenges(&bursts, day, history_days(conn, day)?, goal_ms, &shortcuts))
+    let mut stmt = conn.prepare("SELECT day, COUNT(*) FROM lesson_results WHERE day >= ?1 AND day <= ?2 GROUP BY day")?;
+    let lessons = stmt
+        .query_map(params![day - xp::CALIBRATION_DAYS, day], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?.max(0) as u64)))?
+        .collect::<rusqlite::Result<Vec<_>>>()?;
+    // An album shortcut first used the day before; "used again" = seen on a later day (last_day ≥ day).
+    let (learnt_yesterday, learnt_used_today): (bool, bool) = if settings.count_shortcuts {
+        conn.query_row(
+            "SELECT COUNT(*) > 0, COALESCE(MAX(last_day >= ?2 AND days_used >= 2), 0) FROM shortcut_levels WHERE first_day = ?1",
+            params![day - 1, day],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )?
+    } else {
+        (false, false)
+    };
+    let extras = xp::Extras { lessons: &lessons, learnt_yesterday, learnt_used_today };
+    Ok(xp::daily_challenges(&bursts, day, history_days(conn, day)?, goal_ms, &shortcuts, extras))
 }
 
 /// What a settle changed.

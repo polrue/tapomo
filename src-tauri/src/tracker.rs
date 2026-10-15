@@ -163,6 +163,8 @@ struct Tracker {
     xp_total: u64,
     /// Setting `count_shortcuts`.
     count_shortcuts: bool,
+    /// App language (es, ca, en…), the default guess for the Office language.
+    ui_lang: &'static str,
     /// Shortcuts counted since the last XP settle, and when that was.
     shortcuts_pending: bool,
     last_settle: Instant,
@@ -198,6 +200,7 @@ impl Tracker {
             goal_refreshed: Instant::now(),
             xp_total: 0,
             count_shortcuts: true,
+            ui_lang: "en",
             shortcuts_pending: false,
             last_settle: Instant::now(),
         };
@@ -285,6 +288,7 @@ impl Tracker {
                 self.paused = s.paused;
                 self.ignore_fullscreen = s.ignore_fullscreen;
                 self.count_shortcuts = s.count_shortcuts;
+                self.ui_lang = crate::i18n::resolve(&s.language);
                 let flushed = if self.paused && !was_paused { self.last_key_ms = None; self.engine.flush() } else { None };
                 self.engine.set_config(Config::default().with_pause_ms(s.pause_ms));
                 self.finish_burst(flushed);
@@ -349,7 +353,16 @@ impl Tracker {
             let _ = self.app.emit("tapomo://shortcut", kind.id());
         }
         // Phase B: a catalogue shortcut moves up its own level (once a day).
-        for id in combo.map(|c| crate::catalog::resolve(c, &exe)).unwrap_or_default() {
+        let office_lang = match combo {
+            Some(c) => {
+                if let Err(e) = crate::catalog::office_evidence(&self.conn, c, &exe) {
+                    log::error!("could not note the Office language: {e}");
+                }
+                crate::catalog::office_lang(&self.conn, self.ui_lang).unwrap_or("en")
+            }
+            None => "en",
+        };
+        for id in combo.map(|c| crate::catalog::resolve(c, &exe, office_lang)).unwrap_or_default() {
             match crate::catalog::record_use(&self.conn, id) {
                 Ok(Some(used)) if used.tip_learnt || (used.level_up && used.level == 4) => {
                     let _ = self.app.emit("tapomo://shortcut-learnt", used);

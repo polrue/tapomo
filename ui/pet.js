@@ -265,6 +265,11 @@ function frame(now) {
 /** Draws the mini bar, zone and face from the value currently displayed. */
 function paintBar() {
   const bar = $('livebar');
+  // The next zone's threshold, as a mark on the bar (none in Supermochi or while idle).
+  const NEXT_AT = { warming: 40, rhythm: 60, good: 80, fire: 95, beating: 108 };
+  const next = NEXT_AT[state.zone];
+  if (next) bar.style.setProperty('--next', `${((next / BAR_MAX) * 100).toFixed(2)}%`);
+  else bar.style.removeProperty('--next');
   const cal = state.calibrating;
   const active = state.display > 0 && !state.paused;
   state.zone = petZone(active ? zoneOfPct(state.display) : null);

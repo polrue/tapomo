@@ -9,7 +9,11 @@ const Progress = (() => {
   let thumbStyle = null; // style the wardrobe thumbnails were last drawn in
 
   const itemName = (id) => t(`item.${id}`);
-  const joinNames = (ids) => ids.map(itemName).join(t('level.and'));
+  /** "A and B", "A, B and C": reward packs hold up to three items. */
+  const joinNames = (ids) => {
+    const n = ids.map(itemName);
+    return n.length > 2 ? `${n.slice(0, -1).join(', ')}${t('level.and')}${n[n.length - 1]}` : n.join(t('level.and'));
+  };
   const kindOf = (id) => (Wardrobe.ITEMS.find((i) => i.id === id) || {}).kind;
   const levelOf = (id) => (Wardrobe.ITEMS.find((i) => i.id === id) || {}).level || 1;
   /** Locked items say how to get them: a level, or "for supporters". */
@@ -68,11 +72,13 @@ const Progress = (() => {
     if (c.id === 'early_goal') return t('ch.early_goal');
     if (c.id === 'long_bursts' || c.id === 'bursts') return tn(`ch.${c.id}`, c.target, { n: fmt(c.target) });
     if (c.id === 'shortcuts') return t('ch.shortcuts', { n: fmt(c.target) });
+    if (c.id === 'lesson') return t('ch.lesson');
+    if (c.id === 'learnt') return t('ch.learnt');
     return t(`ch.${c.id}`, { n: fmt(c.target) });
   }
 
   /** Yes/no challenges have no counter; the others show "2 of 3". */
-  const counted = (c) => !['beat_avg', 'early_goal'].includes(c.id);
+  const counted = (c) => !['beat_avg', 'early_goal', 'lesson', 'learnt'].includes(c.id);
 
   function renderChallenges(fresh = []) {
     const card = $('challenges');
