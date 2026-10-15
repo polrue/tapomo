@@ -233,7 +233,7 @@
   "ch.xp": "+15 XP",
   "ch.full": "¡Pleno! Los tres retos: +15 XP extra",
   "wd.title": "Armario de Tapomo",
-  "wd.hint": "Cada 3 niveles desbloqueas un pack de dos premios. Toca uno para ponérselo o quitárselo. Si dos cosas no caben juntas, Tapomo se quita la que sobra.",
+  "wd.hint": "Cada 3 niveles desbloqueas un pack de premios. Toca uno para ponérselo o quitárselo. Si dos cosas no caben juntas, Tapomo se quita la que sobra.",
   "wd.style": "Estilo",
   "wd.style.bold": "Llamativo",
   "wd.style.subtle": "Sutil",
@@ -600,5 +600,6 @@
   "album.cat.office": "Word, Excel y Office",
   "item.flequillo": "Flequillo",
   "item.tupe": "Tupé",
-  "item.melenita": "Melenita"
+  "item.melenita": "Melenita",
+  "pet.mash": "¡Eh, eso es aporrear! 😄 No cuenta"
 }

@@ -233,7 +233,7 @@
   "ch.xp": "+15 XP",
   "ch.full": "Full house! All three: +15 bonus XP",
   "wd.title": "Tapomo's wardrobe",
-  "wd.hint": "Every 3 levels you unlock a pack of two rewards. Tap one to put it on or take it off. If two things don't fit together, Tapomo takes off the one in the way.",
+  "wd.hint": "Every 3 levels you unlock a pack of rewards. Tap one to put it on or take it off. If two things don't fit together, Tapomo takes off the one in the way.",
   "wd.style": "Style",
   "wd.style.bold": "Bold",
   "wd.style.subtle": "Subtle",
@@ -600,5 +600,6 @@
   "album.cat.office": "Word, Excel and Office",
   "item.flequillo": "Fringe",
   "item.tupe": "Quiff",
-  "item.melenita": "Little bob"
+  "item.melenita": "Little bob",
+  "pet.mash": "Hey, that's keyboard mashing! 😄 It doesn't count"
 }

@@ -233,7 +233,7 @@
   "ch.xp": "+15 XP",
   "ch.full": "Carton plein ! Les trois : +15 XP bonus",
   "wd.title": "La garde-robe de Tapomo",
-  "wd.hint": "Tous les 3 niveaux, tu débloques un lot de deux récompenses. Touche-en une pour la mettre ou l'enlever. Si deux choses ne vont pas ensemble, Tapomo enlève celle qui gêne.",
+  "wd.hint": "Tous les 3 niveaux, tu débloques un lot de récompenses. Touche-en une pour la mettre ou l'enlever. Si deux choses ne vont pas ensemble, Tapomo enlève celle de trop.",
   "wd.style": "Style",
   "wd.style.bold": "Voyant",
   "wd.style.subtle": "Discret",
@@ -600,5 +600,6 @@
   "album.cat.office": "Word, Excel et Office",
   "item.flequillo": "Frange",
   "item.tupe": "Banane",
-  "item.melenita": "Petit carré"
+  "item.melenita": "Petit carré",
+  "pet.mash": "Hé, ça c'est taper au hasard ! 😄 Ça ne compte pas"
 }
