@@ -31,7 +31,12 @@ const Badges = (() => {
       const sub = document.createElement('span');
       sub.className = 'bd-sub';
       if (got) {
+        // What it was for stays visible once earned (0.7.0).
         sub.textContent = t(`badges.rarity.${b.rarity}`);
+        const how = document.createElement('span');
+        how.className = 'bd-how';
+        how.textContent = t(`badge.${b.id}.hint`);
+        sub.append(document.createElement('br'), how);
         li.title = t('badges.earned_on', { date: dateOf(b.earned_ms) });
       } else {
         sub.textContent = t(`badge.${b.id}.hint`);
@@ -42,7 +47,7 @@ const Badges = (() => {
           sub.append(document.createElement('br'), p);
         }
       }
-      li.setAttribute('aria-label', `${name(b.id)}. ${got ? t('badges.earned_on', { date: dateOf(b.earned_ms) }) : sub.textContent}`);
+      li.setAttribute('aria-label', `${name(b.id)}. ${got ? `${t(`badge.${b.id}.hint`)}. ${t('badges.earned_on', { date: dateOf(b.earned_ms) })}` : sub.textContent}`);
       li.append(art, title, sub);
       grid.append(li);
     }
@@ -74,9 +79,12 @@ const Badges = (() => {
       art.innerHTML = BadgeArt.medal(b.id, b.rarity, true);
       const cap = document.createElement('figcaption');
       cap.textContent = name(b.id);
+      const how = document.createElement('span');
+      how.className = 'bdup-how';
+      how.textContent = t(`badge.${b.id}.hint`);
       const xp = document.createElement('small');
       xp.textContent = t('badges.xp', { n: fmt(b.xp) });
-      fig.append(art, cap, xp);
+      fig.append(art, cap, how, xp);
       box.append(fig);
     }
     $('bdup-more').hidden = unseen.length <= 6;
