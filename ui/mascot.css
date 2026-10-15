@@ -60,7 +60,7 @@
 @keyframes m-breathe-deep { 0%, 100% { transform: scaleY(.99); } 50% { transform: scaleY(1.03); } }
 
 /* Zones (warming < rhythm < good < fire < beating < super). Speed reads through motion, never fire:
-   tapered speed lines from "good" on (4 / 7 / 10 lines, faster per zone), a forward lean that grows
+   straight round-capped speed lines from "good" on (4 / 7 / 10 lines, faster per zone), a forward lean that grows
    (mascot.js, LEAN), faint afterimages at beating (1) and super (2), the gold glow and sunglasses at
    beating, and the golden aura, tuft and bolts in Supermochi. Everything fades (opacity), never pops. */
 .mascot .m-lines, .mascot .m-glow { display: inline; opacity: 0; transition: opacity calc(320ms / var(--speed)) ease; }
@@ -68,7 +68,7 @@
 .mascot[data-zone="beating"] .m-lines, .mascot[data-zone="super"] .m-lines { opacity: 1; }
 .mascot[data-zone="beating"] .m-glow, .mascot[data-zone="super"] .m-glow { opacity: 1; }
 .mascot[data-shades="on"] .m-shades { display: inline; }
-.m-lines .ln { opacity: 0; fill: var(--zl, #ff9e7a); transform-box: fill-box; transform-origin: 100% 50%; }
+.m-lines .ln { opacity: 0; stroke: var(--zl, #ff9e7a); transform-box: fill-box; transform-origin: 100% 50%; }
 .mascot[data-zone="good"] { --zl: #ff9e7a; --zk: 1; }
 .mascot[data-zone="fire"] { --zl: #f0553a; --zk: .7; }
 .mascot[data-zone="beating"] { --zl: #ffb81c; --zk: .55; }
@@ -112,6 +112,11 @@
 .sm-spark { opacity: 0; }
 .mascot[data-zone="super"] .sm-spark { animation: sm-spark calc(900ms / var(--speed)) steps(1) infinite; animation-delay: calc(var(--dl) / var(--speed)); }
 @keyframes sm-spark { 0% { opacity: 1; } 22% { opacity: 0; } 55% { opacity: 1; } 70% { opacity: 0; } }
+.mascot.sm-nohair .sm-tuft { display: none; } /* Mascot.setSuperHair(svg, false) */
+/* With hair the aura swells up to wrap it; without hair (setting or a hat on) it stays compact. */
+.mascot .sm-no-hair { display: none; }
+.mascot.sm-nohair .sm-with-hair, .mascot.rw-head-on .sm-with-hair { display: none; }
+.mascot.sm-nohair .sm-no-hair, .mascot.rw-head-on .sm-no-hair { display: inline; }
 .mascot.rw-head-on .sm-tuft { display: none; } /* a hat or helmet is on: only the aura stays */
 /* A backspace swallowed by Supermochi: the aura pulses once (no "oops"). */
 .mascot.sm-absorb .sm-a1 { animation: sm-absorb calc(420ms / var(--speed)) ease-out; }

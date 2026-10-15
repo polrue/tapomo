@@ -6,7 +6,7 @@
 //   Proposed:  Calentando <40 · Cogiendo ritmo 40–60 · Buen ritmo 60–80 · ¡En racha! 80–95 ·
 //              ¡Superándote! 95–108 · ¡Modo Supermochi! ≥108 (a power-up that lasts at least 35 s and
 //              ignores backspaces meanwhile; only the pet's reaction, the stats stay honest).
-// Speed reads through motion, not fire: tapered anime speed lines (more, longer and faster per zone),
+// Speed reads through motion, not fire: straight round-capped speed lines (more, longer and faster per zone),
 // a stronger forward lean per zone, and faint afterimages at the top two zones.
 (() => {
   const INK = '#23202b';
@@ -33,14 +33,15 @@
   const zoneAt = (p, list = set()) => [...list].reverse().find((z) => p >= z.from) || list[0];
 
   // ------------------------------------------------------------- Supermochi drawing
-  const aura = (k, extra) => {
+  const aura = (k, extra, swell = 1) => {
     const N = 26;
     let d = '';
     for (let i = 0; i <= N * 2; i++) {
       const a = (i / (N * 2)) * Math.PI * 2;
-      const up = Math.max(0, -Math.sin(a));
+      const up = Math.max(0, -Math.sin(a)) * swell;
       const tip = i % 2 === 1;
-      const r = tip ? 1 + (extra + 16 * up) / 62 : 1;
+      // The top half swells (up to +25 %) so the glow wraps the flame-hair too, tips included.
+      const r = (1 + 0.25 * up ** 1.5) * (tip ? 1 + (extra + 8 * up) / 62 : 1);
       const x = 80 + Math.cos(a) * 62 * k * r;
       let y = 92 + Math.sin(a) * 60 * k * r;
       if (tip) y -= 7 * (0.4 + up); // flames lean upward
@@ -72,30 +73,28 @@
   const bolt = (x, y, s, dl) => `<g class="sm-spark" style="--dl:${dl}s"><path transform="translate(${x} ${y}) scale(${s})" d="M1 -7 L-4 1 L0 1 L-2 7 L5 -1.5 L1 -1.5 L3 -7 Z" fill="#fff1a6" stroke="${INK}" stroke-width="${(1.3 / s).toFixed(2)}" stroke-linejoin="round"/></g>`;
   const BACK = `
     <g class="sm-aura">
-      <path class="sm-a1" d="${aura(1.02, 12)}" fill="url(#sm-aura-g)" opacity=".8"/>
-      <path class="sm-a2" d="${aura(0.93, 8)}" fill="#fff3a0" opacity=".55"/>
+      <path class="sm-a1 sm-with-hair" d="${aura(1.02, 12)}" fill="url(#sm-aura-g)" opacity=".8"/><path class="sm-a1 sm-no-hair" d="${aura(1.02, 12, 0)}" fill="url(#sm-aura-g)" opacity=".8"/>
     </g>
     <g class="sm-tuft" stroke-linejoin="round" stroke-linecap="round">
       ${LOCKS_BACK.map((l) => lockG(l, 'url(#sm-tuft-b)')).join('')}
       ${LOCKS_FRONT.map((l) => lockG(l, 'url(#sm-tuft-g)', true)).join('')}
       ${ember(58, 18, 1.4, 0)}${ember(102, 12, 1.2, -0.45)}${ember(124, 28, 1.05, -0.8)}
     </g>
+    <g class="sm-aura sm-aura-over" opacity=".3">
+      <path class="sm-a2 sm-with-hair" d="${aura(0.93, 8)}" fill="#fff3a0" opacity=".55"/><path class="sm-a2 sm-no-hair" d="${aura(0.93, 8, 0)}" fill="#fff3a0" opacity=".55"/>
+    </g>
 `;
   const FRONT = `<g class="sm-sparks">${bolt(16, 62, 1.1, 0)}${bolt(145, 74, 1.25, 0.25)}${bolt(20, 124, 0.95, 0.5)}${bolt(140, 128, 1, 0.15)}${bolt(134, 34, 0.85, 0.4)}${bolt(26, 34, 0.85, 0.6)}</g>`;
 
-  // Speed lines: tapered (thick end at Tapomo's back, needle tail behind). Tier 1 shows from Buen ritmo,
+  // Speed lines: straight bars with round caps. Tier 1 shows from Buen ritmo,
   // tier 2 from ¡En racha!, tier 3 from ¡Superándote!.
   const LINES = [
     [1, 26, 64, 30, 0.5, 0], [1, 22, 88, 38, 0.44, -0.2], [1, 26, 112, 32, 0.52, -0.33], [1, 30, 130, 26, 0.46, -0.1],
     [2, 18, 74, 44, 0.4, -0.27], [2, 16, 100, 48, 0.38, -0.05], [2, 22, 122, 40, 0.42, -0.4],
     [3, 20, 52, 54, 0.34, -0.15], [3, 12, 94, 60, 0.32, -0.3], [3, 18, 138, 50, 0.36, -0.08],
   ];
-  const SPEED = `<g class="zn-speed" aria-hidden="true">${LINES.map(([tier, x, y, len, d, dl]) =>
-    `<path class="zl t${tier}" style="--d:${d}s;--dl:${dl}s" d="M${x} ${y - 1.9} Q${x - len * 0.45} ${y - 0.7} ${x - len} ${y} Q${x - len * 0.45} ${y + 0.7} ${x} ${y + 1.9} Q${x + 1.6} ${y} ${x} ${y - 1.9} Z"/>`).join('')}</g>`;
-  const RING = `<g class="zn-ring" aria-hidden="true" transform="rotate(-90 80 92)">
-      <circle cx="80" cy="92" r="76" fill="none" stroke="#ffd23f" stroke-opacity=".25" stroke-width="2.4"/>
-      <circle class="zn-ring-fg" cx="80" cy="92" r="76" fill="none" stroke="#ffd23f" stroke-width="3.2" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="0"/>
-    </g>`;
+  const SPEED = `<g class="zn-speed" aria-hidden="true" fill="none" stroke-width="4" stroke-linecap="round">${LINES.map(([tier, x, y, len, d, dl]) =>
+    `<path class="zl t${tier}" style="--d:${d}s;--dl:${dl}s" d="M${x - 4} ${y}h-${len - 4}"/>`).join('')}</g>`;
 
   const css = document.createElement('style');
   css.textContent = `
@@ -115,11 +114,15 @@
     .mascot[data-super="on"] .sm-spark { animation: sm-spark calc(900ms / var(--speed)) steps(1) infinite; animation-delay: calc(var(--dl) / var(--speed)); }
     @keyframes sm-spark { 0% { opacity: 1; } 22% { opacity: 0; } 55% { opacity: 1; } 70% { opacity: 0; } }
     .mascot[data-zone="super"] .m-glow { opacity: 1; }
+    .mascot.sm-nohair .sm-tuft { display: none; } /* lab toggle: Supermochi without the flame-hair */
+    #mascot .sm-no-hair { display: none; }
+    #mascot.sm-nohair .sm-with-hair, #mascot.rw-head-on .sm-with-hair { display: none; }
+    #mascot.sm-nohair .sm-no-hair, #mascot.rw-head-on .sm-no-hair { display: inline; }
     .mascot.rw-head-on .sm-tuft { display: none; } /* a hat or helmet is on: only the aura stays */
 
     /* Proposed zones: our own speed lines replace the built-in ones. */
     .mascot[data-pz] .m-lines { opacity: 0 !important; }
-    .zn-speed .zl { opacity: 0; fill: var(--zl, #ff9e7a); transform-box: fill-box; transform-origin: 100% 50%; }
+    .zn-speed .zl { opacity: 0; stroke: var(--zl, #ff9e7a); transform-box: fill-box; transform-origin: 100% 50%; }
     .mascot[data-pz="good"] { --zl: #ff9e7a; --zk: 1; }
     .mascot[data-pz="fire"] { --zl: #f0553a; --zk: .7; }
     .mascot[data-pz="beating"] { --zl: #ffb81c; --zk: .55; }
@@ -143,13 +146,8 @@
     /* Wind: the ninja band's tails flap faster as the zone rises. */
     .mascot[data-pz="fire"] .rw-flutter { animation-duration: calc(450ms / var(--speed)); }
     .mascot[data-pz="beating"] .rw-flutter, .mascot[data-pz="super"] .rw-flutter { animation-duration: calc(300ms / var(--speed)); }
-    /* Supermochi shield: a thin gold ring that empties over 35 s; it flashes when it absorbs a backspace. */
-    .zn-ring { opacity: 0; transition: opacity calc(240ms / var(--speed)) ease; }
-    .mascot[data-immune="on"] .zn-ring { opacity: 1; }
-    .zn-ring-fg { filter: drop-shadow(0 0 2px #fff3a0); }
-    .mascot.zn-absorb .zn-ring { animation: zn-absorb calc(420ms / var(--speed)) ease-out; transform-box: view-box; transform-origin: 80px 92px; }
+    /* Supermochi shield: it absorbs backspaces for 35 s (no ring drawn); the aura pulses on each one. */
     .mascot.zn-absorb .sm-a1 { animation: zn-aura-pulse calc(420ms / var(--speed)) ease-out; }
-    @keyframes zn-absorb { 0% { transform: rotate(-90deg) scale(1); } 40% { transform: rotate(-90deg) scale(1.08); } 100% { transform: rotate(-90deg) scale(1); } }
     @keyframes zn-aura-pulse { 0% { transform: scale(1); opacity: .8; } 40% { transform: scale(1.12, 1.16); opacity: 1; } 100% { transform: scale(1); opacity: .8; } }
 
     /* The bar grows with the zone too. */
@@ -163,7 +161,7 @@
     @keyframes zn-sheen { from { transform: translateX(-110%); } to { transform: translateX(240%); } }
     @keyframes zn-flow { to { transform: translateX(-14.14px); } }
     @media (prefers-reduced-motion: reduce) {
-      .sm-a1, .sm-a2, .sm-lock, .sm-ember, .sm-spark, .zl, .pet.pz .livebar i::after, .zn-ring, .rw-flutter { animation: none !important; }
+      .sm-a1, .sm-a2, .sm-lock, .sm-ember, .sm-spark, .zl, .pet.pz .livebar i::after, .rw-flutter { animation: none !important; }
       .zn-lean { transition: none; }
       .mascot[data-super="on"] .sm-spark { opacity: 1; }
       .mascot[data-pz="good"] .zl.t1, .mascot[data-pz="fire"] .zl.t1, .mascot[data-pz="fire"] .zl.t2, .mascot[data-pz="beating"] .zl, .mascot[data-pz="super"] .zl { opacity: .8; }
@@ -184,14 +182,13 @@
     body.insertBefore(g(BACK), body.firstChild);
     body.insertBefore(g(FRONT), body.querySelector('.rw-crown-lift') || null);
     // Lean wrapper around the whole body stack (hop > bob > lift > breath > body), plus the speed
-    // lines and two afterimages behind it, and the shield ring in front.
+    // lines and two afterimages behind it.
     const lean = document.createElementNS(NS, 'g');
     lean.setAttribute('class', 'zn-lean');
     lean.id = 'zn-body-main';
     hop.before(lean);
     lean.append(hop);
     lean.insertAdjacentHTML('beforebegin', `${SPEED}<use class="zn-ghost g2" href="#zn-body-main" transform="translate(-26 0)"/><use class="zn-ghost g1" href="#zn-body-main" transform="translate(-13 0)"/>`);
-    lean.insertAdjacentHTML('afterend', RING);
     svg.__sm = true;
   }
   const prevMount = Mascot.mount;
@@ -247,13 +244,6 @@
     // pet.js redraws the face from the streak on every key; while Supermochi lasts, keep its own face
     // (an "ups" after the shield has run out still shows).
     if (superOn && !['sparkle', 'dots', 'closed'].includes(svg.dataset.eyes)) Mascot.setFace(svg, { eyes: 'sparkle', mouth: 'open', cheeks: true });
-    // Shield ring: empties over the 35 s window.
-    const left = superOn ? Math.max(0, IMMUNE_MS - (performance.now() - superStart)) : 0;
-    if (left > 0) {
-      svg.dataset.immune = 'on';
-      const fg = svg.querySelector('.zn-ring-fg');
-      if (fg) fg.setAttribute('stroke-dashoffset', (100 * (1 - left / IMMUNE_MS)).toFixed(2));
-    } else delete svg.dataset.immune;
   }
   function setSuper(on) {
     const pet = $('pet');
@@ -271,7 +261,6 @@
     } else {
       delete pet.dataset.super;
       delete svg.dataset.super;
-      delete svg.dataset.immune;
       if (superOn) {
         if (svg.dataset.zone === 'super') svg.dataset.zone = 'beating';
         if (svg.dataset.zone === 'beating' && !svg.classList.contains('sleeping')) Mascot.setShades(svg, true);
@@ -369,6 +358,23 @@
     renderScale();
     // Let pet.js repaint its own zone, then re-apply.
     if (window.Lab) window.Lab.pushLive();
+  }));
+  // Flame-hair toggle: compare Supermochi with and without the tuft (aura, bolts and glow stay).
+  document.querySelectorAll('.seg-z[data-hair]').forEach((b) => b.addEventListener('click', () => {
+    const on = b.dataset.hair === 'on';
+    const m = $('mascot');
+    if (m) {
+      m.classList.toggle('sm-nohair', !on);
+      // Also as attributes: the afterimages are <use> clones that page CSS can't reach.
+      const set = (sel, visible) => m.querySelectorAll(sel).forEach((el) => (visible ? el.removeAttribute('display') : el.setAttribute('display', 'none')));
+      set('.sm-tuft', on);
+      set('.sm-with-hair', on);
+      set('.sm-no-hair', !on);
+    }
+    document.querySelectorAll('.seg-z[data-hair]').forEach((x) => {
+      x.classList.toggle('on', x === b);
+      x.setAttribute('aria-pressed', String(x === b));
+    });
   }));
   $('zn-go-super').addEventListener('click', () => { $('zn-slider').value = 120; drive(120); });
   $('zn-backspace').addEventListener('click', () => {
