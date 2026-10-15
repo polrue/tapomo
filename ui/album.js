@@ -33,7 +33,7 @@ const Album = (() => {
     $('al-count').textContent = known ? tn('album.count', known, { n: fmt(known), total: fmt(items.length) }) : t('album.none');
     const grid = $('al-grid');
     grid.replaceChildren();
-    for (const cat of ['edit', 'windows', 'browser', 'files', 'code', 'design', 'chat'].filter((c) => items.some((i) => i.category === c))) {
+    for (const cat of ['edit', 'office', 'windows', 'browser', 'files', 'code', 'design', 'chat'].filter((c) => items.some((i) => i.category === c))) {
       const h = document.createElement('h3');
       h.textContent = t(`album.cat.${cat}`);
       const ul = document.createElement('ul');

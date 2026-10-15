@@ -1,6 +1,6 @@
 {
- "_comment": "Tapomo shortcut catalogue v1 (0.4.3; phase C in 0.5.1: Explorer, VS Code, Photoshop, Slack/Discord). Open data: contributions welcome. mods: c=Ctrl a=Alt w=Win s=Shift; vk = Windows virtual-key code (layout-independent). Sensitive shortcuts (e.g. incognito windows) are never listed: they count as 'other'.",
- "version": 2,
+ "_comment": "Tapomo shortcut catalogue v1 (0.4.3; phase C in 0.5.1: Explorer, VS Code, Photoshop, Slack/Discord). Open data: contributions welcome. mods: c=Ctrl a=Alt w=Win s=Shift; vk = Windows virtual-key code (layout-independent). Sensitive shortcuts (e.g. incognito windows) are never listed: they count as 'other'. Office (v3): entries with \"apps\": \"office\" carry per-language combos under \"office\"; the Office language is deduced from use (Ctrl+G = save in Spanish Office). Entries with \"except_office\" don't count in Office apps.",
+ "version": 3,
  "shortcuts": [
   {
    "id": "copy",
@@ -84,7 +84,8 @@
     "es": "Selecciona todo de golpe.",
     "en": "Selects everything at once."
    },
-   "label_en": "Ctrl+A"
+   "label_en": "Ctrl+A",
+   "except_office": true
   },
   {
    "id": "find",
@@ -98,17 +99,8 @@
     "es": "Busca una palabra en la página o el documento.",
     "en": "Finds a word in the page or document."
    },
-   "overrides": {
-    "es": {
-     "apps": [
-      "WINWORD.EXE"
-     ],
-     "mods": "c",
-     "vk": 66,
-     "label": "Ctrl+B"
-    }
-   },
-   "label_en": "Ctrl+F"
+   "label_en": "Ctrl+F",
+   "except_office": true
   },
   {
    "id": "save",
@@ -122,19 +114,8 @@
     "es": "Guarda el documento. Mejor a menudo.",
     "en": "Saves the document. Do it often."
    },
-   "overrides": {
-    "es": {
-     "apps": [
-      "WINWORD.EXE",
-      "EXCEL.EXE",
-      "POWERPNT.EXE"
-     ],
-     "mods": "c",
-     "vk": 71,
-     "label": "Ctrl+G"
-    }
-   },
-   "label_en": "Ctrl+S"
+   "label_en": "Ctrl+S",
+   "except_office": true
   },
   {
    "id": "word_left",
@@ -702,6 +683,162 @@
     "en": "Jumps to any channel or conversation."
    },
    "label_en": "Ctrl+K"
+  },
+  {
+   "id": "office_save",
+   "apps": "office",
+   "mods": "c",
+   "vk": 83,
+   "label": "Ctrl+G",
+   "label_en": "Ctrl+S",
+   "category": "office",
+   "level": "basic",
+   "tip": {
+    "es": "Guarda el documento. En Office en español es Ctrl+G.",
+    "en": "Saves the document."
+   },
+   "office": {
+    "en": {
+     "mods": "c",
+     "vk": 83,
+     "label": "Ctrl+S"
+    },
+    "es": {
+     "mods": "c",
+     "vk": 71,
+     "label": "Ctrl+G"
+    }
+   }
+  },
+  {
+   "id": "office_find",
+   "apps": "office",
+   "mods": "c",
+   "vk": 70,
+   "label": "Ctrl+B",
+   "label_en": "Ctrl+F",
+   "category": "office",
+   "level": "basic",
+   "tip": {
+    "es": "Busca en el documento.",
+    "en": "Finds in the document."
+   },
+   "office": {
+    "en": {
+     "mods": "c",
+     "vk": 70,
+     "label": "Ctrl+F"
+    },
+    "es": {
+     "mods": "c",
+     "vk": 66,
+     "label": "Ctrl+B"
+    }
+   }
+  },
+  {
+   "id": "office_select_all",
+   "apps": "office",
+   "mods": "c",
+   "vk": 65,
+   "label": "Ctrl+E",
+   "label_en": "Ctrl+A",
+   "category": "office",
+   "level": "basic",
+   "tip": {
+    "es": "Selecciona todo el documento.",
+    "en": "Selects the whole document."
+   },
+   "office": {
+    "en": {
+     "mods": "c",
+     "vk": 65,
+     "label": "Ctrl+A"
+    },
+    "es": {
+     "mods": "c",
+     "vk": 69,
+     "label": "Ctrl+E"
+    }
+   }
+  },
+  {
+   "id": "office_bold",
+   "apps": "office",
+   "mods": "c",
+   "vk": 66,
+   "label": "Ctrl+N",
+   "label_en": "Ctrl+B",
+   "category": "office",
+   "level": "basic",
+   "tip": {
+    "es": "Negrita para lo seleccionado.",
+    "en": "Bold for the selection."
+   },
+   "office": {
+    "en": {
+     "mods": "c",
+     "vk": 66,
+     "label": "Ctrl+B"
+    },
+    "es": {
+     "mods": "c",
+     "vk": 78,
+     "label": "Ctrl+N"
+    }
+   }
+  },
+  {
+   "id": "office_italic",
+   "apps": "office",
+   "mods": "c",
+   "vk": 73,
+   "label": "Ctrl+K",
+   "label_en": "Ctrl+I",
+   "category": "office",
+   "level": "medium",
+   "tip": {
+    "es": "Cursiva para lo seleccionado.",
+    "en": "Italic for the selection."
+   },
+   "office": {
+    "en": {
+     "mods": "c",
+     "vk": 73,
+     "label": "Ctrl+I"
+    },
+    "es": {
+     "mods": "c",
+     "vk": 75,
+     "label": "Ctrl+K"
+    }
+   }
+  },
+  {
+   "id": "office_underline",
+   "apps": "office",
+   "mods": "c",
+   "vk": 85,
+   "label": "Ctrl+S",
+   "label_en": "Ctrl+U",
+   "category": "office",
+   "level": "medium",
+   "tip": {
+    "es": "Subraya lo seleccionado.",
+    "en": "Underlines the selection."
+   },
+   "office": {
+    "en": {
+     "mods": "c",
+     "vk": 85,
+     "label": "Ctrl+U"
+    },
+    "es": {
+     "mods": "c",
+     "vk": 83,
+     "label": "Ctrl+S"
+    }
+   }
   }
  ]
 }
