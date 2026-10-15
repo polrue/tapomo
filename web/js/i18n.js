@@ -161,6 +161,7 @@ window.I18N = {
     'say.habits': '¡Objetivo cumplido!',
     'say.code': 'Todo a la vista',
     'say.faq': '¿Alguna duda?',
+    'say.support': '¡Gracias por estar aquí! 💗',
     'say.cta': '¡Vamos allá!',
     'say.tips': [
       'Nunca guardo lo que escribes, solo cuento teclas',
@@ -329,6 +330,7 @@ window.I18N = {
     'say.habits': 'Goal reached!',
     'say.code': 'All in the open',
     'say.faq': 'Any questions?',
+    'say.support': 'Thanks for being here! 💗',
     'say.cta': 'Let\'s go!',
     'say.tips': [
       'I never save what you type, I only count keys',

@@ -455,8 +455,9 @@ html.reduced .trail-layer { display: none; }
 
 /* Speech bubble: always white with ink text, like the app's floating pet. */
 .bubble {
-  position: absolute; left: 50%; bottom: 80%; z-index: 2;
-  transform: translateX(calc(-50% + var(--bx, 0px))) translateY(6px) scale(.85); transform-origin: 50% 100%;
+  /* The shift that keeps it on screen (--bx) is on `left`, which is not animated: only the pop-in is. */
+  position: absolute; left: calc(50% + var(--bx, 0px)); bottom: 80%; z-index: 2;
+  transform: translateX(-50%) translateY(6px) scale(.85); transform-origin: 50% 100%;
   opacity: 0; transition: opacity .2s ease, transform .3s cubic-bezier(.34, 1.56, .64, 1);
   pointer-events: none; width: max-content; max-width: min(240px, 70vw);
 }
@@ -465,10 +466,10 @@ html.reduced .trail-layer { display: none; }
   padding: 8px 14px; border-radius: 16px; box-shadow: 0 6px 20px -6px rgba(35, 32, 43, .35), 0 0 0 1.5px rgba(35, 32, 43, .08);
 }
 .bubble::after {
-  content: ""; position: absolute; left: calc(50% - var(--bx, 0px)); bottom: -7px; width: 14px; height: 14px; margin-left: -7px;
+  content: ""; position: absolute; left: clamp(20px, calc(50% - var(--bx, 0px)), calc(100% - 20px)); bottom: -7px; width: 14px; height: 14px; margin-left: -7px;
   background: #fff; transform: rotate(45deg); border-radius: 0 0 4px 0; box-shadow: 3px 3px 6px -3px rgba(35, 32, 43, .25);
 }
-.bubble.show { opacity: 1; transform: translateX(calc(-50% + var(--bx, 0px))) translateY(0) scale(1); }
+.bubble.show { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 .bubble.small span { font-size: .9rem; }
 
 /* The goal ring Tapomo shows in "habits". */
@@ -478,7 +479,7 @@ html.reduced .trail-layer { display: none; }
 .gr-track { stroke: var(--line); }
 .gr-fill { stroke: var(--accent); stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; }
 .traveler.ring-on .goal-ring { opacity: 1; transform: none; }
-.traveler.ring-on .gr-fill { stroke-dashoffset: 0; transition: stroke-dashoffset 1.6s cubic-bezier(.4, 0, .2, 1) .25s; }
+.traveler.ring-on .gr-fill { stroke-dashoffset: 0; transition: stroke-dashoffset .45s cubic-bezier(.4, 0, .2, 1) .05s; }
 .traveler.ring-done .gr-fill { stroke: var(--gold); }
 
 /* Static Tapomos (reduced motion): one per stage, no travelling. */
@@ -529,6 +530,7 @@ html.intro-on.intro-built body::before { display: none; }
 /* ------------------------------------------------------------------ support */
 .support { text-align: center; background: linear-gradient(180deg, transparent, color-mix(in srgb, #ff8fb5 14%, transparent) 40%, color-mix(in srgb, var(--accent, #ff9e7a) 16%, transparent)); }
 .support-inner { max-width: 760px; }
+.support-stage { margin: 0 auto 6px; }
 .support-heart { font-size: clamp(3rem, 8vw, 4.5rem); line-height: 1; margin-bottom: 14px; }
 .support-heart span { display: inline-block; animation: support-beat 1.8s ease-in-out infinite; }
 @keyframes support-beat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.16); } 28% { transform: scale(1); } 42% { transform: scale(1.08); } }
