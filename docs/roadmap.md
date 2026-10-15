@@ -19,8 +19,8 @@ Reglas que valen para todo el plan:
 | 0.3 | Gamificación personal: objetivo diario, días seguidos, actualizador automático, XP y niveles, insignias, liga contigo mismo, carta semanal, contador de atajos | Hecho (hechas: 0.3.0 objetivo diario y días seguidos; 0.3.1 actualizador y caracteres por minuto; 0.3.2 XP, niveles, retos, armario y zonas nuevas; 0.3.3 insignias; 0.3.4 liga contigo mismo; 0.3.5 carta semanal; 0.3.6 atajos por tipos; 0.3.7 récords) |
 | 0.4 | Lecciones de mecanografía (ES + US) y entrenador de atajos | Hecho (0.4.0 motor y filas; 0.4.1 todas las unidades; 0.4.2 práctica a medida y objetivo; 0.4.3 entrenador de atajos) |
 | 0.5 | Web tapomo.app, estadísticas anónimas opcionales, ligas entre amigos | Hecho en código (0.5.0: app + `server/` + `web/`); falta que Pol cree la cuenta de Cloudflare, el DNS de tapomo.app y publique |
-| Más tarde | Cifrado de la base de datos, más idiomas | Pendiente |
-| Aparte | Firma de código (SignPath), web tapomo.app, Microsoft Store y winget. Ver [`distribution.md`](distribution.md) | En curso |
+| Más tarde | Cifrado de la base de datos, más idiomas, atajos fase C, licencia de arte | Hecho: cifrado (0.6.1), catalán, francés y alemán (0.6.0–0.6.2), atajos fase C (0.5.1). Pendiente de Pol: licencia de arte ([propuesta](art-license.md)) |
+| Aparte | Firma de código (SignPath), web tapomo.app, Microsoft Store y winget. Ver [`distribution.md`](distribution.md) | Preparado en el repositorio: web (`web/` + flujo de Pages), servidor (`server/`), manifiestos de winget (`packaging/winget/`). Depende de Pol: DNS, cuenta de Cloudflare, activar Pages, PR a winget, volver a pedir SignPath y la Store (exige firma) |
 
 ---
 
