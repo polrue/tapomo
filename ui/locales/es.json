@@ -555,5 +555,12 @@
   "album.cat.design": "Photoshop",
   "album.cat.chat": "Slack y Discord",
   "lessons.layout.fr": "Francés (AZERTY)",
-  "lessons.layout.de": "Alemán (QWERTZ)"
+  "lessons.layout.de": "Alemán (QWERTZ)",
+  "crypt.title": "Cifrado de tus datos",
+  "crypt.off": "Tus datos ya se quedan en tu equipo. Si quieres, Tapomo puede además cifrar su base de datos, para que solo tu usuario de Windows pueda leerla.",
+  "crypt.on": "🔒 La base de datos está cifrada: solo tu usuario de Windows puede leerla.",
+  "crypt.button": "Cifrar la base de datos",
+  "crypt.confirm": "Tapomo cifrará su base de datos y se reiniciará en unos segundos. No se puede deshacer, pero no pierdes nada. ¿Seguimos? Ojo: la clave va unida a tu usuario de Windows; si se borra o se restablece desde otra cuenta, los datos no se podrán recuperar.",
+  "crypt.working": "Cifrando… Tapomo se reiniciará enseguida.",
+  "crypt.failed": "No se ha podido cifrar. Tus datos siguen como estaban; puedes volver a intentarlo."
 }
