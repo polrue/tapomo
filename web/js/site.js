@@ -281,6 +281,7 @@
     const first = stages[0];
     push(first.x, first.y, first.size);
     d = `M${first.x.toFixed(1)} ${first.y.toFixed(1)}`;
+    const stageL = [0]; // path length at which Tapomo stands on each stage
     for (let i = 0; i < stages.length - 1; i++) {
       const S = stages[i], N = stages[i + 1];
       const rS = railFor(S), rN = railFor(N);
@@ -300,6 +301,7 @@
       line([rN, N.y - dy2], F);
       // off the rail, into the next stage
       curve([rN, N.y - dy2], [rN, N.y - dy2 * 0.45], [N.x, N.y - dy2 * 0.55], [N.x, N.y], F, N.size);
+      stageL.push(pts[pts.length - 1].l);
     }
     samples = pts;
     total = pts[pts.length - 1].l;
@@ -315,7 +317,7 @@
     // Scroll anchors: the "viewport centre" value at which Tapomo stands on each stage.
     const maxY = docH - vh;
     const mid = vh * 0.5;
-    anchors = stages.map((s) => ({ name: s.name, y: s.y, a: clamp(s.y, mid, maxY + mid) }));
+    anchors = stages.map((s, i) => ({ name: s.name, y: s.y, l: stageL[i], a: clamp(s.y, mid, maxY + mid) }));
     for (let i = 1; i < anchors.length; i++) anchors[i].a = Math.max(anchors[i].a, anchors[i - 1].a + 2);
     const R = Math.min(vh * 0.4, 340);
     anchors.forEach((an, i) => {
@@ -327,7 +329,7 @@
   }
 
   // The magnet: around each anchor Tapomo holds still for a while, then eases out and travels.
-  const HOLD = 0.55;
+  const HOLD = 0.4;
   const C = 1 - HOLD;
   const GA = 3 - C, GB = C - 2; // g(e) = GA e² + GB e³, g(1) = 1, g'(1) = C (slope matches outside)
   function warp(v) {
@@ -342,34 +344,61 @@
     return { v, at: '' };
   }
 
-  function pointAtY(Y) {
+  /** Point at path length L (binary search over the samples). */
+  function pointAtL(L) {
     let lo = 0, hi = samples.length - 1;
-    if (Y <= samples[0].y) return samples[0];
-    if (Y >= samples[hi].y) return samples[hi];
+    if (L <= 0) return samples[0];
+    if (L >= samples[hi].l) return samples[hi];
     while (hi - lo > 1) {
       const m = (lo + hi) >> 1;
-      if (samples[m].y < Y) lo = m; else hi = m;
+      if (samples[m].l < L) lo = m; else hi = m;
     }
     const a = samples[lo], b = samples[hi];
-    const k = b.y === a.y ? 1 : (Y - a.y) / (b.y - a.y);
-    return { x: lerp(a.x, b.x, k), y: Y, s: lerp(a.s, b.s, k), l: lerp(a.l, b.l, k) };
+    const k = b.l === a.l ? 1 : (L - a.l) / (b.l - a.l);
+    return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), s: lerp(a.s, b.s, k), l: L };
   }
+
+  // Tapomo follows the scroll with a little lag, so a flick of the wheel becomes a walk, not a jump.
+  const FOLLOW_TAU = 0.35; // s
+  const MAX_SPEED = 1800; // px of path per second: a brisk walk, never a dash
+  let shownL = null;
+  let lastT = 0;
 
   function update(force) {
     if (!samples.length || !anchors.length) return;
     const vh = window.innerHeight;
     const centre = window.scrollY + vh * 0.5;
     const w = warp(centre);
-    // anchor space -> path y (piecewise linear between stages)
-    let Y = anchors[0].y;
-    if (w.v >= anchors[anchors.length - 1].a) Y = anchors[anchors.length - 1].y;
+    // anchor space -> distance along the path (piecewise linear between stages). Distance, not
+    // height: crossing the screen sideways takes its fair share of scroll instead of a few pixels.
+    let L = anchors[0].l;
+    if (w.v >= anchors[anchors.length - 1].a) L = anchors[anchors.length - 1].l;
     else if (w.v > anchors[0].a) {
       for (let i = 0; i < anchors.length - 1; i++) {
         const A = anchors[i], B = anchors[i + 1];
-        if (w.v <= B.a) { Y = lerp(A.y, B.y, (w.v - A.a) / (B.a - A.a)); break; }
+        if (w.v <= B.a) { L = lerp(A.l, B.l, (w.v - A.a) / (B.a - A.a)); break; }
       }
     }
-    const p = pointAtY(Y);
+    const now = performance.now();
+    // The first frame of a new gesture is a normal frame, not "everything since it stopped".
+    const dt = lastT ? Math.min(0.05, (now - lastT) / 1000) : 1 / 60;
+    lastT = now;
+    if (force || shownL === null) shownL = L;
+    else {
+      const step = (L - shownL) * (1 - Math.exp(-dt / FOLLOW_TAU));
+      // A late frame must not double the step: the cap counts at most one 60 fps frame.
+      // …but when it falls far behind (a long fast scroll) it hurries, so it's never lost off-screen.
+      // On screen it hurries at most 1.6×; off screen (nobody sees it) it may run to catch up.
+      const lag = Math.abs(L - shownL);
+      const here = pointAtL(shownL);
+      const outside = Math.max(0, window.scrollY - here.y, here.y - (window.scrollY + vh));
+      const limit = 1.6 + 2.4 * clamp((outside - 100) / 400, 0, 1); // 1.6× on screen, up to 4× well off it
+      const cap = MAX_SPEED * Math.min(1 + lag / 1200, limit) * Math.min(dt, 1 / 60);
+      shownL += clamp(step, -cap, cap);
+    }
+    const moving = Math.abs(L - shownL) > 0.5;
+    if (!moving) shownL = L;
+    const p = pointAtL(shownL);
     const size = Math.round(p.s);
     traveler.style.width = traveler.style.height = `${size}px`;
     traveler.style.transform = `translate3d(${(p.x - size / 2).toFixed(1)}px, ${(p.y - size / 2).toFixed(1)}px, 0)`;
@@ -378,11 +407,12 @@
     // Lean into the direction of travel.
     const vx = lastX === null ? 0 : p.x - lastX;
     lastX = p.x;
-    tilt = lerp(tilt, clamp(vx * 0.9, -16, 16), 0.35);
+    tilt = lerp(tilt, clamp(vx * 0.6, -12, 12), 0.25);
     if (Math.abs(tilt) < 0.2) tilt = 0;
     tinner.style.setProperty('--tilt', `${tilt.toFixed(1)}deg`);
-    setState(w.at);
-    if (tilt !== 0) requestUpdate(); // settle the lean back to zero
+    setState(moving ? '' : w.at);
+    if (tilt !== 0 || moving) requestUpdate(); // keep walking / settle the lean back to zero
+    else lastT = 0;
   }
 
   let rafPending = false;
