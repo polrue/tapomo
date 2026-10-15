@@ -20,3 +20,8 @@
 .bdup-item .bd-art { width: 80px; height: 80px; }
 .bdup-item figcaption { font-weight: 800; }
 .bdup-item small { color: var(--accent-strong); font-weight: 800; }
+
+/* What each badge was for, also once earned (0.7.0) */
+.bd-how { text-transform: none; }
+.bdup-item { width: 150px; }
+.bdup-how { color: var(--muted); font-size: 0.8rem; text-align: center; line-height: 1.3; }
