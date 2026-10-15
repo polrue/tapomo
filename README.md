@@ -65,7 +65,7 @@ El motor de medida (`crates/tapomo-core`) no depende de Windows ni de Tauri y ti
 
 ## Licencia y apoyo
 
-GPL-3.0-or-later, ver [LICENSE](LICENSE). Si Tapomo te gusta, puedes [invitarle a un café ☕](https://github.com/sponsors/polrue).
+GPL-3.0-or-later, ver [LICENSE](LICENSE).
 
 ---
 
@@ -132,4 +132,4 @@ The measuring engine (`crates/tapomo-core`) has no Windows or Tauri dependency a
 
 ### License and support
 
-GPL-3.0-or-later, see [LICENSE](LICENSE). If you like Tapomo you can [buy it a coffee ☕](https://github.com/sponsors/polrue).
+GPL-3.0-or-later, see [LICENSE](LICENSE).
