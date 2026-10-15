@@ -6,6 +6,7 @@ mod commands;
 mod db;
 mod hook;
 mod i18n;
+mod keystore;
 mod league;
 mod lessons;
 mod password;
@@ -87,6 +88,8 @@ fn main() {
             commands::get_week_summary,
             commands::social_get,
             commands::social_set,
+            commands::get_encrypted,
+            commands::encrypt_database,
             commands::get_heatmap,
             commands::get_apps,
             commands::set_alias,
@@ -132,6 +135,12 @@ fn main() {
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
             let db_path = data_dir.join("tapomo.db");
+            // "Cifrar la base de datos" left an encrypted copy ready: swap it in before opening.
+            match keystore::finish_pending(&db_path) {
+                Ok(true) => log::info!("database is now encrypted"),
+                Ok(false) => {}
+                Err(e) => log::error!("could not finish encrypting the database: {e}"),
+            }
             log::info!("database: {}", db_path.display());
             let conn = db::open(&db_path)?;
             let settings = db::get_settings(&conn)?;

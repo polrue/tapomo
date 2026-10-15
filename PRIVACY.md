@@ -29,7 +29,7 @@ En una base de datos SQLite local, en tu carpeta de usuario:
 
 **Nunca** se guarda: el texto, las teclas concretas, los títulos de ventana, las direcciones web, capturas de pantalla ni nada parecido.
 
-Al desinstalar Tapomo puedes borrar también estos datos.
+Al desinstalar Tapomo puedes borrar también estos datos. Si quieres, puedes **cifrar** la base de datos (Ajustes → «Cifrar la base de datos»): se cifra con SQLCipher y la clave queda protegida por Windows para tu usuario.
 
 ## Conexiones a internet
 
@@ -92,7 +92,7 @@ In a local SQLite database in your user folder:
 
 **Never** stored: text, individual keys, window titles, web addresses, screenshots or anything similar.
 
-When you uninstall Tapomo you can also delete this data.
+When you uninstall Tapomo you can also delete this data. If you like, you can **encrypt** the database (Settings → "Encrypt the database"): it is encrypted with SQLCipher and the key is protected by Windows for your user.
 
 ## Internet connections
 

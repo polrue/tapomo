@@ -234,7 +234,7 @@ Idea de Pol, 13-10-2026. Es una página estática y divertida, llena de animacio
 - **Atajos, Fase C** *(hecho en la 0.5.1, 15-10-2026)*: Explorador, VS Code, Photoshop, Slack y Discord en el catálogo, abierto a contribuciones. Office se queda fuera de momento: sus atajos de formato cambian según el idioma (en Word en español Ctrl+S es subrayado) y harían falta las deducciones por uso. Lista fija de combinaciones sensibles que el gancho nunca reconoce.
 - **winget** *(preparado)*: `packaging/winget/make-manifest.sh` genera los manifiestos de una versión publicada; el PR a microsoft/winget-pkgs lo abre Pol.
 
-- Cifrado opcional de la base de datos (SQLCipher + clave DPAPI) antes del lanzamiento público.
+- Cifrado opcional de la base de datos (SQLCipher + clave DPAPI) *(hecho en la 0.6.1, 15-10-2026: Ajustes → «Cifrar la base de datos»; la app usa SQLCipher siempre, que también lee las bases sin cifrar)*.
 - Firma de código o Microsoft Store; con firma, actualización automática (Tauri updater).
 - Licencia de arte separada del código GPL (Tapomo y el nombre como marca).
 - Más idiomas de interfaz y más distribuciones de teclado *(0.6.0, 15-10-2026: interfaz en catalán; teclados francés AZERTY y alemán QWERTZ en las lecciones. Pendiente: interfaz en francés y alemán)*.

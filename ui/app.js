@@ -286,6 +286,10 @@ function renderSettings() {
   $('s-auto-update').checked = settings.auto_update;
   $('s-auto-update').disabled = !settings.check_updates;
   $('paused-banner').hidden = !settings.paused;
+  invoke('get_encrypted').then((on) => {
+    $('crypt-status').textContent = t(on ? 'crypt.on' : 'crypt.off');
+    $('crypt-btn').hidden = on;
+  }).catch(showError);
 }
 
 function renderTabs() {
@@ -390,6 +394,18 @@ function bindControls() {
   });
 
   $('open-logs').addEventListener('click', () => invoke('open_logs_dir').catch(showError));
+  $('crypt-btn').addEventListener('click', async () => {
+    if (!confirm(t('crypt.confirm'))) return;
+    $('crypt-btn').disabled = true;
+    $('crypt-status').textContent = t('crypt.working');
+    try {
+      await invoke('encrypt_database'); // Tapomo restarts itself when it is done
+    } catch (e) {
+      showError(e);
+      $('crypt-status').textContent = t('crypt.failed');
+      $('crypt-btn').disabled = false;
+    }
+  });
 
   $('exclusion-form').addEventListener('submit', async (e) => {
     e.preventDefault();

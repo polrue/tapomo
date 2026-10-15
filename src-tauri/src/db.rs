@@ -10,6 +10,13 @@ const DEFAULT_EXCLUSIONS: [&str; 4] = ["KeePass.exe", "KeePassXC.exe", "1Passwor
 
 pub fn open(path: &Path) -> rusqlite::Result<Connection> {
     let conn = Connection::open(path)?;
+    // An encrypted database is unlocked first; a key that can't be read leaves it locked and the
+    // migration below fails with a clear error instead of touching the file.
+    match crate::keystore::load(path) {
+        Ok(Some(key)) => crate::keystore::unlock(&conn, &key)?,
+        Ok(None) => {}
+        Err(e) => log::error!("could not read the database key: {e}"),
+    }
     conn.busy_timeout(std::time::Duration::from_secs(3))?;
     // WAL lets the UI read while the tracker writes.
     conn.pragma_update(None, "journal_mode", "WAL")?;

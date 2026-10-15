@@ -555,5 +555,12 @@
   "album.cat.design": "Photoshop",
   "album.cat.chat": "Slack i Discord",
   "lessons.layout.fr": "Francès (AZERTY)",
-  "lessons.layout.de": "Alemany (QWERTZ)"
+  "lessons.layout.de": "Alemany (QWERTZ)",
+  "crypt.title": "Xifratge de les teves dades",
+  "crypt.off": "Les teves dades ja es queden al teu ordinador. Si vols, Tapomo també pot xifrar la seva base de dades, perquè només el teu usuari de Windows la pugui llegir.",
+  "crypt.on": "🔒 La base de dades està xifrada: només el teu usuari de Windows la pot llegir.",
+  "crypt.button": "Xifrar la base de dades",
+  "crypt.confirm": "Tapomo xifrarà la seva base de dades i es reiniciarà en uns segons. No es pot desfer, però no perds res. Continuem? Compte: la clau va lligada al teu usuari de Windows; si s'esborra o es restableix des d'un altre compte, les dades no es podran recuperar.",
+  "crypt.working": "Xifrant… Tapomo es reiniciarà de seguida.",
+  "crypt.failed": "No s'ha pogut xifrar. Les teves dades continuen com estaven; ho pots tornar a provar."
 }
