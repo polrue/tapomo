@@ -39,12 +39,25 @@
     for (let i = 0; i <= N * 2; i++) {
       const a = (i / (N * 2)) * Math.PI * 2;
       const up = Math.max(0, -Math.sin(a)) * swell;
-      const tip = i % 2 === 1;
       // The top half swells (up to +25 %) so the glow wraps the flame-hair too, tips included.
-      const r = (1 + 0.25 * up ** 1.5) * (tip ? 1 + (extra + 8 * up) / 62 : 1);
-      const x = 80 + Math.cos(a) * 62 * k * r;
+      const r = 1 + 0.25 * up ** 1.5;
+      let x = 80 + Math.cos(a) * 62 * k * r;
       let y = 92 + Math.sin(a) * 60 * k * r;
-      if (tip) y -= 7 * (0.4 + up); // flames lean upward
+      if (i % 2) {
+        // Flames rise and Supermochi runs to the right, so each spike is the sum of three pushes: out
+        // from the body, up (fading toward the bottom) and back to the left, the wind of the run. Top
+        // spikes lean back ~25°, trailing (left) ones stream back long, leading (right) ones stay short
+        // and hug the body pointing up, bottom ones open downward and trail back. Never forward.
+        const nx = Math.cos(a), ny = Math.sin(a);
+        const lift = 1.2 * (1 - 0.8 * Math.max(0, ny));
+        const wind = 1 - 0.3 * Math.max(0, nx);
+        const dx = nx - wind, dy = ny - lift, dl = Math.hypot(dx, dy) || 1;
+        // Dead bottom stays a bit shorter; trailing side longer, leading side shorter.
+        const nub = ny > 0 ? Math.min(1, 0.6 + Math.abs(nx) * 2) : 1;
+        const len = (62 * k * r * (extra + 8 * up) / 62 + 7 * (0.4 + up)) * nub * (1 - 0.35 * nx);
+        x += dx / dl * len;
+        y += dy / dl * len;
+      }
       d += `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)} `;
     }
     return d + 'Z';
