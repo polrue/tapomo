@@ -594,5 +594,11 @@
   "pet.zone.good": "Bon rythme !",
   "pet.zone.fire": "En pleine forme !",
   "pet.zone.beating": "Tu te dépasses !",
-  "pet.super.first2": "Pendant 35 s, même les erreurs ne t'arrêtent pas"
+  "pet.super.first2": "Pendant 35 s, même les erreurs ne t'arrêtent pas",
+  "ch.lesson": "Fais une leçon",
+  "ch.learnt": "Utilise aujourd'hui le raccourci appris hier",
+  "album.cat.office": "Word, Excel et Office",
+  "item.flequillo": "Frange",
+  "item.tupe": "Banane",
+  "item.melenita": "Petit carré"
 }

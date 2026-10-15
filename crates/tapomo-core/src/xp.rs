@@ -87,6 +87,17 @@ impl DayBurst {
     }
 }
 
+/// What the challenges know beyond typing (0.7.0): lessons done and the shortcut learnt yesterday.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Extras<'a> {
+    /// `(day, lessons finished)`.
+    pub lessons: &'a [(i64, u64)],
+    /// A shortcut from the album was used for the very first time yesterday...
+    pub learnt_yesterday: bool,
+    /// ...and it has been used again today.
+    pub learnt_used_today: bool,
+}
+
 /// A challenge of the day and how far today's bursts have got.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Challenge {
@@ -173,7 +184,7 @@ fn step_clamp(v: u32, step: u32, lo: u32, hi: u32) -> u32 {
 /// number of distinct days with bursts before today (all time). The choice only depends on days
 /// before today, so it stays fixed during the day. `goal_ms == 0` means the daily goal is off.
 /// `shortcuts` holds `(day, count)` pairs, empty when shortcut counting is off.
-pub fn daily_challenges(bursts: &[DayBurst], today: i64, history_days: usize, goal_ms: u64, shortcuts: &[(i64, u64)]) -> [Challenge; 3] {
+pub fn daily_challenges(bursts: &[DayBurst], today: i64, history_days: usize, goal_ms: u64, shortcuts: &[(i64, u64)], extras: Extras) -> [Challenge; 3] {
     let h = history(bursts, today, goal_ms);
     let shortcut_avg = if h.active_days == 0 {
         0.0
@@ -198,6 +209,15 @@ pub fn daily_challenges(bursts: &[DayBurst], today: i64, history_days: usize, go
         if shortcut_avg >= 5.0 {
             pool.push(("shortcuts", step_clamp(shortcut_avg as u32, 5, 10, 50)));
         }
+        // Only for people who already do lessons (on 2+ of the last 14 days).
+        let lesson_days = extras.lessons.iter().filter(|(d, n)| *d < today && *d >= today - CALIBRATION_DAYS && *n > 0).count();
+        if lesson_days >= 2 {
+            pool.push(("lesson", 1));
+        }
+        // A shortcut first used yesterday: using it again today turns it into a habit.
+        if extras.learnt_yesterday {
+            pool.push(("learnt", 1));
+        }
         // Fisher–Yates with a day-seeded generator.
         let mut seed = mix(today as u64);
         for i in (1..pool.len()).rev() {
@@ -220,10 +240,12 @@ pub fn daily_challenges(bursts: &[DayBurst], today: i64, history_days: usize, go
             "bursts" => today_bursts.len() as u32,
             "chars" => today_bursts.iter().map(|b| b.chars).sum(),
             "shortcuts" => shortcuts.iter().filter(|(d, _)| *d == today).map(|(_, n)| *n as u32).sum(),
+            "lesson" => extras.lessons.iter().filter(|(d, _)| *d == today).map(|(_, n)| *n as u32).sum(),
+            "learnt" => u32::from(extras.learnt_used_today),
             _ => 0,
         };
         // beat_avg and early_goal are yes/no: their target is shown as a pace or not at all.
-        let goal = if matches!(id, "beat_avg" | "early_goal") { 1 } else { target };
+        let goal = if matches!(id, "beat_avg" | "early_goal" | "learnt") { 1 } else { target };
         Challenge { id, target, progress: progress.min(goal), done: progress >= goal }
     })
 }
@@ -291,7 +313,7 @@ mod tests {
     #[test]
     fn newcomers_get_welcome_challenges() {
         let today = [b(TODAY, 600, 30, 200, 120, 1)];
-        let c = daily_challenges(&today, TODAY, 0, 20 * 60_000, &[]);
+        let c = daily_challenges(&today, TODAY, 0, 20 * 60_000, &[], Extras::default());
         assert_eq!(c.map(|c| c.id), ["bursts", "chars", "clean"]);
         assert_eq!((c[0].progress, c[0].done), (1, false));
         assert_eq!((c[2].progress, c[2].done), (100, true));
@@ -301,9 +323,9 @@ mod tests {
     fn challenges_are_stable_for_a_day_and_calibrated() {
         let mut bursts = routine();
         let goal = 2 * 60_000; // met every day by 170 s of typing
-        let a = daily_challenges(&bursts, TODAY, 10, goal, &[]);
+        let a = daily_challenges(&bursts, TODAY, 10, goal, &[], Extras::default());
         bursts.push(b(TODAY, 900, 120, 700, 600, 3));
-        let c = daily_challenges(&bursts, TODAY, 10, goal, &[]);
+        let c = daily_challenges(&bursts, TODAY, 10, goal, &[], Extras::default());
         assert_eq!(a.map(|c| c.id), c.map(|c| c.id), "typing today must not change today's picks");
         let ids = c.map(|c| c.id);
         assert_eq!(ids.iter().collect::<std::collections::HashSet<_>>().len(), 3, "no repeats");
@@ -324,7 +346,7 @@ mod tests {
         // One app, goal off: early_goal and apps are never offered, the three base ones always are.
         let bursts: Vec<DayBurst> = (1..=10).map(|k| b(TODAY - k, 600, 90, 451, 500, 1)).collect();
         for day in TODAY..TODAY + 4 {
-            let mut ids = daily_challenges(&bursts, day, 10, 0, &[]).map(|c| c.id);
+            let mut ids = daily_challenges(&bursts, day, 10, 0, &[], Extras::default()).map(|c| c.id);
             ids.sort_unstable();
             assert_eq!(ids, ["beat_avg", "clean", "long_bursts"]);
         }
@@ -337,19 +359,47 @@ mod tests {
         let found = (TODAY..TODAY + 4).find_map(|d| {
             let shifted: Vec<DayBurst> = bursts.iter().map(|x| DayBurst { day: x.day + d - TODAY, ..*x }).collect();
             let sc: Vec<(i64, u64)> = used.iter().map(|(x, n)| (x + d - TODAY, *n)).collect();
-            daily_challenges(&shifted, d, 10, 0, &sc).into_iter().find(|c| c.id == "shortcuts")
+            daily_challenges(&shifted, d, 10, 0, &sc, Extras::default()).into_iter().find(|c| c.id == "shortcuts")
         });
         let c = found.expect("offered on some day");
         assert_eq!((c.target, c.progress, c.done), (20, 7, false));
         // Nobody gets it without the habit.
-        assert!((TODAY..TODAY + 4).all(|d| daily_challenges(&bursts, d, 10, 0, &[]).iter().all(|c| c.id != "shortcuts")));
+        assert!((TODAY..TODAY + 4).all(|d| daily_challenges(&bursts, d, 10, 0, &[], Extras::default()).iter().all(|c| c.id != "shortcuts")));
+    }
+
+    #[test]
+    fn lesson_and_learnt_challenges_need_the_habit() {
+        let bursts: Vec<DayBurst> = (1..=10).map(|k| b(TODAY - k, 600, 90, 451, 500, 1)).collect();
+        let lessons = [(TODAY - 3, 1), (TODAY - 1, 2), (TODAY, 1)];
+        let extras = Extras { lessons: &lessons, learnt_yesterday: true, learnt_used_today: false };
+        let mut seen = std::collections::HashSet::new();
+        for d in TODAY..TODAY + 1 {
+            for c in daily_challenges(&bursts, d, 10, 0, &[], extras) {
+                seen.insert(c.id);
+                if c.id == "lesson" { assert_eq!((c.progress, c.done), (1, true)); }
+                if c.id == "learnt" { assert!(!c.done); }
+            }
+        }
+        // Pool of 5 (3 base + lesson + learnt): over a few days both show up.
+        let all: std::collections::HashSet<&str> = (0..12)
+            .flat_map(|k| {
+                let shifted: Vec<DayBurst> = bursts.iter().map(|x| DayBurst { day: x.day + k, ..*x }).collect();
+                let ls: Vec<(i64, u64)> = lessons.iter().map(|(d, n)| (d + k, *n)).collect();
+                daily_challenges(&shifted, TODAY + k, 10, 0, &[], Extras { lessons: &ls, ..extras }).map(|c| c.id)
+            })
+            .collect();
+        assert!(all.contains("lesson") && all.contains("learnt"), "{all:?}");
+        // Without lessons or a learnt shortcut they never appear.
+        for d in TODAY..TODAY + 4 {
+            assert!(daily_challenges(&bursts, d, 10, 0, &[], Extras::default()).iter().all(|c| c.id != "lesson" && c.id != "learnt"));
+        }
     }
 
     #[test]
     fn the_choice_varies_between_days() {
         let bursts = routine();
         let sets: std::collections::HashSet<[&str; 3]> =
-            (0..20).map(|k| daily_challenges(&bursts, TODAY + k, 10, 2 * 60_000, &[]).map(|c| c.id)).collect();
+            (0..20).map(|k| daily_challenges(&bursts, TODAY + k, 10, 2 * 60_000, &[], Extras::default()).map(|c| c.id)).collect();
         assert!(sets.len() > 3, "only {} different sets", sets.len());
     }
 
@@ -359,7 +409,7 @@ mod tests {
         bursts.push(b(TODAY, 600, 10, 121, 50, 1)); // 72 wpm but only 10 s
         let find = |bs: &[DayBurst]| (TODAY..TODAY + 60).find_map(|d| {
             let shifted: Vec<DayBurst> = bs.iter().map(|x| DayBurst { day: x.day + d - TODAY, ..*x }).collect();
-            daily_challenges(&shifted, d, 10, 0, &[]).into_iter().find(|c| c.id == "beat_avg")
+            daily_challenges(&shifted, d, 10, 0, &[], Extras::default()).into_iter().find(|c| c.id == "beat_avg")
         });
         assert!(!find(&bursts).unwrap().done);
         bursts.push(b(TODAY, 700, 30, 181, 50, 1)); // 72 wpm over 30 s

@@ -41,6 +41,35 @@ pub struct Entry {
     pub tip: HashMap<String, String>,
     #[serde(default)]
     pub overrides: HashMap<String, Override>,
+    /// Office only: the combination per Office language (`en`, `es`); see [`office_lang`].
+    #[serde(default)]
+    pub office: HashMap<String, OfficeCombo>,
+    /// Doesn't count in Office apps, where the same keys mean something else in some languages.
+    #[serde(default)]
+    pub except_office: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct OfficeCombo {
+    pub mods: String,
+    pub vk: u32,
+    pub label: String,
+}
+
+/// The Office apps whose shortcuts change with the Office language.
+const OFFICE_APPS: [&str; 4] = ["winword.exe", "excel.exe", "powerpnt.exe", "outlook.exe"];
+
+/// The app list of an entry ("office" expands to the Office apps); `None` = every app.
+fn app_list(e: &Entry) -> Option<Vec<String>> {
+    match &e.apps {
+        Apps::All(a) if a == "office" => Some(OFFICE_APPS.iter().map(|x| x.to_string()).collect()),
+        Apps::All(_) => None,
+        Apps::Some(list) => Some(list.iter().map(|a| a.to_lowercase()).collect()),
+    }
+}
+
+pub fn is_office(exe: &str) -> bool {
+    OFFICE_APPS.contains(&exe.to_lowercase().as_str())
 }
 
 #[derive(Deserialize)]
@@ -72,6 +101,9 @@ const SENSITIVE: [(u8, u32); 3] = [(CTRL | SHIFT, 0x4E), (CTRL | SHIFT, 0x50), (
 struct Combo {
     entry: usize,
     apps: Option<Vec<String>>,
+    /// Office language this combination belongs to (Office entries only).
+    lang: Option<String>,
+    except_office: bool,
 }
 
 struct Catalogue {
@@ -90,19 +122,26 @@ fn catalogue() -> &'static Catalogue {
         let mut combos: HashMap<(u8, u32), Vec<Combo>> = HashMap::new();
         for (i, e) in entries.iter().enumerate() {
             let apps = match &e.apps {
+                Apps::All(a) if a == "office" => Some(OFFICE_APPS.iter().map(|x| x.to_string()).collect()),
                 Apps::All(_) => None,
                 Apps::Some(list) => Some(list.iter().map(|a| a.to_lowercase()).collect()),
             };
-            let mut add = |key: (u8, u32), apps| {
+            let mut add = |key: (u8, u32), apps: Option<Vec<String>>, lang: Option<String>| {
                 if SENSITIVE.contains(&key) {
                     log::warn!("shortcut catalogue lists a sensitive combination ({}); ignored", e.id);
                 } else {
-                    combos.entry(key).or_default().push(Combo { entry: i, apps });
+                    combos.entry(key).or_default().push(Combo { entry: i, apps, lang, except_office: e.except_office });
                 }
             };
-            add((mods_bits(&e.mods), e.vk), apps);
+            if e.office.is_empty() {
+                add((mods_bits(&e.mods), e.vk), apps.clone(), None);
+            } else {
+                for (lang, oc) in &e.office {
+                    add((mods_bits(&oc.mods), oc.vk), apps.clone(), Some(lang.clone()));
+                }
+            }
             for o in e.overrides.values() {
-                add((mods_bits(&o.mods), o.vk), Some(o.apps.iter().map(|a| a.to_lowercase()).collect()));
+                add((mods_bits(&o.mods), o.vk), Some(o.apps.iter().map(|a| a.to_lowercase()).collect()), None);
             }
         }
         Catalogue { entries, combos }
@@ -115,20 +154,59 @@ pub fn known_combo(mods: u8, vk: u32) -> Option<u32> {
     catalogue().combos.contains_key(&(mods, vk)).then_some((u32::from(mods) << 16) | vk)
 }
 
-/// The catalogue entries a recognised combination stands for in this app (usually one).
-pub fn resolve(code: u32, exe: &str) -> Vec<&'static str> {
+/// The catalogue entries a recognised combination stands for in this app (usually one). In Office the
+/// meaning depends on the Office language (`office_lang`, "es" or "en").
+pub fn resolve(code: u32, exe: &str, office_lang: &str) -> Vec<&'static str> {
     let cat = catalogue();
     let exe = exe.to_lowercase();
+    let office = is_office(&exe);
     let key = ((code >> 16) as u8, code & 0xFFFF);
     cat.combos
         .get(&key)
         .map(|list| {
             list.iter()
+                .filter(|c| !(c.except_office && office))
+                .filter(|c| c.lang.as_deref().is_none_or(|l| l == office_lang))
                 .filter(|c| c.apps.as_ref().is_none_or(|apps| apps.contains(&exe)))
                 .map(|c| cat.entries[c.entry].id.as_str())
                 .collect()
         })
         .unwrap_or_default()
+}
+
+// ------------------------------------------------------------- Office language
+
+/// In Office, saving is Ctrl+S in English and Ctrl+G in Spanish (where Ctrl+S underlines). Tapomo
+/// counts which of the two a person uses in Office to know the language of their Office; until there is
+/// enough evidence it assumes the app's own language. Only these two counts are stored.
+const CTRL_G: u32 = ((CTRL as u32) << 16) | 0x47;
+const CTRL_S: u32 = ((CTRL as u32) << 16) | 0x53;
+const OFFICE_EVIDENCE_MIN: u32 = 5;
+
+pub fn office_evidence(conn: &Connection, code: u32, exe: &str) -> rusqlite::Result<()> {
+    if !is_office(exe) {
+        return Ok(());
+    }
+    let key = match code {
+        CTRL_G => "office_ev_es",
+        CTRL_S => "office_ev_en",
+        _ => return Ok(()),
+    };
+    let n: u32 = db::get_raw(conn, key)?.and_then(|v| v.parse().ok()).unwrap_or(0);
+    db::set_raw(conn, key, &(n + 1).to_string())
+}
+
+/// "es" or "en": the language of this person's Office, deduced from use, else the app language.
+pub fn office_lang(conn: &Connection, ui_lang: &str) -> rusqlite::Result<&'static str> {
+    let read = |k: &str| -> rusqlite::Result<u32> { Ok(db::get_raw(conn, k)?.and_then(|v| v.parse().ok()).unwrap_or(0)) };
+    let (es, en) = (read("office_ev_es")?, read("office_ev_en")?);
+    Ok(if es + en >= OFFICE_EVIDENCE_MIN {
+        if es > en { "es" } else { "en" }
+    } else if matches!(ui_lang, "es" | "ca") {
+        "es"
+    } else {
+        "en"
+    })
 }
 
 // ------------------------------------------------------------------ levels
@@ -218,20 +296,17 @@ pub fn tip(conn: &Connection, lang: &str) -> rusqlite::Result<Option<Tip>> {
     let apps: Vec<String> = stmt.query_map([since], |r| r.get::<_, String>(0))?.collect::<rusqlite::Result<_>>()?;
     let cat = catalogue();
     let mastered = |category: &str| cat.entries.iter().filter(|e| e.category == category && used.get(&e.id).is_some_and(|u| level_of(u.0) >= 3)).count();
-    let fits = |e: &Entry| match &e.apps {
-        Apps::All(_) => true,
-        Apps::Some(list) => list.iter().any(|a| apps.iter().any(|x| x.eq_ignore_ascii_case(a))),
-    };
+    let fits = |e: &Entry| app_list(e).is_none_or(|list| list.iter().any(|a| apps.iter().any(|x| x.eq_ignore_ascii_case(a))));
     let mut candidates: Vec<&Entry> = cat
         .entries
         .iter()
         .filter(|e| used.get(&e.id).is_none_or(|u| u.0 == 0 && !u.1) && fits(e) && !(e.level == "basic" && mastered(&e.category) >= 2))
         .collect();
     // App-specific tips for the apps used today first, then by level; a stable daily rotation among equals.
-    candidates.sort_by_key(|e| (matches!(e.apps, Apps::All(_)), LEVELS.iter().position(|l| *l == e.level).unwrap_or(3)));
+    candidates.sort_by_key(|e| (app_list(e).is_none(), LEVELS.iter().position(|l| *l == e.level).unwrap_or(3)));
     let pick = candidates.first().map(|first| {
-        let key = (matches!(first.apps, Apps::All(_)), first.level.clone());
-        let same: Vec<&&Entry> = candidates.iter().filter(|e| (matches!(e.apps, Apps::All(_)), e.level.clone()) == key).collect();
+        let key = (app_list(first).is_none(), first.level.clone());
+        let same: Vec<&&Entry> = candidates.iter().filter(|e| (app_list(e).is_none(), e.level.clone()) == key).collect();
         same[(today.rem_euclid(same.len() as i64)) as usize].id.clone()
     });
     db::set_raw(conn, "sc_tip", &format!("{today}:{}", pick.clone().unwrap_or_default()))?;
@@ -249,9 +324,12 @@ fn build(conn: &Connection, id: &str, lang: &str) -> rusqlite::Result<Option<Tip
     let since = db::range_start_ms(conn, "today")?;
     // In an Office app in Spanish, show the Spanish combination.
     let mut label = if lang == "es" { e.label.clone() } else { e.label_en.clone() };
-    let app = match &e.apps {
-        Apps::All(_) => None,
-        Apps::Some(list) => {
+    if let Some(oc) = e.office.get(office_lang(conn, lang)?) {
+        label = oc.label.clone();
+    }
+    let app = match app_list(e) {
+        None => None,
+        Some(list) => {
             let mut stmt = conn.prepare("SELECT COALESCE(NULLIF(a.alias, ''), a.exe), a.exe FROM bursts b JOIN apps a ON a.id = b.app_id WHERE b.start_ms >= ?1 GROUP BY a.id")?;
             let today: Vec<(String, String)> = stmt.query_map([since], |r| Ok((r.get(0)?, r.get(1)?)))?.collect::<rusqlite::Result<_>>()?;
             today.into_iter().find(|(_, exe)| list.iter().any(|a| a.eq_ignore_ascii_case(exe))).map(|(name, _)| name.trim_end_matches(".exe").trim_end_matches(".EXE").to_string())
@@ -289,6 +367,7 @@ pub struct AlbumItem {
 }
 
 pub fn album(conn: &Connection, lang: &str) -> rusqlite::Result<Vec<AlbumItem>> {
+    let olang = office_lang(conn, lang)?;
     let mut stmt = conn.prepare("SELECT id, days_used FROM shortcut_levels")?;
     let days: HashMap<String, u32> = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?.collect::<rusqlite::Result<_>>()?;
     Ok(catalogue()
@@ -298,7 +377,11 @@ pub fn album(conn: &Connection, lang: &str) -> rusqlite::Result<Vec<AlbumItem>> 
             let d = days.get(&e.id).copied().unwrap_or(0);
             AlbumItem {
                 id: e.id.clone(),
-                label: if lang == "es" { e.label.clone() } else { e.label_en.clone() },
+                label: e
+                    .office
+                    .get(olang)
+                    .map(|oc| oc.label.clone())
+                    .unwrap_or_else(|| if lang == "es" { e.label.clone() } else { e.label_en.clone() }),
                 text: e.tip.get(lang).or_else(|| e.tip.get("en")).cloned().unwrap_or_default(),
                 category: e.category.clone(),
                 level: level_of(d),
@@ -330,20 +413,38 @@ mod tests {
         let cat = catalogue();
         assert!(cat.entries.len() >= 30);
         let ctrl_t = known_combo(CTRL, 0x54).expect("Ctrl+T is in the catalogue");
-        assert_eq!(resolve(ctrl_t, "chrome.exe"), ["new_tab"]);
-        assert!(resolve(ctrl_t, "notepad.exe").is_empty(), "browser-only");
+        assert_eq!(resolve(ctrl_t, "chrome.exe", "en"), ["new_tab"]);
+        assert!(resolve(ctrl_t, "notepad.exe", "en").is_empty(), "browser-only");
         // Word in Spanish saves with Ctrl+G: it counts as "save" there, and nowhere else.
         let ctrl_g = known_combo(CTRL, 0x47).unwrap();
-        assert_eq!(resolve(ctrl_g, "WINWORD.EXE"), ["save"]);
-        assert!(resolve(ctrl_g, "notepad.exe").is_empty());
+        assert_eq!(resolve(ctrl_g, "WINWORD.EXE", "es"), ["office_save"]);
+        assert!(resolve(ctrl_g, "WINWORD.EXE", "en").is_empty(), "Go To in English Office: not in the album");
+        assert!(resolve(ctrl_g, "notepad.exe", "es").is_empty());
+        // Ctrl+S: save in English Office, underline in Spanish Office, plain save elsewhere.
+        let ctrl_s = known_combo(CTRL, 0x53).unwrap();
+        assert_eq!(resolve(ctrl_s, "WINWORD.EXE", "en"), ["office_save"]);
+        assert_eq!(resolve(ctrl_s, "WINWORD.EXE", "es"), ["office_underline"]);
+        assert_eq!(resolve(ctrl_s, "notepad.exe", "es"), ["save"]);
         // Not in the catalogue: incognito (sensitive) and random combinations are never recognised.
         assert_eq!(known_combo(CTRL | SHIFT, 0x4E), None);
         assert_eq!(known_combo(CTRL | SHIFT, 0x50), None, "Firefox private window");
         // Phase C: same keys, different apps, different meanings.
         let ctrl_t = known_combo(CTRL, 0x54).unwrap();
-        assert_eq!(resolve(ctrl_t, "Photoshop.exe"), ["free_transform"]);
-        assert_eq!(resolve(known_combo(ALT, 0x26).unwrap(), "Code.exe"), ["move_line"]);
+        assert_eq!(resolve(ctrl_t, "Photoshop.exe", "en"), ["free_transform"]);
+        assert_eq!(resolve(known_combo(ALT, 0x26).unwrap(), "Code.exe", "en"), ["move_line"]);
         assert_eq!(known_combo(CTRL | ALT | WIN, 0x51), None);
+    }
+
+    #[test]
+    fn office_language_is_deduced_from_use() {
+        let c = mem();
+        assert_eq!(office_lang(&c, "es").unwrap(), "es");
+        assert_eq!(office_lang(&c, "en").unwrap(), "en");
+        for _ in 0..6 {
+            office_evidence(&c, CTRL_G, "WINWORD.EXE").unwrap();
+        }
+        office_evidence(&c, CTRL_S, "notepad.exe").unwrap(); // outside Office: no evidence
+        assert_eq!(office_lang(&c, "en").unwrap(), "es", "uses Ctrl+G to save: Spanish Office");
     }
 
     #[test]

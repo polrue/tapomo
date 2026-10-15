@@ -61,13 +61,10 @@ html, body {
 .pet[data-zone="super"] .livebar i { background: linear-gradient(90deg, #ffb81c, #fff1a6, #ffb81c) 0 0 / 200% 100%;
   animation: pet-shimmer calc(700ms / var(--speed, 1)) linear infinite; }
 @keyframes pet-shimmer { to { background-position: -200% 0; } }
-/* Zone thresholds as thin ticks on the bar (40, 60, 80, 95 and 108 % of a 130 % bar). */
-.livebar:not(.calibrating) { background-image:
-  linear-gradient(90deg, transparent calc(30.77% - .6px), rgba(35, 32, 43, .4) 0 calc(30.77% + .6px), transparent 0),
-  linear-gradient(90deg, transparent calc(46.15% - .6px), rgba(35, 32, 43, .4) 0 calc(46.15% + .6px), transparent 0),
-  linear-gradient(90deg, transparent calc(61.54% - .6px), rgba(35, 32, 43, .4) 0 calc(61.54% + .6px), transparent 0),
-  linear-gradient(90deg, transparent calc(73.08% - .6px), rgba(35, 32, 43, .4) 0 calc(73.08% + .6px), transparent 0),
-  linear-gradient(90deg, transparent calc(83.08% - .6px), rgba(35, 32, 43, .4) 0 calc(83.08% + .6px), transparent 0); }
+/* Only the NEXT zone's threshold is marked (pet.js sets --next as a % of the 130 % bar): one clear
+   target instead of five lines. Hidden in Supermochi (nothing above it) and while calibrating. */
+.livebar:not(.calibrating)[style*="--next"] { background-image:
+  linear-gradient(90deg, transparent calc(var(--next) - 1px), rgba(35, 32, 43, .55) 0 calc(var(--next) + 1px), transparent 0); }
 /* The bar livens up with the zone: a sheen, then flowing stripes that speed up, then a glow. */
 .livebar i::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; right: -20px; opacity: 0; transition: opacity 300ms ease; }
 .pet[data-zone="rhythm"] .livebar i::after { opacity: 1; right: auto; width: 45%;
