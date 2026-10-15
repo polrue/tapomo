@@ -332,11 +332,15 @@
   const HOLD = 0.4;
   const C = 1 - HOLD;
   const GA = 3 - C, GB = C - 2; // g(e) = GA e² + GB e³, g(1) = 1, g'(1) = C (slope matches outside)
+  // Anticipation: on the way in Tapomo lands a little early (bigger hold on the arriving side); on the
+  // way out it lingers a moment, then sets off gradually (the eased curve below + the spring).
+  let scrollDir = 1; // 1 scrolling down, -1 up
   function warp(v) {
     for (const an of anchors) {
       const z = v - an.a;
       if (Math.abs(z) >= an.r) continue;
-      const hold = an.r * HOLD;
+      const arriving = Math.sign(z) === -scrollDir;
+      const hold = an.r * (arriving ? HOLD + 0.15 : HOLD);
       if (Math.abs(z) <= hold) return { v: an.a, at: an.name };
       const e = (Math.abs(z) - hold) / (an.r - hold);
       return { v: an.a + Math.sign(z) * an.r * (GA * e * e + GB * e * e * e), at: '' };
@@ -358,16 +362,22 @@
     return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), s: lerp(a.s, b.s, k), l: L };
   }
 
-  // Tapomo follows the scroll with a little lag, so a flick of the wheel becomes a walk, not a jump.
-  const FOLLOW_TAU = 0.35; // s
-  const MAX_SPEED = 1800; // px of path per second: a brisk walk, never a dash
+  // Tapomo has inertia: a critically damped spring pulls it towards where the scroll says it should be,
+  // with limited acceleration and speed. It sets off gently, cruises, brakes and stops without overshoot.
+  const OMEGA = 7.5;       // spring stiffness (rad/s): settles in ~0.6 s
+  const MAX_ACCEL = 4200;  // px/s²: how hard it can speed up or brake
+  const MAX_SPEED = 1800;  // px/s along the path while visible: a brisk walk, never a dash
   let shownL = null;
+  let vel = 0;
   let lastT = 0;
+  let lastCentre = null;
 
   function update(force) {
     if (!samples.length || !anchors.length) return;
     const vh = window.innerHeight;
     const centre = window.scrollY + vh * 0.5;
+    if (lastCentre !== null && Math.abs(centre - lastCentre) > 0.5) scrollDir = centre > lastCentre ? 1 : -1;
+    lastCentre = centre;
     const w = warp(centre);
     // anchor space -> distance along the path (piecewise linear between stages). Distance, not
     // height: crossing the screen sideways takes its fair share of scroll instead of a few pixels.
@@ -381,23 +391,25 @@
     }
     const now = performance.now();
     // The first frame of a new gesture is a normal frame, not "everything since it stopped".
-    const dt = lastT ? Math.min(0.05, (now - lastT) / 1000) : 1 / 60;
+    const dt = lastT ? Math.min(1 / 30, (now - lastT) / 1000) : 1 / 60;
     lastT = now;
-    if (force || shownL === null) shownL = L;
-    else {
-      const step = (L - shownL) * (1 - Math.exp(-dt / FOLLOW_TAU));
-      // A late frame must not double the step: the cap counts at most one 60 fps frame.
-      // …but when it falls far behind (a long fast scroll) it hurries, so it's never lost off-screen.
-      // On screen it hurries at most 1.6×; off screen (nobody sees it) it may run to catch up.
-      const lag = Math.abs(L - shownL);
+    if (force || shownL === null) {
+      shownL = L;
+      vel = 0;
+    } else {
+      // Far off screen (after a long fast scroll) it may run faster, so it's never lost; nobody sees it.
       const here = pointAtL(shownL);
       const outside = Math.max(0, window.scrollY - here.y, here.y - (window.scrollY + vh));
-      const limit = 1.6 + 2.4 * clamp((outside - 100) / 400, 0, 1); // 1.6× on screen, up to 4× well off it
-      const cap = MAX_SPEED * Math.min(1 + lag / 1200, limit) * Math.min(dt, 1 / 60);
-      shownL += clamp(step, -cap, cap);
+      const vmax = MAX_SPEED * (1 + 2.5 * clamp((outside - 100) / 400, 0, 1));
+      const acc = clamp(OMEGA * OMEGA * (L - shownL) - 2 * OMEGA * vel, -MAX_ACCEL, MAX_ACCEL);
+      vel = clamp(vel + acc * dt, -vmax, vmax);
+      shownL += vel * dt;
     }
-    const moving = Math.abs(L - shownL) > 0.5;
-    if (!moving) shownL = L;
+    const moving = Math.abs(L - shownL) > 0.5 || Math.abs(vel) > 4;
+    if (!moving) {
+      shownL = L;
+      vel = 0;
+    }
     const p = pointAtL(shownL);
     const size = Math.round(p.s);
     traveler.style.width = traveler.style.height = `${size}px`;
@@ -496,6 +508,7 @@
     const prev = state;
     state = next;
     if (prev && REACT[prev]) REACT[prev].leave();
+    if (next && !prev && !REDUCED) Mascot.squish(tsvg); // a little landing
     if (next && REACT[next]) REACT[next].enter();
     else {
       // flying: wide-eyed and happy
@@ -876,8 +889,8 @@
       html.classList.add('reduced');
       if (layer) layer.remove();
       staticStages();
-      const replay = $('.replay-intro');
-      if (replay) replay.closest('li').remove();
+      // Reduced motion: no intro to replay (footer link and header button go away).
+      for (const el of $$('.replay-intro')) (el.closest('li') || el).remove();
       watchReveals();
       if (!SCROLL_TL) { window.addEventListener('scroll', progressFallback, { passive: true }); progressFallback(); }
       store.set(VISITED, '1');
@@ -886,8 +899,7 @@
 
     initTraveler();
     watchReveals();
-    const replay = $('.replay-intro');
-    if (replay) replay.addEventListener('click', () => {
+    for (const replay of $$('.replay-intro')) replay.addEventListener('click', () => {
       window.scrollTo({ top: 0, behavior: 'auto' });
       traveler.classList.remove('ready');
       runIntro();
