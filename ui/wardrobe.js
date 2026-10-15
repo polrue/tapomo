@@ -329,7 +329,44 @@
   })();
   const bushy = (cx) => `<path transform="translate(${cx} 61)" d="M-12 3 Q-11 -5 -1 -6 Q10 -6.5 12.5 1 Q10.5 0 9 2.2 Q7 -.5 4.6 2 Q2.4 -.6 0 2 Q-2.6 -.4 -5 2.4 Q-7.6 .2 -9.4 3.4 Q-10.8 2 -12 3 Z" fill="#4a3426" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/>
       <path transform="translate(${cx} 61)" d="M-7 -3 Q-1 -4.8 6 -3.4" fill="none" stroke="#8a6248" stroke-width="1.3" stroke-linecap="round"/>`;
+  // Hairstyles (slot pelo): drawn ON the head, over the top of the body and never over the eyes or
+  // cheeks. Same drawing in both styles. Each one: soft fill, darker strands, a white shine.
+  // `bangs` builds a row of rounded fringe locks from right to left: gaps at y `yg`, tips at `tips[i]`.
+  const bangs = (x0, x1, yg, tips, lean = 0.2) => {
+    const w = (x0 - x1) / tips.length;
+    return tips.map((yt, i) => {
+      const a = x0 - i * w;
+      const b = a - w;
+      const yc = (yg + (yt - yg) / 0.75).toFixed(1);
+      return ` C${(a - w * lean).toFixed(1)} ${yc} ${(b + w * (0.5 - lean)).toFixed(1)} ${yc} ${b.toFixed(1)} ${yg}`;
+    }).join('');
+  };
+  const HAIR_ART = {
+    flequillo: `<g class="rw-hair" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M28.5 75 C24 52 40 32.5 80 32 C120 32.5 136 52 131.5 75 Q129.5 78.5 126.5 75.5 C125.5 66 124 58 122 52${bangs(122, 38, 49.5, [55.5, 58.5, 60, 60, 58.5, 55.5])} C36 58 34.5 66 33.5 75.5 Q30.5 78.5 28.5 75 Z" fill="#7a4a33" stroke="${INK}" stroke-width="2.2"/>
+        <path d="M108 38.5 Q111 44 108 50 M94 35.5 Q96 43 94 50 M80 34.5 V50 M66 35.5 Q64 43 66 50 M52 38.5 Q49 44 52 50" fill="none" stroke="#5a3322" stroke-width="1.8"/>
+        <path d="M40 52 Q44 41 56 37" fill="none" stroke="#fff" stroke-width="2.6" opacity=".6"/>
+        <path d="M62 35.6 L68 34.8" fill="none" stroke="#fff" stroke-width="2.4" opacity=".6"/>
+      </g>`,
+    tupe: `<g class="rw-hair" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M30 68 C28.5 52 36 42 52 39 L108 39 C124 42 131.5 52 130 68 C127 60 122 55 115 51 L112 42 L48 42 L45 51 C38 55 33 60 30 68 Z" fill="#3a4472" stroke="${INK}" stroke-width="2.2"/>
+        <path d="M100 18 C104 5 118 3 121 12 C116 9.5 110 11 107.5 19 Z" fill="#3a4472" stroke="${INK}" stroke-width="2.2"/>
+        <path d="M42 50 C33 31 52 15 76 14 C94 13 108 15 116 24 C122 31 122 41 117 47 C111 53 101 53 95 48 C89 54 78 54 72 48.5 C65 54 50 55 42 50 Z" fill="#3a4472" stroke="${INK}" stroke-width="2.2"/>
+        <path d="M54 44 C54 31 68 24 86 24 C98 24 106 28 110 35" fill="none" stroke="#252b4a" stroke-width="2"/>
+        <path d="M66 46 C67 38 76 33 88 33.5" fill="none" stroke="#252b4a" stroke-width="1.8"/>
+        <path d="M49 34 Q55 22 69 18.5" fill="none" stroke="#aab8f2" stroke-width="2.6" opacity=".9"/>
+        <path d="M108 12.5 Q111 9 115 9" fill="none" stroke="#aab8f2" stroke-width="2" opacity=".9"/>
+      </g>`,
+    melenita: `<g class="rw-hair" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M23.5 102 C19 74 24 36 80 32.5 C136 36 141 74 136.5 102 C133.5 106.5 127.5 106 125.5 101.5 C124.5 86 127 70 121 60 C110 58 97 52 88 44 C82 50 74 52 66 52 C56 53 48 56 42 61 C35 71 36 86 34.5 101.5 C32.5 106 26.5 106.5 23.5 102 Z" fill="#b0602f" stroke="${INK}" stroke-width="2.2"/>
+        <path d="M88 44 C92 50 98 56 104 58" fill="none" stroke="#84431f" stroke-width="1.8"/>
+        <path d="M30 96 C28 82 29 70 33 62 M130 96 C132 82 131 70 127 62 M66 39 Q72 37 80 38" fill="none" stroke="#84431f" stroke-width="1.8"/>
+        <path d="M34 62 Q38 45 54 39" fill="none" stroke="#fff" stroke-width="2.6" opacity=".5"/>
+        <path d="M96 38 Q104 38 110 41" fill="none" stroke="#fff" stroke-width="2.2" opacity=".45"/>
+      </g>`,
+  };
   const PROP_ART = {
+    ...Object.fromEntries(Object.entries(HAIR_ART).map(([k, v]) => [k, { front: v }])),
     gorra: {
       back: `<path d="M50 24 Q80 8 110 24 Q112 30 80 30 Q48 30 50 24 Z" fill="#ff4d3a" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/>`,
       front: `<g stroke-linejoin="round">
@@ -452,10 +489,11 @@
     mango: { base: '#ffbf4f', hi: 0.3 }, arandano: { base: '#9aa3ec', hi: 0.3 }, sesamo: { base: '#6d6773', hi: 0.26 },
     dorado: { base: 'gold', hi: 0.34 }, mecenas: { base: '#ffd6e1', hi: 0.4 },
   };
-  // [level, approved item, second item]; the original lab "PAIRS" table, now all real rewards.
-  const PAIRS = [
+  // [level, approved item, second item, optional third (hairstyles)]; the original lab "PAIRS" table,
+  // now all real rewards. A pack can hold 1-3 items: never assume pairs.
+  const PACKS = [
     [4, 'lacito', 'bigote'], [7, 'gafas', 'gafassol'], [10, 'fresa', 'cejas'], [13, 'bufanda', 'gorra'],
-    [16, 'auris', 'gamer'], [19, 'matcha', 'parche'], [22, 'gorrito', 'ninja'], [25, 'pajarita', 'barba'],
+    [16, 'auris', 'gamer', 'flequillo'], [19, 'matcha', 'parche', 'tupe'], [22, 'gorrito', 'ninja', 'melenita'], [25, 'pajarita', 'barba'],
     [28, 'mango', 'pesa'], [31, 'capa', 'superheroe'], [34, 'chef', 'vikingo'], [37, 'arandano', 'musculitos'],
     [40, 'flores', 'dino'], [43, 'sesamo', 'cicatriz'], [46, 'aureola', 'astronauta'], [50, 'dorado', null],
   ];
@@ -464,11 +502,13 @@
     auris: 'cute', gamer: 'canero', matcha: 'cute', parche: 'broma', gorrito: 'cute', ninja: 'canero', pajarita: 'cute', barba: 'broma',
     mango: 'cute', pesa: 'fuerza', capa: 'cute', superheroe: 'disfraz', chef: 'cute', vikingo: 'canero', arandano: 'cute',
     musculitos: 'fuerza', flores: 'cute', dino: 'disfraz', sesamo: 'cute', cicatriz: 'canero', aureola: 'cute', astronauta: 'disfraz',
-    dorado: 'cute', clasico: 'cute', mecenas: 'cute',
+    dorado: 'cute', clasico: 'cute', mecenas: 'cute', flequillo: 'cute', tupe: 'canero', melenita: 'cute',
   };
   // Where Tapomo's head item ends, per style: how far the record crown and the halo rise above it.
   const LIFT_SUBTLE = { lacito: 0, gorrito: 26, chef: 40, flores: 5 };
   const LIFT_BOLD = { lacito: 0, gorrito: 44, chef: 58, flores: 10, gorra: 8, ninja: 0, vikingo: 40, astronauta: 32, dino: 18 };
+  // Hair is not a head item (a bow or flowers can sit on it), so it lifts the crown on its own.
+  const LIFT_HAIR = { flequillo: 5, tupe: 20, melenita: 5 };
 
   // ------------------------------------------------------------------ style rule
   // Only these change between "subtle" and "bold"; every other item always uses the bold drawing.
@@ -479,7 +519,10 @@
   // Every item declares its slot(s) and what it excludes ('slot:x' = everything in slot x, or an item
   // key). Two items conflict if they share a slot or either one excludes the other. Full-body costumes
   // (disfraz) exclude every external accessory and keep only face items and the halo.
-  const SLOT_NAMES = ['cabeza', 'frente', 'orejas', 'ojos', 'cejas', 'bigote', 'barba', 'marca', 'cuello', 'espalda', 'brazos', 'torso', 'aura', 'cuerpo'];
+  // Hair (slot pelo, one style at a time): every hat that covers the head excludes it, so a hat takes
+  // the hair off and the hair takes the hat off; the fringe and the ninja band share the forehead.
+  // Bow, flowers, headphones and halo sit on top of the hair.
+  const SLOT_NAMES = ['cabeza', 'pelo', 'frente', 'orejas', 'ojos', 'cejas', 'bigote', 'barba', 'marca', 'cuello', 'espalda', 'brazos', 'torso', 'aura', 'cuerpo'];
   const FACE_SLOTS = ['ojos', 'cejas', 'bigote', 'barba', 'marca', 'aura'];
   const COSTUME_EXCL = SLOT_NAMES.filter((z) => !FACE_SLOTS.includes(z)).map((z) => `slot:${z}`);
   const RULES = {
@@ -487,16 +530,16 @@
     gafas: { slots: ['ojos'] },
     bufanda: { slots: ['cuello'] },
     auris: { slots: ['orejas'] },
-    gorrito: { slots: ['cabeza'], excluye: ['slot:frente'] },
+    gorrito: { slots: ['cabeza'], excluye: ['slot:frente', 'slot:pelo'] },
     pajarita: { slots: ['cuello'] },
     capa: { slots: ['espalda'] },
-    chef: { slots: ['cabeza'], excluye: ['slot:frente', 'slot:orejas'] },
+    chef: { slots: ['cabeza'], excluye: ['slot:frente', 'slot:orejas', 'slot:pelo'] },
     flores: { slots: ['cabeza'], excluye: ['slot:frente'] },
     aureola: { slots: ['aura'] },
-    gorra: { slots: ['cabeza'], excluye: ['slot:frente'] },
+    gorra: { slots: ['cabeza'], excluye: ['slot:frente', 'slot:pelo'] },
     gafassol: { slots: ['ojos'] },
     ninja: { slots: ['frente'] },
-    vikingo: { slots: ['cabeza'], excluye: ['slot:frente', 'slot:orejas'] },
+    vikingo: { slots: ['cabeza'], excluye: ['slot:frente', 'slot:orejas', 'slot:pelo'] },
     gamer: { slots: ['orejas'] },
     bigote: { slots: ['bigote'] },
     barba: { slots: ['barba'] },
@@ -508,7 +551,11 @@
     astronauta: { slots: ['cuerpo', 'cabeza'], disfraz: true },
     dino: { slots: ['cuerpo', 'cabeza'], disfraz: true },
     superheroe: { slots: ['cuerpo', 'espalda', 'ojos'], disfraz: true },
+    flequillo: { slots: ['pelo'], excluye: ['ninja'] },
+    tupe: { slots: ['pelo'] },
+    melenita: { slots: ['pelo'] },
   };
+  const HAIR_IDS = Object.keys(HAIR_ART);
   // The scar's own exclusions depend on where it sits. Only 'mejilla' is used for now.
   const SCAR_EXCL = { mejilla: [], frente: ['gorrito', 'chef', 'flores', 'gorra', 'vikingo', 'ninja', 'dino'], cuerpo: ['barba', 'bufanda', 'pajarita'] };
   const SCAR_POS = 'mejilla';
@@ -518,18 +565,18 @@
   const clash = (a, b) => a !== b && (slotsOf(a).some((z) => slotsOf(b).includes(z)) || excludes(a, b) || excludes(b, a));
 
   const ITEMS = [{ id: 'clasico', kind: 'skin', level: 1, theme: THEME.clasico, slots: [] }];
-  for (const [level, a, b] of PAIRS) {
-    for (const id of [a, b]) {
+  for (const [level, ...ids] of PACKS) {
+    for (const id of ids) {
       if (!id) continue;
       const skin = SKIN_IDS.includes(id);
       ITEMS.push({ id, kind: skin ? 'skin' : 'acc', level, theme: THEME[id], slots: skin ? [] : slotsOf(id).slice() });
     }
   }
-  // Thank-you skin for supporters: not a level reward (never in PAIRS / REWARD_LEVELS / itemsAt);
+  // Thank-you skin for supporters: not a level reward (never in PACKS / REWARD_LEVELS / itemsAt);
   // unlocked() only lists it after setSupporter(true).
   ITEMS.push({ id: 'mecenas', kind: 'skin', level: 0, supporter: true, theme: THEME.mecenas, slots: [] });
   const BY_ID = Object.fromEntries(ITEMS.map((i) => [i.id, i]));
-  const REWARD_LEVELS = PAIRS.map((p) => p[0]);
+  const REWARD_LEVELS = PACKS.map((p) => p[0]);
   const isAcc = (id) => typeof id === 'string' && BY_ID[id] !== undefined && BY_ID[id].kind === 'acc';
   const isSkin = (id) => typeof id === 'string' && BY_ID[id] !== undefined && BY_ID[id].kind === 'skin';
 
@@ -631,11 +678,13 @@
     }
     const realMount = Mascot.mount;
     Mascot.mount = (svg) => { const r = realMount(svg); decorate(svg); return r; };
+    const realZone = Mascot.setZone;
+    Mascot.setZone = (svg, ...rest) => { const r = realZone(svg, ...rest); if (svg && svg.__rw) hairZone(svg); return r; };
   }
 
-  // Drawing order, back to front: neck, face, hats, brows (over brims), ears, helmet, halo.
+  // Drawing order, back to front: neck, face, hair (over the glasses' arms), hats, brows (over brims), ears, helmet, halo.
   const FRONT_ORDER = ['capa', 'superheroe', 'musculitos', 'pesa', 'cicatriz', 'barba', 'bufanda', 'pajarita', 'bigote', 'gafas', 'gafassol', 'parche',
-    'lacito', 'gorrito', 'chef', 'flores', 'gorra', 'ninja', 'vikingo', 'dino', 'cejas', 'auris', 'gamer', 'astronauta', 'aureola'];
+    ...HAIR_IDS, 'lacito', 'gorrito', 'chef', 'flores', 'gorra', 'ninja', 'vikingo', 'dino', 'cejas', 'auris', 'gamer', 'astronauta', 'aureola'];
 
   function paint(svg, look, animateNew = true, fresh = null) {
     const rw = svg.__rw;
@@ -649,11 +698,15 @@
     svg.classList.toggle('rw-subtle', !bold);
     const head = look.acc.find((k) => slotsOf(k).includes('cabeza'));
     const covered = look.acc.some((k) => slotsOf(k).includes('cabeza') || slotsOf(k).includes('cuerpo'));
+    const hair = look.acc.find((k) => slotsOf(k).includes('pelo'));
     const costume = bold && look.skin === 'fresa';
     // The strawberry calyx shares the top of the head: it stays with the bow, the ninja band,
-    // headphones and halo, and steps aside (is not drawn) under any hat, helmet or hood.
-    const calyx = costume && !covered;
-    svg.classList.toggle('rw-head-on', covered);
+    // headphones and halo, and steps aside (is not drawn) under any hat, helmet, hood or hairstyle.
+    const calyx = costume && !covered && !hair;
+    // rw-head-on: a hat or helmet hides the Supermochi flame-hair. A bow or flowers over a hairstyle don't.
+    svg.classList.toggle('rw-head-on', covered && !hair);
+    // Supermochi grows its golden flame-hair only over a hairstyle (which hides meanwhile, see hairZone).
+    if (typeof Mascot !== 'undefined' && Mascot.setSuperHair) Mascot.setSuperHair(svg, !!hair);
     svg.classList.remove('rw-pose-auto', 'rw-pose-relax', 'rw-pose-flex');
     svg.classList.add(`rw-pose-${POSE}`);
     svg.classList.toggle('rw-gold', skin.base === 'gold');
@@ -674,11 +727,19 @@
     rw.back.innerHTML = fix(order.map((k) => wrap(k, backOf(k))).join(''));
     rw.front.innerHTML = fix((calyx ? CALYX : '') + order.map((k) => wrap(k, frontOf(k))).join(''));
     const headLift = !head ? 0 : ((!bold && STYLE_VARIES.includes(head) ? LIFT_SUBTLE[head] : LIFT_BOLD[head]) || 0);
-    const up = headLift + (calyx ? 12 : 0);
+    const up = Math.max(headLift, hair ? LIFT_HAIR[hair] : 0) + (calyx ? 12 : 0);
     rw.lift.setAttribute('transform', `translate(0 ${-up})`);
     rw.lift.style.transform = `translateY(${-up}px)`;
     const halo = rw.front.querySelector('.rw-halo-move');
     if (halo) halo.style.transform = `translateY(${-up}px)`;
+    hairZone(svg);
+  }
+
+  // In Supermochi the flame-hair replaces the worn hairstyle. wardrobe.css fades it; the opacity
+  // attribute also reaches the afterimages (<use> clones, which page CSS can't style).
+  function hairZone(svg) {
+    const sup = svg.dataset.zone === 'super';
+    svg.querySelectorAll('.rw-hair').forEach((el) => (sup ? el.setAttribute('opacity', '0') : el.removeAttribute('opacity')));
   }
 
   function paintAll(fresh) {

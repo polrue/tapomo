@@ -233,7 +233,7 @@
   "ch.xp": "+15 XP",
   "ch.full": "Hattrick! Alle drei: +15 Bonus-XP",
   "wd.title": "Tapomos Kleiderschrank",
-  "wd.hint": "Alle 3 Level schaltest du ein Paket mit zwei Belohnungen frei. Tipp eine an, um sie anzuziehen oder auszuziehen. Wenn zwei Sachen nicht zusammenpassen, zieht Tapomo die störende aus.",
+  "wd.hint": "Alle 3 Level schaltest du ein Belohnungspaket frei. Tippe eins an, um es an- oder auszuziehen. Wenn zwei Dinge nicht zusammenpassen, zieht Tapomo das störende aus.",
   "wd.style": "Stil",
   "wd.style.bold": "Auffällig",
   "wd.style.subtle": "Dezent",
@@ -600,5 +600,6 @@
   "album.cat.office": "Word, Excel und Office",
   "item.flequillo": "Pony",
   "item.tupe": "Tolle",
-  "item.melenita": "Bob"
+  "item.melenita": "Bob",
+  "pet.mash": "He, das ist Tastenhämmern! 😄 Das zählt nicht"
 }

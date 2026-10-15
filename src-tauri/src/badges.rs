@@ -169,7 +169,7 @@ mod tests {
             )
             .unwrap();
         let app = db::intern_app(conn, "test.exe").unwrap();
-        let b = Burst { app_id: app, start_ms: start as u64, end_ms: start as u64 + 60_000, chars, backspaces: 0, word_deletes: 0, peak_wpm: peak, best_streak: clean };
+        let b = Burst { app_id: app, start_ms: start as u64, end_ms: start as u64 + 60_000, chars, backspaces: 0, word_deletes: 0, peak_wpm: peak, best_streak: clean, mash: false };
         db::insert_burst(conn, &b).unwrap();
     }
 

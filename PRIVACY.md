@@ -15,6 +15,7 @@ Además:
 - Los **campos de contraseña** se ignoran por completo: ni se cuentan ni se cronometran.
 - Las **aplicaciones excluidas** se ignoran. Por defecto lo están los gestores de contraseñas (KeePass, KeePassXC, 1Password y Bitwarden), y puedes añadir más.
 - Las pulsaciones inyectadas por macros o autotypers se ignoran.
+- Para no contar como escritura el aporreo del teclado («asdasdasd», «aaaaaa»), el gancho compara cada tecla con las dos anteriores en su memoria y solo pasa un «igual que antes: sí/no». Las teclas no salen del gancho ni se guardan.
 - Puedes **pausar** la medición en cualquier momento desde la bandeja del sistema.
 
 ## Qué se guarda (solo en tu equipo)
@@ -78,6 +79,7 @@ Also:
 - **Password fields** are ignored entirely: not counted, not timed.
 - **Excluded applications** are ignored. Password managers (KeePass, KeePassXC, 1Password and Bitwarden) are excluded by default, and you can add more.
 - Keystrokes injected by macros or auto-typers are ignored.
+- So that keyboard mashing ("asdasdasd", "aaaaaa") doesn't count as typing, the hook compares each key with the previous two in its own memory and only passes on a "same as before: yes/no". The keys never leave the hook and are never stored.
 - You can **pause** measuring at any time from the system tray.
 
 ## What is stored (only on your computer)

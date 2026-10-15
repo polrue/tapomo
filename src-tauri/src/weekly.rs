@@ -118,7 +118,7 @@ mod tests {
     fn burst(c: &Connection, exe: &str, day: i64, hour: i64, secs: u64, chars: u32, peak: Option<f64>) {
         let start = day_start_ms(c, day).unwrap() + hour * 3_600_000;
         let app = db::intern_app(c, exe).unwrap();
-        let b = Burst { app_id: app, start_ms: start as u64, end_ms: start as u64 + secs * 1000, chars, backspaces: 0, word_deletes: 0, peak_wpm: peak, best_streak: chars };
+        let b = Burst { app_id: app, start_ms: start as u64, end_ms: start as u64 + secs * 1000, chars, backspaces: 0, word_deletes: 0, peak_wpm: peak, best_streak: chars, mash: false };
         db::insert_burst(c, &b).unwrap();
     }
 

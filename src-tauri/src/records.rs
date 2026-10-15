@@ -83,7 +83,7 @@ mod tests {
 
     fn burst(c: &Connection, exe: &str, start: u64, secs: u64, chars: u32, peak: Option<f64>, clean: u32) {
         let app = db::intern_app(c, exe).unwrap();
-        db::insert_burst(c, &Burst { app_id: app, start_ms: start, end_ms: start + secs * 1000, chars, backspaces: 0, word_deletes: 0, peak_wpm: peak, best_streak: clean })
+        db::insert_burst(c, &Burst { app_id: app, start_ms: start, end_ms: start + secs * 1000, chars, backspaces: 0, word_deletes: 0, peak_wpm: peak, best_streak: clean, mash: false })
             .unwrap();
     }
 

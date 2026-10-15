@@ -43,6 +43,9 @@ thread_local! {
     /// Which virtual keys are currently held (hook thread only), to spot auto-repeat.
     /// A lost key-up (e.g. Win+L) only costs that key's next press.
     static DOWN: RefCell<[bool; 256]> = const { RefCell::new([false; 256]) };
+    /// The last two character keys (hook thread only, never sent anywhere): only "same as before?"
+    /// leaves the hook, to recognise mashing like "aaaa" or "asasas".
+    static LAST: RefCell<[u32; 2]> = const { RefCell::new([u32::MAX; 2]) };
 }
 
 /// Starts the hook thread. Events are sent as [`Msg::Key`].
@@ -134,8 +137,19 @@ unsafe fn handle(wparam: WPARAM, lparam: LPARAM) {
                 }
                 return;
             }
+            let repeat = if class == KeyClass::Char {
+                LAST.with(|l| {
+                    let mut l = l.borrow_mut();
+                    let r = tapomo_core::Repeat { same_as_prev: l[0] == vk, same_as_prev2: l[1] == vk };
+                    *l = [vk, l[0]];
+                    r
+                })
+            } else {
+                LAST.with(|l| *l.borrow_mut() = [u32::MAX; 2]);
+                tapomo_core::Repeat::default()
+            };
             if let Some(tx) = SENDER.get() {
-                let _ = tx.send(Msg::Key(RawKey { t_ms: now_ms(), class, hwnd: GetForegroundWindow().0 as isize }));
+                let _ = tx.send(Msg::Key(RawKey { t_ms: now_ms(), class, hwnd: GetForegroundWindow().0 as isize, repeat }));
             }
         }
         _ => {}

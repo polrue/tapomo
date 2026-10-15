@@ -1,7 +1,7 @@
 //! Global keyboard hook. It only ever produces [`RawKey`]s: a timestamp, a key
 //! *class* and the foreground window handle. The pressed key itself is dropped.
 
-use tapomo_core::KeyClass;
+use tapomo_core::{KeyClass, Repeat};
 
 #[cfg(windows)]
 mod windows;
@@ -16,6 +16,8 @@ pub struct RawKey {
     pub class: KeyClass,
     /// Foreground window handle, as an integer so it is `Send` on every platform.
     pub hwnd: isize,
+    /// Same key as the previous one / two back (for spotting mashing). Never which key it was.
+    pub repeat: Repeat,
 }
 
 /// No keyboard hook outside Windows: the app compiles but measures nothing.
