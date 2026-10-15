@@ -138,7 +138,12 @@ pub fn gather(conn: &Connection, open_ms: u64) -> rusqlite::Result<Facts> {
 fn num(n: f64, decimals: usize, lang: &str) -> String {
     let s = format!("{n:.decimals$}");
     let (int, frac) = s.split_once('.').map_or((s.as_str(), None), |(i, f)| (i, Some(f)));
-    let (group, dec) = if matches!(lang, "es" | "ca") { ('.', ',') } else { (',', '.') };
+    // French groups thousands with a narrow no-break space (U+202F), like `toLocaleString('fr')`.
+    let (group, dec) = match lang {
+        "es" | "ca" | "de" => ('.', ','),
+        "fr" => ('\u{202F}', ','),
+        _ => (',', '.'),
+    };
     let mut out = String::new();
     for (i, ch) in int.chars().enumerate() {
         if i > 0 && (int.len() - i) % 3 == 0 {
@@ -158,8 +163,13 @@ type Candidate = (&'static str, Vec<(&'static str, String)>, u32);
 /// Every tip whose condition holds, with its weight (facts 3, generic 1).
 pub fn candidates(f: &Facts, lang: &str) -> Vec<Candidate> {
     let mut c: Vec<Candidate> = Vec::new();
-    // Speed unit of the language (ES: ppm = palabras por minuto).
-    let unit = if matches!(lang, "es" | "ca") { "ppm" } else { "WPM" };
+    // Speed unit of the language (ES: ppm = palabras por minuto; FR: mots par minute; DE: Wörter pro Minute).
+    let unit = match lang {
+        "es" | "ca" => "ppm",
+        "fr" => "mpm",
+        "de" => "WpM",
+        _ => "WPM",
+    };
     let t = &f.today;
     let m = &f.month;
     if t.bursts == 0 {
@@ -329,5 +339,9 @@ mod tests {
         assert_eq!(num(0.5, 1, "es"), "0,5");
         assert_eq!(num(12345.0, 0, "ca"), "12.345");
         assert_eq!(num(12345.0, 0, "en"), "12,345");
+        assert_eq!(num(12345.0, 0, "de"), "12.345");
+        assert_eq!(num(0.5, 1, "de"), "0,5");
+        assert_eq!(num(12345.0, 0, "fr"), "12\u{202F}345");
+        assert_eq!(num(0.5, 1, "fr"), "0,5");
     }
 }

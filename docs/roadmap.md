@@ -236,6 +236,6 @@ Idea de Pol, 13-10-2026. Es una página estática y divertida, llena de animacio
 
 - Cifrado opcional de la base de datos (SQLCipher + clave DPAPI) *(hecho en la 0.6.1, 15-10-2026: Ajustes → «Cifrar la base de datos»; la app usa SQLCipher siempre, que también lee las bases sin cifrar)*.
 - Firma de código o Microsoft Store; con firma, actualización automática (Tauri updater).
-- Licencia de arte separada del código GPL (Tapomo y el nombre como marca).
-- Más idiomas de interfaz y más distribuciones de teclado *(0.6.0, 15-10-2026: interfaz en catalán; teclados francés AZERTY y alemán QWERTZ en las lecciones. Pendiente: interfaz en francés y alemán)*.
+- Licencia de arte separada del código GPL (Tapomo y el nombre como marca) *(propuesta en [`art-license.md`](art-license.md), pendiente de decisión de Pol)*.
+- Más idiomas de interfaz y más distribuciones de teclado *(0.6.0, 15-10-2026: interfaz en catalán; teclados francés AZERTY y alemán QWERTZ en las lecciones. 0.6.2: interfaz en francés y alemán)*.
 - Cuentas GitHub Sponsors / Ko-fi (pendiente de crear por Pol).

@@ -188,6 +188,8 @@ const Lessons = (() => {
   function defaultLayout() {
     // Catalan typists use the Spanish keyboard (and the Spanish lesson texts: there is no Catalan set).
     if (savedLayout()) return savedLayout();
+    const ui = document.documentElement.lang;
+    if (ui === 'fr' || ui === 'de') return ui;
     // French and German speakers usually have AZERTY / QWERTZ keyboards even with the UI in English.
     const nav = (navigator.language || '').toLowerCase();
     if (nav.startsWith('fr')) return 'fr';

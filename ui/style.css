@@ -85,7 +85,7 @@ main { padding: 8px 24px 32px; max-width: 960px; margin: 0 auto; }
 @media (min-width: 940px) {
   .tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .tile { padding: 12px 12px; }
-  .tile strong { font-size: 1.35rem; }
+  .tile strong { font-size: 1.25rem; }
 }
 .tile {
   background: var(--card);
