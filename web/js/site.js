@@ -201,7 +201,7 @@
   let lastX = null;
   let tilt = 0;
 
-  function say(text, ms = 2300) {
+  function say(text, ms = 3400) {
     if (!bubble || !text) return;
     const span = bubble.firstElementChild;
     span.textContent = text;
@@ -215,7 +215,7 @@
     if (r.left + dx < 10) dx = 10 - r.left;
     bubble.style.setProperty('--bx', `${Math.round(dx)}px`);
     clearTimeout(say.timer);
-    say.timer = setTimeout(() => bubble.classList.remove('show'), ms);
+    say.timer = setTimeout(() => bubble.classList.remove('show'), Math.max(ms * 1.4, 2800)); // time to read it
   }
 
   // Cubic Bézier helper for the path.
@@ -336,6 +336,11 @@
   // way out it lingers a moment, then sets off gradually (the eased curve below + the spring).
   let scrollDir = 1; // 1 scrolling down, -1 up
   function warp(v) {
+    // Past the last stage (or above the first) it stays there: the ending never depends on stopping
+    // in exactly the right spot.
+    const first = anchors[0], last = anchors[anchors.length - 1];
+    if (last && v >= last.a) return { v: last.a, at: last.name };
+    if (first && v <= first.a) return { v: first.a, at: first.name };
     for (const an of anchors) {
       const z = v - an.a;
       if (Math.abs(z) >= an.r) continue;
@@ -494,17 +499,34 @@
       enter() {
         Mascot.setFace(tsvg, { eyes: 'star', mouth: 'open', cheeks: true });
         Mascot.setCrown(tsvg, true);
+        traveler.classList.add('crowned');
         Mascot.jump(tsvg, { big: true });
         say(t('say.cta'));
         clearInterval(celebrateTimer);
         celebrateTimer = setInterval(() => { if (!document.hidden) Mascot.jump(tsvg, { big: true }); }, 2600);
       },
-      leave() { clearInterval(celebrateTimer); Mascot.setCrown(tsvg, false); },
+      leave() { clearInterval(celebrateTimer); Mascot.setCrown(tsvg, false); traveler.classList.remove('crowned'); },
     },
   };
 
+  // A stage's face and props stay at least this long, even if the visitor scrolls on straight away.
+  const MIN_DWELL = 1600;
+  let enteredAt = 0;
+  let dwellTimer = 0;
   function setState(next) {
+    clearTimeout(dwellTimer);
     if (next === state) return;
+    const left = MIN_DWELL - (performance.now() - enteredAt);
+    if (!next && state && left > 0 && !REDUCED) {
+      dwellTimer = setTimeout(() => applyState(''), left);
+      return;
+    }
+    applyState(next);
+  }
+
+  function applyState(next) {
+    if (next === state) return;
+    if (next) enteredAt = performance.now();
     const prev = state;
     state = next;
     if (prev && REACT[prev]) REACT[prev].leave();

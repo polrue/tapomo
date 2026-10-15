@@ -548,3 +548,6 @@ html.intro-on.intro-built body::before { display: none; }
 @media (max-width: 520px) { .replay-txt { display: none; } }
 
 @media (prefers-reduced-motion: reduce) { .scroll-cue svg { animation: none !important; } }
+
+/* With the crown on (end of the page) the bubble sits higher so the crown shows. */
+.traveler.crowned .bubble { bottom: 104%; }
