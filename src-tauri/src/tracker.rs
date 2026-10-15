@@ -37,10 +37,21 @@ pub enum Msg {
     PasswordFocus,
     /// XP changed outside the tracker (a lesson): re-read the total so no level-up is announced twice.
     XpRefresh,
+    /// A lesson just finished: it counts as typing (0.7.2), like any burst.
+    Lesson(LessonBurst),
     /// A shortcut of this kind was used in the window with this handle (the key itself is never sent).
     Shortcut(tapomo_core::shortcuts::ShortcutKind, Option<u32>, isize),
     /// Flush the open burst, save and stop. The sender is acknowledged when done.
     Shutdown(SyncSender<()>),
+}
+
+/// What a finished lesson adds as typing: no text, only its size, time and speed.
+#[derive(Debug, Clone, Copy)]
+pub struct LessonBurst {
+    pub chars: u32,
+    pub duration_ms: u64,
+    pub wpm: f64,
+    pub best_run: u32,
 }
 
 /// State shared with the UI side.
@@ -233,6 +244,7 @@ impl Tracker {
                 }
                 Ok(Msg::Reload) => self.reload(),
                 Ok(Msg::Shortcut(kind, combo, hwnd)) => self.on_shortcut(kind, combo, hwnd),
+                Ok(Msg::Lesson(l)) => self.on_lesson(l),
                 Ok(Msg::XpRefresh) => {
                     if let Ok(total) = xp::total(&self.conn) {
                         self.xp_total = total;
@@ -374,6 +386,40 @@ impl Tracker {
                 Err(e) => log::error!("could not record a shortcut level: {e}"),
             }
         }
+    }
+
+    /// A finished lesson goes through the same path as typing: records, badges, XP, goal and leagues.
+    fn on_lesson(&mut self, l: LessonBurst) {
+        if l.chars == 0 || l.duration_ms == 0 {
+            return;
+        }
+        let Some(app_id) = self.app_id(db::LESSONS_APP) else { return };
+        let end_ms = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or(0);
+        let wpm = if l.wpm.is_finite() { l.wpm.clamp(0.0, 300.0) } else { 0.0 };
+        self.finish_burst(Some(Burst {
+            app_id,
+            start_ms: end_ms.saturating_sub(l.duration_ms.min(3_600_000)),
+            end_ms,
+            chars: l.chars,
+            backspaces: 0,
+            word_deletes: 0,
+            peak_wpm: Some(wpm),
+            best_streak: l.best_run,
+            mash: false,
+        }));
+        // The engine's run never saw these keys: keep the lesson's own best run as the record.
+        if l.best_run > self.saved_best {
+            match db::save_best_streak(&self.conn, l.best_run) {
+                Ok(()) => self.saved_best = l.best_run,
+                Err(e) => log::error!("could not save best streak: {e}"),
+            }
+        }
+        // Goal time from the database (it knows whether lessons count towards the goal).
+        if let Ok(ms) = db::today_active_ms(&self.conn) {
+            self.goal_stored_ms = ms;
+        }
+        self.sync_goal();
+        self.settle_xp();
     }
 
     fn finish_burst(&mut self, burst: Option<Burst>) {

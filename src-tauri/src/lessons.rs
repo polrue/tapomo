@@ -30,6 +30,12 @@ pub struct LessonRun {
     pub accuracy: f64,
     pub target_wpm: f64,
     pub keys: Vec<KeyCount>,
+    /// Characters of the lesson text typed (0.7.2: lessons count as typing).
+    #[serde(default)]
+    pub chars: u32,
+    /// Longest run without a mistake.
+    #[serde(default)]
+    pub best_run: u32,
 }
 
 #[derive(Debug, Serialize, PartialEq)]
@@ -70,8 +76,8 @@ pub fn save(conn: &Connection, run: &LessonRun) -> rusqlite::Result<Saved> {
         .is_some();
     let tx = conn.unchecked_transaction()?;
     tx.execute(
-        "INSERT INTO lesson_results(lesson_id, layout, ts, day, duration_ms, wpm, accuracy, stars) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-        params![id, layout, now_ms(), today, run.duration_ms.min(3_600_000) as i64, wpm, accuracy, stars],
+        "INSERT INTO lesson_results(lesson_id, layout, ts, day, duration_ms, wpm, accuracy, stars, as_burst) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+        params![id, layout, now_ms(), today, run.duration_ms.min(3_600_000) as i64, wpm, accuracy, stars, run.chars > 0],
     )?;
     for k in run.keys.iter().filter(|k| k.key.chars().count() == 1) {
         tx.execute(
@@ -161,7 +167,7 @@ mod tests {
     }
 
     fn run(acc: f64, wpm: f64, keys: Vec<KeyCount>) -> LessonRun {
-        LessonRun { lesson_id: "home-1".into(), layout: "es".into(), duration_ms: 120_000, wpm, accuracy: acc, target_wpm: 20.0, keys }
+        LessonRun { lesson_id: "home-1".into(), layout: "es".into(), duration_ms: 120_000, wpm, accuracy: acc, target_wpm: 20.0, keys, chars: 0, best_run: 0 }
     }
 
     #[test]
@@ -176,6 +182,23 @@ mod tests {
         let p = progress(&c, "es").unwrap();
         assert_eq!(p.lessons, vec![("home-1".to_string(), 3, 3)]);
         assert!(p.before_after.is_none());
+    }
+
+    #[test]
+    fn a_lesson_stored_as_a_burst_counts_once_and_follows_the_goal_setting() {
+        let c = mem();
+        // What the tracker stores for a lesson: a burst of the lessons app, plus the result row.
+        let end: i64 = c.query_row("SELECT CAST(strftime('%s', 'now') AS INTEGER) * 1000", [], |r| r.get(0)).unwrap();
+        let app = db::intern_app(&c, db::LESSONS_APP).unwrap();
+        db::insert_burst(&c, &tapomo_core::Burst { app_id: app, start_ms: end as u64 - 120_000, end_ms: end as u64, chars: 300, backspaces: 0, word_deletes: 0, peak_wpm: Some(30.0), best_streak: 80, mash: false }).unwrap();
+        save(&c, &LessonRun { chars: 300, best_run: 80, ..run(0.95, 30.0, vec![]) }).unwrap();
+        assert_eq!(db::today_active_ms(&c).unwrap(), 120_000, "not twice");
+        assert_eq!(db::daily_active(&c).unwrap().iter().map(|d| d.1).sum::<u64>(), 120_000);
+        let mut s = db::get_settings(&c).unwrap();
+        s.lessons_in_goal = false;
+        db::set_settings(&c, &s).unwrap();
+        assert_eq!(db::today_active_ms(&c).unwrap(), 0);
+        assert_eq!(db::daily_active(&c).unwrap().iter().map(|d| d.1).sum::<u64>(), 0);
     }
 
     #[test]
