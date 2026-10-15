@@ -64,3 +64,6 @@ svg[data-zone="super"] .rw-supergold-sweep { animation: rw-gold-sweep calc(900ms
   .rw-supergold { transition: none; }
   svg[data-zone="super"] .rw-supergold-sweep { animation: none; }
 }
+/* Hairstyles: in Supermochi the golden flame-hair (mascot.js, setSuperHair) replaces the worn hairstyle. */
+.rw-hair { transition: opacity calc(200ms / var(--speed, 1)) ease; }
+svg[data-zone="super"] .rw-hair { opacity: 0; }

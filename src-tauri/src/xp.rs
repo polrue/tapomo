@@ -242,7 +242,7 @@ mod tests {
             .query_row("SELECT CAST(strftime('%s', 'now', 'localtime', 'start of day', ?1, '+12 hours', 'utc') AS INTEGER) * 1000", [format!("-{days_ago} days")], |r| r.get(0))
             .unwrap();
         let app = db::intern_app(conn, "test.exe").unwrap();
-        let b = Burst { app_id: app, start_ms: start as u64, end_ms: start as u64 + secs * 1000, chars, backspaces: 0, word_deletes: 0, peak_wpm: None, best_streak: chars };
+        let b = Burst { app_id: app, start_ms: start as u64, end_ms: start as u64 + secs * 1000, chars, backspaces: 0, word_deletes: 0, peak_wpm: None, best_streak: chars, mash: false };
         db::insert_burst(conn, &b).unwrap();
     }
 

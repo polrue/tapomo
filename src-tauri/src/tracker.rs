@@ -324,7 +324,7 @@ impl Tracker {
         if self.engine.current_streak() == 0 {
             self.record_baseline = self.engine.best_streak_ever();
         }
-        let burst = self.engine.push(KeyEvent { t_ms: key.t_ms, class: key.class, app_id });
+        let burst = self.engine.push(KeyEvent { t_ms: key.t_ms, class: key.class, app_id, repeat: key.repeat });
         let streak = self.engine.current_streak();
         self.shared.streak.store(streak, Ordering::Relaxed);
         if self.record_baseline > 0 && streak == self.record_baseline + 1 {
@@ -375,6 +375,12 @@ impl Tracker {
 
     fn finish_burst(&mut self, burst: Option<Burst>) {
         let Some(burst) = burst else { return };
+        // Keyboard mashing never counts: no speed, records, XP, goal time or leagues. Tapomo laughs instead.
+        if burst.mash {
+            log::info!("burst discarded: looks like keyboard mashing");
+            let _ = self.app.emit("tapomo://mash", ());
+            return;
+        }
         if let Err(e) = db::insert_burst(&self.conn, &burst) {
             log::error!("could not save burst: {e}");
             return;

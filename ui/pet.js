@@ -354,6 +354,15 @@ async function applyLook(settings) {
   });
 }
 
+/** A burst discarded as keyboard mashing: no scolding, a laugh. */
+function onMash() {
+  if (state.paused) return;
+  Mascot.setFace(svg, { eyes: 'closed', mouth: 'big', cheeks: true });
+  Mascot.tilt(svg);
+  say('pet.mash', 2600);
+  setTimeout(renderFace, 1400);
+}
+
 /** A suggested shortcut used for the first time, or one just mastered. */
 function onShortcutLearnt(u) {
   if (state.paused || state.asleep) return;
@@ -557,6 +566,7 @@ async function init() {
   await Promise.all([
     listen('tapomo://key', (e) => onKey(e.payload)),
     listen('tapomo://shortcut', (e) => onShortcut(e.payload)),
+    listen('tapomo://mash', onMash),
     listen('tapomo://live', (e) => onLive(e.payload)),
     listen('tapomo://record', onRecord),
     listen('tapomo://goal', onGoal),

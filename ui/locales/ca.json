@@ -233,7 +233,7 @@
   "ch.xp": "+15 XP",
   "ch.full": "Ple! Els tres reptes: +15 XP extra",
   "wd.title": "Armari de Tapomo",
-  "wd.hint": "Cada 3 nivells desbloqueges un paquet de dos premis. Toca'n un per posar-l'hi o treure-l'hi. Si dues coses no hi caben juntes, Tapomo es treu la que sobra.",
+  "wd.hint": "Cada 3 nivells desbloqueges un paquet de premis. Toca'n un per posar-l'hi o treure-l'hi. Si dues coses no hi caben juntes, Tapomo es treu la que sobra.",
   "wd.style": "Estil",
   "wd.style.bold": "Cridaner",
   "wd.style.subtle": "Subtil",
@@ -600,5 +600,6 @@
   "album.cat.office": "Word, Excel i Office",
   "item.flequillo": "Serrell",
   "item.tupe": "Tupè",
-  "item.melenita": "Melena curta"
+  "item.melenita": "Melena curta",
+  "pet.mash": "Ep, això és picar a l'atzar! 😄 No compta"
 }

@@ -29,13 +29,19 @@ pub enum KeyClass {
 }
 
 impl KeyClass {
-    fn is_typed(self) -> bool {
-        matches!(self, KeyClass::Char | KeyClass::Space | KeyClass::Enter)
-    }
-
     fn is_correction(self) -> bool {
         matches!(self, KeyClass::Backspace | KeyClass::WordDelete)
     }
+}
+
+/// What the keyboard hook can say about a key compared with the previous ones, without ever saying which
+/// key it was: the comparison happens inside the hook and only these two yes/no answers leave it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct Repeat {
+    /// Same key as the previous one ("aaaa").
+    pub same_as_prev: bool,
+    /// Same key as two keys back ("asasas").
+    pub same_as_prev2: bool,
 }
 
 /// One keystroke as seen by the engine.
@@ -46,6 +52,7 @@ pub struct KeyEvent {
     pub class: KeyClass,
     /// Caller-interned id of the foreground application. Switching apps closes the burst.
     pub app_id: u32,
+    pub repeat: Repeat,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -90,6 +97,9 @@ pub struct Burst {
     /// Longest run of characters without a correction reached during this burst.
     /// Runs carry over between bursts, so this can exceed `chars`.
     pub best_streak: u32,
+    /// Looks like keyboard mashing ("dasjkdlas…", "aaaaaa", "asasas", impossible speed): see
+    /// [`MASH_SHARE`]. Callers drop these bursts so they never count as typing.
+    pub mash: bool,
 }
 
 impl Burst {
@@ -136,6 +146,74 @@ struct Open {
     backspaces: u32,
     word_deletes: u32,
     best_streak: u32,
+    /// Per typed key: part of a mashing pattern (parallel to `typed_times`).
+    suspicious: Vec<bool>,
+    no_space_run: u32,
+    same_run: u32,
+    alt_run: u32,
+}
+
+/// Mashing patterns: a run of letters this long without a space or Enter…
+pub const MASH_NO_SPACE_RUN: u32 = 40;
+/// …the same key pressed this many times in a row…
+pub const MASH_SAME_RUN: u32 = 8;
+/// …two keys alternating for this many keys…
+pub const MASH_ALT_RUN: u32 = 20; // "jajajaja" laughs stay well below
+/// …or a sustained speed no human types at.
+pub const MASH_WPM: f64 = 250.0;
+/// A burst is mashing when more than this share of its characters belongs to such patterns.
+pub const MASH_SHARE: f64 = 0.5;
+
+impl Open {
+    /// Marks the last `n` keys as suspicious (a pattern just reached its threshold). Returns how many of
+    /// them were not flagged yet.
+    fn flag_last(&mut self, n: u32) -> u32 {
+        let len = self.suspicious.len();
+        let mut newly = 0;
+        for f in &mut self.suspicious[len.saturating_sub(n as usize)..] {
+            newly += u32::from(!*f);
+            *f = true;
+        }
+        newly
+    }
+
+    /// Records a typed key and updates the patterns. Returns how many keys became suspicious just now.
+    fn note_typed(&mut self, class: KeyClass, repeat: Repeat) -> u32 {
+        self.suspicious.push(false);
+        if class != KeyClass::Char {
+            // Spaces and Enter break every pattern: real words are short.
+            self.no_space_run = 0;
+            self.same_run = 0;
+            self.alt_run = 0;
+            return 0;
+        }
+        let mut newly = 0;
+        self.no_space_run += 1;
+        self.same_run = if repeat.same_as_prev { self.same_run + 1 } else { 1 };
+        self.alt_run = if repeat.same_as_prev2 && !repeat.same_as_prev { self.alt_run.max(2) + 1 } else { 0 };
+        if self.no_space_run >= MASH_NO_SPACE_RUN {
+            newly += self.flag_last(if self.no_space_run == MASH_NO_SPACE_RUN { MASH_NO_SPACE_RUN } else { 1 });
+        }
+        if self.same_run >= MASH_SAME_RUN {
+            newly += self.flag_last(if self.same_run == MASH_SAME_RUN { MASH_SAME_RUN } else { 1 });
+        }
+        if self.alt_run >= MASH_ALT_RUN {
+            newly += self.flag_last(if self.alt_run == MASH_ALT_RUN { MASH_ALT_RUN } else { 1 });
+        }
+        newly
+    }
+
+    /// Keys of runs that could still turn out to be mashing (not yet at their threshold). They only
+    /// count towards the run without deleting once the word ends, so a record can never be inflated.
+    fn pending(&self) -> u32 {
+        let below = |run: u32, at: u32| if run < at { run } else { 0 };
+        below(self.no_space_run, MASH_NO_SPACE_RUN).max(below(self.same_run, MASH_SAME_RUN)).max(below(self.alt_run, MASH_ALT_RUN))
+    }
+
+    fn looks_mashed(&self) -> bool {
+        let n = self.suspicious.len();
+        n > 0 && self.suspicious.iter().filter(|&&f| f).count() as f64 > n as f64 * MASH_SHARE
+    }
 }
 
 impl Engine {
@@ -152,9 +230,14 @@ impl Engine {
         self.config = config;
     }
 
-    /// Current run of characters since the last correction.
+    /// Current run of characters since the last correction, counting only confirmed keys (see
+    /// `Open::pending`): it catches up at the end of each word.
     pub fn current_streak(&self) -> u32 {
-        self.streak
+        self.confirmed_streak()
+    }
+
+    fn confirmed_streak(&self) -> u32 {
+        self.streak.saturating_sub(self.current.as_ref().map_or(0, Open::pending))
     }
 
     pub fn best_streak_ever(&self) -> u32 {
@@ -172,6 +255,9 @@ impl Engine {
     /// burst is open or it is younger than [`LIVE_MIN_MS`] (too noisy to show).
     pub fn live_wpm(&self, now_ms: u64) -> Option<f64> {
         let open = self.current.as_ref()?;
+        if open.typed_times.len() >= 20 && open.looks_mashed() {
+            return None; // mashing never fills the live bar (or triggers Supermochi)
+        }
         let first = *open.typed_times.first()?;
         if now_ms.saturating_sub(open.last_ms) > self.config.pause_ms {
             return None;
@@ -213,10 +299,7 @@ impl Engine {
             _ => None,
         };
 
-        if ev.class.is_typed() {
-            self.streak += 1;
-            self.best_streak_ever = self.best_streak_ever.max(self.streak);
-        } else if ev.class.is_correction() {
+        if ev.class.is_correction() {
             self.streak = 0;
         }
 
@@ -227,14 +310,26 @@ impl Engine {
             backspaces: 0,
             word_deletes: 0,
             best_streak: 0,
+            suspicious: Vec::new(),
+            no_space_run: 0,
+            same_run: 0,
+            alt_run: 0,
         });
         open.last_ms = ev.t_ms;
         match ev.class {
             KeyClass::Backspace => open.backspaces += 1,
             KeyClass::WordDelete => open.word_deletes += 1,
-            _ => open.typed_times.push(ev.t_ms),
+            _ => {
+                open.typed_times.push(ev.t_ms);
+                // Mashed keys never grow the run without deleting; when a pattern is recognised, the keys
+                // it already counted are taken back too.
+                let newly = open.note_typed(ev.class, ev.repeat);
+                self.streak = (self.streak + 1).saturating_sub(newly);
+            }
         }
-        open.best_streak = open.best_streak.max(self.streak);
+        let confirmed = self.streak.saturating_sub(open.pending());
+        open.best_streak = open.best_streak.max(confirmed);
+        self.best_streak_ever = self.best_streak_ever.max(confirmed);
 
         closed
     }
@@ -263,6 +358,15 @@ impl Engine {
         // from the first to the last *typed* key.
         let start_ms = *open.typed_times.first()?;
         let end_ms = *open.typed_times.last()?;
+        let mash = open.looks_mashed() || (wpm(chars, end_ms - start_ms) > MASH_WPM && end_ms - start_ms >= 3_000);
+        // The last word is over: its keys count now, unless the burst was mashing.
+        let mut best_streak = open.best_streak;
+        if mash {
+            self.streak = self.streak.saturating_sub(open.pending()); // the unconfirmed tail was mashing too
+        } else {
+            best_streak = best_streak.max(self.streak);
+            self.best_streak_ever = self.best_streak_ever.max(self.streak);
+        }
         Some(Burst {
             app_id: open.app_id,
             start_ms,
@@ -271,7 +375,8 @@ impl Engine {
             backspaces: open.backspaces,
             word_deletes: open.word_deletes,
             peak_wpm: peak_wpm(&open.typed_times, self.config.peak_window_ms),
-            best_streak: open.best_streak,
+            best_streak,
+            mash,
         })
     }
 }
@@ -444,14 +549,15 @@ mod tests {
     const APP: u32 = 1;
 
     fn ev(t_ms: u64, class: KeyClass) -> KeyEvent {
-        KeyEvent { t_ms, class, app_id: APP }
+        KeyEvent { t_ms, class, app_id: APP, repeat: Repeat::default() }
     }
 
     /// Types `n` characters starting at `t0`, one every `gap_ms`. Returns the next free time.
     fn type_chars(e: &mut Engine, out: &mut Vec<Burst>, t0: u64, n: u32, gap_ms: u64) -> u64 {
         let mut t = t0;
-        for _ in 0..n {
-            out.extend(e.push(ev(t, KeyClass::Char)));
+        for i in 0..n {
+            // Real text: a space every few letters (long runs without one look like mashing).
+            out.extend(e.push(ev(t, if i % 6 == 5 { KeyClass::Space } else { KeyClass::Char })));
             t += gap_ms;
         }
         t
@@ -515,7 +621,7 @@ mod tests {
         let mut e = Engine::new(Config::default());
         let mut out = Vec::new();
         let t = type_chars(&mut e, &mut out, 0, 20, 100);
-        out.extend(e.push(KeyEvent { t_ms: t, class: KeyClass::Char, app_id: 2 }));
+        out.extend(e.push(KeyEvent { t_ms: t, class: KeyClass::Char, app_id: 2, repeat: Repeat::default() }));
         assert_eq!(out.len(), 1);
         assert_eq!(out[0].app_id, APP);
     }
@@ -727,6 +833,81 @@ mod tests {
         // Pieces of the same day add up.
         let s = goal_status(&[(MON, 12 * MIN), (MON, 9 * MIN)], MON, 20 * MIN, false);
         assert!(s.met_today);
+    }
+
+    /// Feeds keys described as (class, same as prev, same as prev2) at `gap_ms` apart.
+    fn feed(e: &mut Engine, keys: &[(KeyClass, bool, bool)], gap_ms: u64) -> Option<Burst> {
+        let mut t = 1_000;
+        let mut out = None;
+        for &(class, a, b) in keys {
+            out = out.or(e.push(KeyEvent { t_ms: t, class, app_id: APP, repeat: Repeat { same_as_prev: a, same_as_prev2: b } }));
+            t += gap_ms;
+        }
+        out.or(e.flush())
+    }
+
+    /// Plain text: words of 5 letters and a space, no repeats.
+    fn words(n_words: usize) -> Vec<(KeyClass, bool, bool)> {
+        (0..n_words).flat_map(|_| [(KeyClass::Char, false, false); 5].into_iter().chain([(KeyClass::Space, false, false)])).collect()
+    }
+
+    #[test]
+    fn normal_text_is_not_mashing() {
+        let mut e = Engine::new(Config::default());
+        let b = feed(&mut e, &words(30), 180).unwrap();
+        assert!(!b.mash);
+        // A few doubled letters ("llamar", "carro") are normal too.
+        let mut keys = words(20);
+        keys[2] = (KeyClass::Char, true, false);
+        let b = feed(&mut Engine::new(Config::default()), &keys, 180).unwrap();
+        assert!(!b.mash);
+    }
+
+    #[test]
+    fn long_runs_without_spaces_are_mashing() {
+        let keys = vec![(KeyClass::Char, false, false); 90];
+        let b = feed(&mut Engine::new(Config::default()), &keys, 60).unwrap();
+        assert!(b.mash, "dasjkdlajsdklj…");
+        // A long word (35 letters) inside normal text is not.
+        let mut keys = words(15);
+        keys.extend(vec![(KeyClass::Char, false, false); 35]);
+        keys.extend(words(15));
+        assert!(!feed(&mut Engine::new(Config::default()), &keys, 150).unwrap().mash);
+    }
+
+    #[test]
+    fn repeated_and_alternating_keys_are_mashing() {
+        let mut keys: Vec<_> = (0..30).map(|i| (KeyClass::Char, i > 0, i > 1)).collect(); // aaaaaa…
+        assert!(feed(&mut Engine::new(Config::default()), &keys, 120).unwrap().mash);
+        keys = (0..30).map(|i| (KeyClass::Char, false, i > 1)).collect(); // asasas…
+        assert!(feed(&mut Engine::new(Config::default()), &keys, 120).unwrap().mash);
+    }
+
+    #[test]
+    fn mashing_never_grows_the_run_without_deleting() {
+        let mut e = Engine::new(Config::default());
+        feed(&mut e, &words(5), 150); // 30 real keys
+        let before = e.current_streak();
+        let mash: Vec<_> = (0..60).map(|i| (KeyClass::Char, i > 0, i > 1)).collect(); // aaaa…
+        feed(&mut e, &mash, 80);
+        assert!(e.current_streak() <= before + MASH_SAME_RUN, "streak went from {before} to {}", e.current_streak());
+        let mut e = Engine::new(Config::default());
+        feed(&mut e, &vec![(KeyClass::Char, false, false); 120], 60); // no spaces
+        assert!(e.current_streak() < MASH_NO_SPACE_RUN, "streak {}", e.current_streak());
+    }
+
+    #[test]
+    fn impossible_speed_is_mashing_and_mashing_never_shows_live() {
+        // 300 wpm with spaces: 25 ms per key for 6 s.
+        let b = feed(&mut Engine::new(Config::default()), &words(40), 40).unwrap();
+        assert!(b.gross_wpm() > MASH_WPM && b.mash);
+        let mut e = Engine::new(Config::default());
+        let mut t = 0;
+        for _ in 0..60 {
+            e.push(KeyEvent { t_ms: t, class: KeyClass::Char, app_id: APP, repeat: Repeat::default() });
+            t += 50;
+        }
+        assert_eq!(e.live_wpm(t), None);
     }
 
     #[test]
