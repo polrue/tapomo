@@ -525,3 +525,17 @@ html.intro-on.intro-built body::before { display: none; }
 
 /* On narrow screens the road would run beside the text: only Tapomo travels (peeking from the edge). */
 @media (max-width: 720px) { .trail { display: none; } }
+
+/* ------------------------------------------------------------------ support */
+.support { text-align: center; background: linear-gradient(180deg, transparent, color-mix(in srgb, #ff8fb5 14%, transparent) 40%, color-mix(in srgb, var(--accent, #ff9e7a) 16%, transparent)); }
+.support-inner { max-width: 760px; }
+.support-heart { font-size: clamp(3rem, 8vw, 4.5rem); line-height: 1; margin-bottom: 14px; }
+.support-heart span { display: inline-block; animation: support-beat 1.8s ease-in-out infinite; }
+@keyframes support-beat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.16); } 28% { transform: scale(1); } 42% { transform: scale(1.08); } }
+.support h2 { font-size: clamp(2rem, 7vw, 4rem); letter-spacing: -.035em; margin: 10px 0 0; }
+.support .lead { margin: 18px auto 0; }
+.support-row { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px; margin-top: 34px; }
+.support-list { list-style: none; padding: 0; margin: 34px auto 0; display: grid; gap: 10px; text-align: left; max-width: 620px; }
+.support-list li { position: relative; padding-left: 30px; }
+.support-list li::before { content: "💗"; position: absolute; left: 0; top: 0; font-size: .95em; }
+@media (prefers-reduced-motion: reduce) { .support-heart span { animation: none; } }
