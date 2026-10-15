@@ -1,6 +1,6 @@
 // Tiny i18n. To add a language: drop locales/xx.json (with a "name" key) and add it to LANGUAGES.
 // The tray menu is translated in Rust from the same JSON files (src-tauri/src/i18n.rs).
-const LANGUAGES = ['es', 'ca', 'en'];
+const LANGUAGES = ['es', 'ca', 'en', 'fr', 'de'];
 const FALLBACK = 'en';
 
 const dictionaries = {};
