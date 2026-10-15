@@ -601,5 +601,10 @@
   "item.flequillo": "Flequillo",
   "item.tupe": "Tupé",
   "item.melenita": "Melenita",
-  "pet.mash": "¡Eh, eso es aporrear! 😄 No cuenta"
+  "pet.mash": "¡Eh, eso es aporrear! 😄 No cuenta",
+  "wd.hair": "Color del pelo",
+  "wd.hair.negro": "Negro",
+  "wd.hair.castano": "Castaño",
+  "wd.hair.rubio": "Rubio",
+  "lessons.key": "Tecla {keys}"
 }

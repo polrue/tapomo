@@ -327,6 +327,7 @@ fn changed_settings(old: &Settings, new: &Settings) -> Vec<&'static str> {
         ("skin", old.skin != new.skin),
         ("accessories", old.accessories != new.accessories),
         ("wear_style", old.wear_style != new.wear_style),
+        ("hair_color", old.hair_color != new.hair_color),
         ("count_shortcuts", old.count_shortcuts != new.count_shortcuts),
         ("lessons_in_goal", old.lessons_in_goal != new.lessons_in_goal),
         ("shortcut_tips", old.shortcut_tips != new.shortcut_tips),

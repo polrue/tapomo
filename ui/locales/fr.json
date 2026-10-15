@@ -601,5 +601,10 @@
   "item.flequillo": "Frange",
   "item.tupe": "Banane",
   "item.melenita": "Petit carré",
-  "pet.mash": "Hé, ça c'est taper au hasard ! 😄 Ça ne compte pas"
+  "pet.mash": "Hé, ça c'est taper au hasard ! 😄 Ça ne compte pas",
+  "wd.hair": "Couleur des cheveux",
+  "wd.hair.negro": "Noir",
+  "wd.hair.castano": "Châtain",
+  "wd.hair.rubio": "Blond",
+  "lessons.key": "Touche {keys}"
 }

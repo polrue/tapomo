@@ -351,6 +351,7 @@ async function applyLook(settings) {
     skin: open.has(settings.skin) ? settings.skin : 'clasico',
     acc: (settings.accessories || []).filter((a) => open.has(a)),
     style: settings.wear_style === 'subtle' ? 'subtle' : 'bold',
+    hair: settings.hair_color || 'castano',
   });
 }
 
