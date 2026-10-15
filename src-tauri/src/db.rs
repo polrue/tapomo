@@ -152,8 +152,21 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
              COMMIT;",
         )?;
     }
+    if version < 8 {
+        // Lessons count as typing (0.7.2): new lessons also store a burst, so their goal time comes from
+        // there; `as_burst` keeps older lessons (which have no burst) counting through this table.
+        conn.execute_batch(
+            "BEGIN;
+             ALTER TABLE lesson_results ADD COLUMN as_burst INTEGER NOT NULL DEFAULT 0;
+             PRAGMA user_version = 8;
+             COMMIT;",
+        )?;
+    }
     Ok(())
 }
+
+/// App name of the bursts that lessons store: they happen inside Tapomo.
+pub const LESSONS_APP: &str = "Tapomo";
 
 // ---------------------------------------------------------------- settings
 
@@ -362,13 +375,17 @@ pub fn today_day(conn: &Connection) -> rusqlite::Result<i64> {
 /// Active typing time per local day: the sum of burst durations, by the day each burst started.
 /// Derived on demand from `bursts` (indexed by `start_ms`); no separate table to keep in sync.
 pub fn daily_active(conn: &Connection) -> rusqlite::Result<Vec<(i64, u64)>> {
-    let sql = format!("SELECT {DAY_OF_START}, SUM(end_ms - start_ms) FROM bursts GROUP BY 1");
+    let in_goal = lessons_in_goal(conn)?;
+    // Lesson bursts (0.7.2) only count towards the goal when the setting says so.
+    let skip = if in_goal { String::new() } else { format!("WHERE app_id NOT IN (SELECT id FROM apps WHERE exe = '{LESSONS_APP}')") };
+    let sql = format!("SELECT {DAY_OF_START}, SUM(end_ms - start_ms) FROM bursts {skip} GROUP BY 1");
     let mut stmt = conn.prepare(&sql)?;
     let rows = stmt.query_map([], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?.max(0) as u64)))?;
     let mut days = rows.collect::<rusqlite::Result<Vec<_>>>()?;
-    // Lesson time counts towards the daily goal too (setting, on by default); repeated days add up.
-    if lessons_in_goal(conn)? {
-        let mut stmt = conn.prepare("SELECT day, SUM(duration_ms) FROM lesson_results GROUP BY day")?;
+    // Older lessons (stored before they made bursts) count towards the daily goal too (setting, on by
+    // default); repeated days add up.
+    if in_goal {
+        let mut stmt = conn.prepare("SELECT day, SUM(duration_ms) FROM lesson_results WHERE as_burst = 0 GROUP BY day")?;
         let rows = stmt.query_map([], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?.max(0) as u64)))?;
         days.extend(rows.collect::<rusqlite::Result<Vec<_>>>()?);
         // One entry per day: callers compare each entry with the goal.
@@ -388,9 +405,16 @@ fn lessons_in_goal(conn: &Connection) -> rusqlite::Result<bool> {
 /// Active time of today alone (cheap: uses the start-of-day index range).
 pub fn today_active_ms(conn: &Connection) -> rusqlite::Result<u64> {
     let since = range_start_ms(conn, "today")?;
-    let ms: i64 = conn.query_row("SELECT COALESCE(SUM(end_ms - start_ms), 0) FROM bursts WHERE start_ms >= ?1", [since], |r| r.get(0))?;
-    let lessons: i64 = if lessons_in_goal(conn)? {
-        conn.query_row("SELECT COALESCE(SUM(duration_ms), 0) FROM lesson_results WHERE day = ?1", [today_day(conn)?], |r| r.get(0))?
+    let in_goal = lessons_in_goal(conn)?;
+    let skip = if in_goal { "" } else { " AND app_id NOT IN (SELECT id FROM apps WHERE exe = ?2)" };
+    let sql = format!("SELECT COALESCE(SUM(end_ms - start_ms), 0) FROM bursts WHERE start_ms >= ?1{skip}");
+    let ms: i64 = if in_goal {
+        conn.query_row(&sql, [since], |r| r.get(0))?
+    } else {
+        conn.query_row(&sql, params![since, LESSONS_APP], |r| r.get(0))?
+    };
+    let lessons: i64 = if in_goal {
+        conn.query_row("SELECT COALESCE(SUM(duration_ms), 0) FROM lesson_results WHERE day = ?1 AND as_burst = 0", [today_day(conn)?], |r| r.get(0))?
     } else {
         0
     };

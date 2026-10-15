@@ -111,6 +111,15 @@ pub fn save_lesson(app: AppHandle, state: State<AppState>, run: crate::lessons::
     let (saved, before, after, badges) = state.with_db(|c| {
         let before = crate::xp::total(c)?;
         let saved = crate::lessons::save(c, &run)?;
+        // It also counts as typing: the tracker stores it as a burst (records, badges, goal…).
+        if run.chars > 0 {
+            let _ = state.tx.send(Msg::Lesson(crate::tracker::LessonBurst {
+                chars: run.chars,
+                duration_ms: run.duration_ms,
+                wpm: run.wpm,
+                best_run: run.best_run,
+            }));
+        }
         let badges = crate::badges::check(c)?;
         Ok((saved, before, crate::xp::total(c)?, badges))
     })?;

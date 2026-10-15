@@ -13,15 +13,20 @@ const Lessons = (() => {
     { id: 'home', base: 12, keys: { es: 'asdfghjklñ', us: 'asdfghjkl;', fr: 'qsdfghjklm', de: 'asdfghjklö' },
       // Gradual start (0.7.0): 2 letters, then 3, 4, 6… Ids keep the old ones where the known letters
       // match, so earlier progress still counts.
-      ids: ['home-1a', 'home-1b', 'home-1', 'home-2a', 'home-2', 'home-3', 'home-4'],
-      lessons: [['fj'], ['d'], ['k'], ['sl'], ['añ'], ['gh'], 'words'],
-      perLayout: { fr: [['fj'], ['d'], ['k'], ['sl'], ['qm'], ['gh'], 'words'], de: [['fj'], ['d'], ['k'], ['sl'], ['aö'], ['gh'], 'words'] } },
+      // 0.8: short real words right after the 8th letter ('home-2w'); the final words lesson stays home-4.
+      ids: ['home-1a', 'home-1b', 'home-1', 'home-2a', 'home-2', 'home-2w', 'home-3', 'home-4'],
+      lessons: [['fj'], ['d'], ['k'], ['sl'], ['añ'], 'words-short', ['gh'], 'words'],
+      // AZERTY's home row has no vowels, so no real words yet: a review of the keys instead.
+      perLayout: { fr: [['fj'], ['d'], ['k'], ['sl'], ['qm'], 'review', ['gh'], 'words'], de: [['fj'], ['d'], ['k'], ['sl'], ['aö'], 'words-short', ['gh'], 'words'] } },
     { id: 'top', base: 15, keys: { es: 'qwertyuiop', us: 'qwertyuiop', fr: 'azertyuiop', de: 'qwertzuiop' },
-      lessons: [['ei'], ['ru', 'ty'], ['wo', 'qp'], 'words'],
-      perLayout: { fr: [['ei'], ['ru', 'ty'], ['zo', 'ap'], 'words'], de: [['ei'], ['ru', 'tz'], ['wo', 'qp'], 'words'] } },
+      // 0.8: a words lesson after each drill (short, then longer); old ids kept, final words stays top-4.
+      ids: ['top-1', 'top-1w', 'top-2', 'top-2w', 'top-3', 'top-3w', 'top-4'],
+      lessons: [['ei'], 'words-short', ['ru', 'ty'], 'words-mid', ['wo', 'qp'], 'words-long', 'words'],
+      perLayout: { fr: [['ei'], 'words-short', ['ru', 'ty'], 'words-mid', ['zo', 'ap'], 'words-long', 'words'], de: [['ei'], 'words-short', ['ru', 'tz'], 'words-mid', ['wo', 'qp'], 'words-long', 'words'] } },
     { id: 'bottom', base: 18, keys: { es: 'zxcvbnm,.', us: 'zxcvbnm,.', fr: 'wxcvbn,;:', de: 'yxcvbnm,.' },
-      lessons: [['vm'], ['cn', ',.'], ['bxz'], 'words'],
-      perLayout: { fr: [['vn'], ['c,', ';:'], ['bxw'], 'words'], de: [['vm'], ['cn', ',.'], ['bxy'], 'words'] } },
+      ids: ['bottom-1', 'bottom-1w', 'bottom-2', 'bottom-2w', 'bottom-3', 'bottom-3w', 'bottom-4'],
+      lessons: [['vm'], 'words-short', ['cn', ',.'], 'words-mid', ['bxz'], 'words-long', 'words'],
+      perLayout: { fr: [['vn'], 'words-short', ['c,', ';:'], 'words-mid', ['bxw'], 'words-long', 'words'], de: [['vm'], 'words-short', ['cn', ',.'], 'words-mid', ['bxy'], 'words-long', 'words'] } },
     // From here on every letter is known; each unit practises one more skill (0.4.1).
     { id: 'caps', base: 18, keys: { es: '⇧', us: '⇧', fr: '⇧', de: '⇧' }, lessons: ['caps-left', 'caps-right', 'names'] },
     { id: 'numbers', base: 15, keys: { es: '1234567890', us: '1234567890', fr: '1234567890', de: '1234567890' }, lessons: ['num-left', 'num-right', 'num-words'] },
@@ -30,6 +35,8 @@ const Lessons = (() => {
       only: ['es', 'fr', 'de'], lessons: ['accent-vowels', 'accent-words'] },
     { id: 'common', base: 22, keys: { es: 'a–z', us: 'a–z', fr: 'a–z', de: 'a–z' }, lessons: ['common-1', 'common-2'] },
     { id: 'sentences', base: 22, keys: { es: 'Aa.', us: 'Aa.', fr: 'Aa.', de: 'Aa.' }, lessons: ['sentences-1', 'sentences-2', 'sentences-3'] },
+    // 0.8: six longer practice texts, the last unit. Every key is known by now.
+    { id: 'texts', base: 22, keys: { es: 'Aa.', us: 'Aa.', fr: 'Aa.', de: 'Aa.' }, lessons: ['text-1', 'text-2', 'text-3', 'text-4', 'text-5', 'text-6'] },
   ];
   // US layout swaps the ES-only home key (fr/de have their own drills in `perLayout`).
   const swap = (layout, s) => (layout === 'us' ? s.replace(/ñ/g, ';') : s);
@@ -104,11 +111,19 @@ const Lessons = (() => {
     return words.join(' ');
   }
 
-  /** Real words that only use letters already learnt (pseudo-drill if there are too few). */
-  function wordsText(lesson, layout, seed, len = 170) {
+  // Words lessons: longest word allowed (0 = any) and text length. The old 'words' is the full-length final one.
+  const WORD_KINDS = {
+    'words-short': { max: 4, len: 100 },
+    'words-mid': { max: 5, len: 125 },
+    'words-long': { max: 0, len: 160 },
+    words: { max: 0, len: 170 },
+  };
+
+  /** Real words that only use letters already learnt, at most `max` letters long (pseudo-drill if there are too few). */
+  function wordsText(lesson, layout, seed, len = 170, max = 0) {
     const r = rng(seed);
     const ok = new Set(lesson.known);
-    const pool = (LessonWords[langOf(layout).lang] || []).filter((w) => [...w].every((c) => ok.has(c)));
+    const pool = (LessonWords[langOf(layout).lang] || []).filter((w) => (!max || w.length <= max) && [...w].every((c) => ok.has(c)));
     if (pool.length < 8) return drill({ ...lesson, newKeys: lesson.known }, seed, len);
     const out = [];
     let size = 0;
@@ -155,8 +170,14 @@ const Lessons = (() => {
     const T = LessonTexts[lang];
     switch (lesson.kind) {
       case 'drill': return drill(lesson, seed);
+      case 'review': return drill({ ...lesson, newKeys: lesson.known }, seed);
       case 'practice': return practiceText(lesson, layout, seed);
-      case 'words': return wordsText(lesson, layout, seed);
+      case 'words': case 'words-short': case 'words-mid': case 'words-long': {
+        const k = WORD_KINDS[lesson.kind];
+        return wordsText(lesson, layout, seed, k.len, k.max);
+      }
+      case 'text-1': case 'text-2': case 'text-3': case 'text-4': case 'text-5': case 'text-6':
+        return T.texts[Number(lesson.kind.split('-')[1]) - 1];
       // Shift with the other hand: capitals of left-hand letters use the right Shift and vice versa.
       case 'caps-left': return fill(r, capWords(words).filter((w) => left.includes(w[0])).map(cap), 150);
       case 'caps-right': return fill(r, capWords(words).filter((w) => !left.includes(w[0])).map(cap), 150);
@@ -210,6 +231,11 @@ const Lessons = (() => {
   function lessonName(l) {
     if (l.kind === 'drill') return t(l.newKeys.length === 1 ? 'lessons.key' : 'lessons.keys', { keys: l.newKeys.split('').join(' ') });
     if (l.kind === 'words') return t('lessons.words');
+    if (l.kind === 'words-mid') return t('lessons.words_mid');
+    if (l.kind === 'words-short') return t('lessons.words_short');
+    if (l.kind === 'review') return t('lessons.review');
+    if (l.kind === 'words-long') return t('lessons.words_long');
+    if (l.kind.startsWith('text-')) return t('lessons.kind.text', { n: l.index + 1 });
     if (l.kind === 'practice') return t('lessons.practice.title');
     if (l.kind.startsWith('sentences')) return t('lessons.kind.sentences', { n: l.index + 1 });
     return t(`lessons.kind.${l.kind}`);
@@ -293,12 +319,26 @@ const Lessons = (() => {
     $('ls-run').hidden = false;
     $('ls-run-title').textContent = lessonName(lesson);
     const box = $('ls-text');
-    box.replaceChildren(...[...text].map((c) => {
+    // Letters of a word stay together on one line; lines break only at spaces (0.7.2).
+    const out = [];
+    let word = null;
+    for (const c of text) {
       const s = document.createElement('span');
       s.textContent = c === ' ' ? ' ' : c;
       s.className = 'ls-ch';
-      return s;
-    }));
+      if (c === ' ') {
+        word = null;
+        out.push(s, document.createElement('wbr'));
+      } else {
+        if (!word) {
+          word = document.createElement('span');
+          word.className = 'ls-word';
+          out.push(word);
+        }
+        word.append(s);
+      }
+    }
+    box.replaceChildren(...out);
     if (!kb) kb = Keyboard.render($('ls-kb'), layout, { t, legend: true, ariaLabel: t('keyboard.aria') });
     else kb.setLayout(layout);
     paint();
@@ -309,7 +349,7 @@ const Lessons = (() => {
   }
 
   function paint() {
-    const spans = $('ls-text').children;
+    const spans = $('ls-text').querySelectorAll('.ls-ch');
     for (let i = 0; i < spans.length; i++) {
       spans[i].classList.toggle('done', i < run.pos);
       spans[i].classList.toggle('cur', i === run.pos);
@@ -336,6 +376,9 @@ const Lessons = (() => {
     const code = Keyboard.charMap(layout).get(want);
     const firstCode = Array.isArray(code) ? code[0].code : code && code.code;
     if (ch === want) {
+      // Longest run without a mistake: lessons count for the "sin borrar" record too (0.7.2).
+      run.clean = (run.clean || 0) + 1;
+      run.bestClean = Math.max(run.bestClean || 0, run.clean);
       stat.hits++;
       stat.ms += Math.round(now - run.lastAt);
       run.lastAt = now;
@@ -343,6 +386,7 @@ const Lessons = (() => {
       kb.flash(firstCode, true);
       Mascot.keyTick($('mascot'));
     } else {
+      run.clean = 0;
       if (!run.errAt.has(run.pos)) stat.misses++;
       run.errAt.add(run.pos);
       kb.flash(firstCode, false);
@@ -360,7 +404,10 @@ const Lessons = (() => {
     let saved = { stars: 1, best_before: 0, xp: 0 };
     try {
       saved = await invoke('save_lesson', {
-        run: { lesson_id: run.lesson.id, layout, duration_ms: Math.round(ms), wpm, accuracy, target_wpm: run.target, keys: [...run.keys.values()] },
+        run: {
+          lesson_id: run.lesson.id, layout, duration_ms: Math.round(ms), wpm, accuracy, target_wpm: run.target, keys: [...run.keys.values()],
+          chars: run.text.length, best_run: run.bestClean || 0,
+        },
       });
     } catch (e) { showError(e); }
     progress = await invoke('get_lessons_progress', { layout }).catch(() => progress);
