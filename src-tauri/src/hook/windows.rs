@@ -173,3 +173,38 @@ fn is_down(vk: u16) -> bool {
 fn now_ms() -> u64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or(0)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const A: u32 = 0x41;
+    const C: u32 = 0x43;
+
+    #[test]
+    fn plain_keys_become_classes() {
+        assert_eq!(classify(A, false, false, false), KeyClass::Char);
+        assert_eq!(classify(0x31, false, false, false), KeyClass::Char);
+        assert_eq!(classify(0xBA, false, false, false), KeyClass::Char); // OEM_1 (ñ on Spanish keyboards)
+        assert_eq!(classify(VK_SPACE, false, false, false), KeyClass::Space);
+        assert_eq!(classify(VK_RETURN, false, false, false), KeyClass::Enter);
+        assert_eq!(classify(VK_BACK, false, false, false), KeyClass::Backspace);
+        assert_eq!(classify(0x25, false, false, false), KeyClass::Ignored); // arrows
+    }
+
+    #[test]
+    fn shortcuts_are_not_typing_but_altgr_is() {
+        assert_eq!(classify(C, true, false, false), KeyClass::Ignored); // Ctrl+C
+        assert_eq!(classify(VK_BACK, true, false, false), KeyClass::WordDelete); // Ctrl+Backspace
+        assert_eq!(classify(0x32, true, true, false), KeyClass::Char); // AltGr+2 = @
+        assert_eq!(classify(A, false, false, true), KeyClass::Ignored); // Win+A
+    }
+
+    #[test]
+    fn only_catalogue_combos_are_ever_identified() {
+        use crate::catalog::{known_combo, CTRL, SHIFT};
+        assert!(known_combo(CTRL, C).is_some());
+        assert!(known_combo(CTRL | SHIFT, 0x4E).is_none(), "incognito never");
+        assert!(known_combo(CTRL, 0x51).is_none(), "Ctrl+Q is not in the album");
+    }
+}

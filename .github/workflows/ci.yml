@@ -38,6 +38,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: npm ci
+      # The Windows-only code (keyboard hook classification, DPAPI key protection) runs here for real.
+      - run: cargo test -p tapomo
       - run: npx tauri build
       - uses: actions/upload-artifact@v7
         with:
