@@ -201,19 +201,26 @@
   let lastX = null;
   let tilt = 0;
 
+  /** Keeps the bubble inside the viewport; re-run while Tapomo moves, or it drifts off the edge. */
+  function keepBubbleOnScreen() {
+    if (!bubble || !bubble.classList.contains('show')) return;
+    const prev = parseFloat(bubble.style.getPropertyValue('--bx')) || 0;
+    const r = bubble.getBoundingClientRect();
+    const vw = document.documentElement.clientWidth;
+    const left = r.left - prev; // where it would be without the shift
+    let dx = 0;
+    if (left + r.width > vw - 10) dx = vw - 10 - (left + r.width);
+    if (left + dx < 10) dx = 10 - left;
+    if (Math.round(dx) !== Math.round(prev)) bubble.style.setProperty('--bx', `${Math.round(dx)}px`);
+  }
+
   function say(text, ms = 3400) {
     if (!bubble || !text) return;
     const span = bubble.firstElementChild;
     span.textContent = text;
-    bubble.style.setProperty('--bx', '0px');
     bubble.classList.add('show');
-    // Keep the bubble inside the viewport.
-    const r = bubble.getBoundingClientRect();
-    const vw = document.documentElement.clientWidth;
-    let dx = 0;
-    if (r.right > vw - 10) dx = vw - 10 - r.right;
-    if (r.left + dx < 10) dx = 10 - r.left;
-    bubble.style.setProperty('--bx', `${Math.round(dx)}px`);
+    keepBubbleOnScreen();
+    setTimeout(keepBubbleOnScreen, 320); // again once the pop-in scale has settled
     clearTimeout(say.timer);
     say.timer = setTimeout(() => bubble.classList.remove('show'), Math.max(ms * 1.4, 2800)); // time to read it
   }
@@ -329,7 +336,7 @@
   }
 
   // The magnet: around each anchor Tapomo holds still for a while, then eases out and travels.
-  const HOLD = 0.4;
+  const HOLD = 0.5; // share of each stage's radius where Tapomo stays put (more margin to see it)
   const C = 1 - HOLD;
   const GA = 3 - C, GB = C - 2; // g(e) = GA e² + GB e³, g(1) = 1, g'(1) = C (slope matches outside)
   // Anticipation: on the way in Tapomo lands a little early (bigger hold on the arriving side); on the
@@ -427,7 +434,10 @@
     tilt = lerp(tilt, clamp(vx * 0.6, -12, 12), 0.25);
     if (Math.abs(tilt) < 0.2) tilt = 0;
     tinner.style.setProperty('--tilt', `${tilt.toFixed(1)}deg`);
-    setState(moving ? '' : w.at);
+    keepBubbleOnScreen();
+    // A stage's reaction starts as soon as the scroll reaches it, while Tapomo is still arriving, so a
+    // visitor who keeps scrolling still sees it (and MIN_DWELL keeps it a moment).
+    setState(w.at);
     if (tilt !== 0 || moving) requestUpdate(); // keep walking / settle the lean back to zero
     else lastT = 0;
   }
@@ -474,9 +484,13 @@
           Mascot.setFace(tsvg, { eyes: 'sparkle', mouth: 'big', cheeks: true });
           Mascot.jump(tsvg, { big: true });
           say(t('say.habits'));
-        }, 1850);
+        }, 550);
       },
-      leave() { clearTimeout(ringTimer); traveler.classList.remove('ring-on', 'ring-done'); },
+      leave() {
+        // The ring fills in ~0.5 s, so the day completes well before halfway to the next stage.
+        clearTimeout(ringTimer);
+        traveler.classList.remove('ring-on', 'ring-done');
+      },
     },
     code: {
       enter() {
@@ -495,6 +509,15 @@
       },
       leave() {},
     },
+    support: {
+      enter() {
+        // Grateful, not pushy: eyes closed, blushing, a little hop.
+        Mascot.setFace(tsvg, { eyes: 'closed', mouth: 'big', cheeks: true });
+        Mascot.jump(tsvg, { big: false });
+        say(t('say.support'));
+      },
+      leave() {},
+    },
     cta: {
       enter() {
         Mascot.setFace(tsvg, { eyes: 'star', mouth: 'open', cheeks: true });
@@ -510,21 +533,40 @@
   };
 
   // A stage's face and props stay at least this long, even if the visitor scrolls on straight away.
-  const MIN_DWELL = 1600;
+  const MIN_DWELL = 2600;      // before the "flying" face comes back
+  const MIN_DWELL_NEXT = 1200; // before another stage takes over (the ring fills in 1 s)
   let enteredAt = 0;
   let dwellTimer = 0;
+  let queued = null;
+  /** The scroll has gone more than halfway towards the neighbouring stage: this stage's moment is over. */
+  function farFrom(name) {
+    const i = anchors.findIndex((an) => an.name === name);
+    if (i < 0 || lastCentre === null) return false;
+    const d = lastCentre - anchors[i].a;
+    const other = anchors[i + Math.sign(d)];
+    return !!other && Math.abs(d) > Math.abs(other.a - anchors[i].a) / 2;
+  }
+
   function setState(next) {
     clearTimeout(dwellTimer);
+    // A waiting reaction is dropped once it would show up in the wrong section.
+    if (queued && farFrom(queued)) queued = null;
     if (next === state) return;
-    const left = MIN_DWELL - (performance.now() - enteredAt);
-    if (!next && state && left > 0 && !REDUCED) {
-      dwellTimer = setTimeout(() => applyState(''), left);
+    const shown = performance.now() - enteredAt;
+    const left = (next || queued ? MIN_DWELL_NEXT : MIN_DWELL) - shown;
+    // Also when another stage comes next (fast scrolling): the current reaction finishes first, and a
+    // stage passed meanwhile is still shown afterwards (never dropped for the "flying" face).
+    // …but never past halfway to the next stage (Pol: reactions reached the next section).
+    if (state && left > 0 && !REDUCED && !farFrom(state)) {
+      if (next || !queued) queued = next;
+      dwellTimer = setTimeout(() => applyState(queued && farFrom(queued) ? '' : queued), left);
       return;
     }
-    applyState(next);
+    applyState(next || queued || ''); // a stage passed during the dwell still shows, if still in its section
   }
 
   function applyState(next) {
+    queued = null;
     if (next === state) return;
     if (next) enteredAt = performance.now();
     const prev = state;
@@ -870,6 +912,7 @@
       habits: { eyes: 'sparkle', mouth: 'big', cheeks: true },
       code: { eyes: 'round', mouth: 'small' },
       faq: { eyes: 'wide', mouth: 'o', brows: true },
+      support: { eyes: 'closed', mouth: 'big', cheeks: true },
       cta: { eyes: 'star', mouth: 'open', cheeks: true },
     };
     for (const stage of $$('[data-stage]')) {
