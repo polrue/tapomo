@@ -382,7 +382,10 @@ function onXp(p) {
   } else if ((p.badges || []).length && !state.paused && !state.asleep) {
     celebrate(2, true);
     Mascot.jump(svg, { big: true });
-    sayText(t('pet.badge', { name: t(`badge.${p.badges[0]}`) }), 3500, true);
+    sayText(t('pet.badge', { name: t(`badge.${p.badges[0]}`) }), 3000, true);
+    // Then what it was for, so a badge never arrives without its reason.
+    const id = p.badges[0];
+    setTimeout(() => sayText(t(`badge.${id}.hint`), 3500, true), 3100);
   } else if ((p.challenges || []).length && !state.paused && !state.asleep) {
     Mascot.jump(svg, { big: false });
     say('pet.challenge', 2500);
