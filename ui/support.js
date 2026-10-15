@@ -2,7 +2,7 @@
 // once a month, never while typing, always dismissible) and the supporter code ("código de mecenas"),
 // which unlocks only cosmetic thanks. Nothing in Tapomo is ever locked behind a payment.
 const Support = (() => {
-  const KOFI = 'https://ko-fi.com/polrue';
+  const KOFI = 'https://ko-fi.com/tapomo';
   const SPONSORS = 'https://github.com/sponsors/polrue';
   const ASK_EVERY_MS = 30 * 24 * 3600 * 1000;
   const KEY = 'tapomo.support.asked';
