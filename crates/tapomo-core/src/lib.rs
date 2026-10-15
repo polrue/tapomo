@@ -268,9 +268,23 @@ impl Engine {
         }
         let window = elapsed.min(self.config.peak_window_ms);
         let since = now_ms - window;
-        let keys = open.typed_times.iter().rev().take_while(|&&t| t >= since).count();
+        let mut keys = open.typed_times.iter().rev().take_while(|&&t| t >= since).count();
+        // While the window still starts at the first key, count the gaps between keys, not the keys:
+        // n keys span n − 1 gaps, and the extra one inflated the first seconds by ~10 %.
+        if window == elapsed {
+            keys = keys.saturating_sub(1);
+        }
         let minutes = window as f64 / 60_000.0;
         Some((keys as f64 / 5.0) / minutes)
+    }
+
+    /// The open burst has lasted a full peak window, so its live speed is steady enough for Supermochi.
+    /// Before that a fast first word could trigger it (and Supermochi holds for half a minute).
+    pub fn live_settled(&self, now_ms: u64) -> bool {
+        self.current
+            .as_ref()
+            .and_then(|o| o.typed_times.first())
+            .is_some_and(|&first| now_ms.saturating_sub(first) >= self.config.peak_window_ms)
     }
 
     /// Duration of the open burst (first to last typed key), or 0 when none is open or it is
@@ -881,6 +895,22 @@ mod tests {
         assert!(feed(&mut Engine::new(Config::default()), &keys, 120).unwrap().mash);
         keys = (0..30).map(|i| (KeyClass::Char, false, i > 1)).collect(); // asasas…
         assert!(feed(&mut Engine::new(Config::default()), &keys, 120).unwrap().mash);
+    }
+
+    #[test]
+    fn live_speed_counts_gaps_at_the_start_and_settles_after_the_window() {
+        let mut e = Engine::new(Config::default());
+        // 60 wpm = 5 keys a second = one key every 200 ms; 11 keys span exactly 2 s.
+        for i in 0..11 {
+            e.push(ev(i * 200, KeyClass::Char));
+        }
+        let w = e.live_wpm(2_000).unwrap();
+        assert!((w - 60.0).abs() < 0.01, "{w}");
+        assert!(!e.live_settled(2_000));
+        for i in 11..60 {
+            e.push(ev(i * 200, KeyClass::Char));
+        }
+        assert!(e.live_settled(11_800));
     }
 
     #[test]
