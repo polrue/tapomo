@@ -11,8 +11,11 @@ const Lessons = (() => {
   // `perLayout`: lessons for layouts whose letters sit elsewhere (AZERTY, QWERTZ); others use `lessons`.
   const UNITS = [
     { id: 'home', base: 12, keys: { es: 'asdfghjklñ', us: 'asdfghjkl;', fr: 'qsdfghjklm', de: 'asdfghjklö' },
-      lessons: [['fj', 'dk'], ['sl', 'añ'], ['gh'], 'words'],
-      perLayout: { fr: [['fj', 'dk'], ['sl', 'qm'], ['gh'], 'words'], de: [['fj', 'dk'], ['sl', 'aö'], ['gh'], 'words'] } },
+      // Gradual start (0.7.0): 2 letters, then 3, 4, 6… Ids keep the old ones where the known letters
+      // match, so earlier progress still counts.
+      ids: ['home-1a', 'home-1b', 'home-1', 'home-2a', 'home-2', 'home-3', 'home-4'],
+      lessons: [['fj'], ['d'], ['k'], ['sl'], ['añ'], ['gh'], 'words'],
+      perLayout: { fr: [['fj'], ['d'], ['k'], ['sl'], ['qm'], ['gh'], 'words'], de: [['fj'], ['d'], ['k'], ['sl'], ['aö'], ['gh'], 'words'] } },
     { id: 'top', base: 15, keys: { es: 'qwertyuiop', us: 'qwertyuiop', fr: 'azertyuiop', de: 'qwertzuiop' },
       lessons: [['ei'], ['ru', 'ty'], ['wo', 'qp'], 'words'],
       perLayout: { fr: [['ei'], ['ru', 'ty'], ['zo', 'ap'], 'words'], de: [['ei'], ['ru', 'tz'], ['wo', 'qp'], 'words'] } },
@@ -57,7 +60,7 @@ const Lessons = (() => {
         const drillKeys = Array.isArray(l) ? swap(layout, l.join('')) : '';
         known += drillKeys;
         const kind = Array.isArray(l) ? 'drill' : l;
-        out.push({ id: `${u.id}-${i + 1}`, unit: u.id, index: i, newKeys: drillKeys, known, kind, base: u.base });
+        out.push({ id: (u.ids && u.ids[i]) || `${u.id}-${i + 1}`, unit: u.id, index: i, newKeys: drillKeys, known, kind, base: u.base });
       });
     }
     return out;
@@ -80,10 +83,12 @@ const Lessons = (() => {
   }
   const pick = (r, s) => s[Math.floor(r() * s.length)];
 
-  /** A drill: short groups that lean on the new keys, about `len` characters. */
-  function drill(lesson, seed, len = 150) {
+  /** A drill: short groups that lean on the new keys, about `len` characters (shorter while few keys are
+   * known: about 55 characters with two keys, up to 150 from ten on). */
+  function drill(lesson, seed, len) {
     const r = rng(seed);
     const known = [...new Set(lesson.known.replace(/[^\p{L};,.]/gu, ''))];
+    len = len || Math.min(150, 30 + 12 * known.length);
     const fresh = [...new Set(lesson.newKeys)];
     const words = [];
     let size = 0;
@@ -203,7 +208,7 @@ const Lessons = (() => {
   };
 
   function lessonName(l) {
-    if (l.kind === 'drill') return t('lessons.keys', { keys: l.newKeys.split('').join(' ') });
+    if (l.kind === 'drill') return t(l.newKeys.length === 1 ? 'lessons.key' : 'lessons.keys', { keys: l.newKeys.split('').join(' ') });
     if (l.kind === 'words') return t('lessons.words');
     if (l.kind === 'practice') return t('lessons.practice.title');
     if (l.kind.startsWith('sentences')) return t('lessons.kind.sentences', { n: l.index + 1 });
@@ -229,6 +234,9 @@ const Lessons = (() => {
     $('ls-layout').value = layout;
     const list = catalogue(layout);
     // A lesson opens once the previous one has been done at least once (never by stars: never blocked by skill).
+    // Done anything later counts too, so lessons added before old progress never lock it.
+    const doneFrom = list.map((l) => bestOf(l.id) > 0);
+    for (let i = doneFrom.length - 2; i >= 0; i--) doneFrom[i] = doneFrom[i] || doneFrom[i + 1];
     let open = true;
     for (const u of unitsFor(layout)) {
       const sec = document.createElement('section');
@@ -255,7 +263,7 @@ const Lessons = (() => {
         b.addEventListener('click', () => start(l));
         li.append(b);
         ol.append(li);
-        open = open && best > 0;
+        open = doneFrom[list.indexOf(l)];
       }
       sec.append(h, keys, ol);
       box.append(sec);

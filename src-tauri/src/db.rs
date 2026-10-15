@@ -182,12 +182,19 @@ pub struct Settings {
     pub skin: String,
     pub accessories: Vec<String>,
     pub wear_style: String,
+    /// Hair colour for the hairstyles: `negro`, `castano` or `rubio`.
+    #[serde(default = "default_hair")]
+    pub hair_color: String,
     /// Count Ctrl/Alt/Win shortcuts by kind (never which one).
     pub count_shortcuts: bool,
     /// Time spent in lessons counts towards the daily goal.
     pub lessons_in_goal: bool,
     /// One shortcut tip a day (only with `count_shortcuts`).
     pub shortcut_tips: bool,
+}
+
+fn default_hair() -> String {
+    "castano".into()
 }
 
 /// Goal choices offered in the settings; anything else falls back to the default.
@@ -233,6 +240,7 @@ pub fn get_settings(conn: &Connection) -> rusqlite::Result<Settings> {
             .map(|v| v.split(',').map(str::trim).filter(|s| !s.is_empty()).map(String::from).collect())
             .unwrap_or_default(),
         wear_style: get_raw(conn, "wear_style")?.filter(|v| v == "subtle").unwrap_or_else(|| "bold".into()),
+        hair_color: get_raw(conn, "hair_color")?.filter(|v| matches!(v.as_str(), "negro" | "castano" | "rubio")).unwrap_or_else(default_hair),
         count_shortcuts: flag("count_shortcuts", true)?,
         lessons_in_goal: flag("lessons_in_goal", true)?,
         shortcut_tips: flag("shortcut_tips", true)?,
@@ -256,6 +264,7 @@ pub fn set_settings(conn: &Connection, s: &Settings) -> rusqlite::Result<()> {
     set_raw(conn, "skin", &id(&s.skin))?;
     set_raw(conn, "accessories", &s.accessories.iter().map(|a| id(a)).filter(|a| !a.is_empty()).take(16).collect::<Vec<_>>().join(","))?;
     set_raw(conn, "wear_style", if s.wear_style == "subtle" { "subtle" } else { "bold" })?;
+    set_raw(conn, "hair_color", if matches!(s.hair_color.as_str(), "negro" | "castano" | "rubio") { &s.hair_color } else { "castano" })?;
     set_raw(conn, "count_shortcuts", b(s.count_shortcuts))?;
     set_raw(conn, "lessons_in_goal", b(s.lessons_in_goal))?;
     set_raw(conn, "shortcut_tips", b(s.shortcut_tips))

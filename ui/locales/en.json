@@ -601,5 +601,10 @@
   "item.flequillo": "Fringe",
   "item.tupe": "Quiff",
   "item.melenita": "Little bob",
-  "pet.mash": "Hey, that's keyboard mashing! 😄 It doesn't count"
+  "pet.mash": "Hey, that's keyboard mashing! 😄 It doesn't count",
+  "wd.hair": "Hair colour",
+  "wd.hair.negro": "Black",
+  "wd.hair.castano": "Brown",
+  "wd.hair.rubio": "Blond",
+  "lessons.key": "Key {keys}"
 }
