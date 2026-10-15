@@ -606,5 +606,11 @@
   "wd.hair.negro": "Noir",
   "wd.hair.castano": "Châtain",
   "wd.hair.rubio": "Blond",
-  "lessons.key": "Touche {keys}"
+  "lessons.key": "Touche {keys}",
+  "lessons.words_short": "Mots courts",
+  "lessons.words_long": "Mots plus longs",
+  "lessons.unit.texts": "Textes",
+  "lessons.kind.text": "Texte {n}",
+  "lessons.review": "Révision",
+  "lessons.words_mid": "Mots moyens"
 }

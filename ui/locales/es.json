@@ -606,5 +606,11 @@
   "wd.hair.negro": "Negro",
   "wd.hair.castano": "Castaño",
   "wd.hair.rubio": "Rubio",
-  "lessons.key": "Tecla {keys}"
+  "lessons.key": "Tecla {keys}",
+  "lessons.words_short": "Palabras cortas",
+  "lessons.words_long": "Palabras más largas",
+  "lessons.unit.texts": "Textos",
+  "lessons.kind.text": "Texto {n}",
+  "lessons.review": "Repaso",
+  "lessons.words_mid": "Palabras medianas"
 }

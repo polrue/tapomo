@@ -606,5 +606,11 @@
   "wd.hair.negro": "Schwarz",
   "wd.hair.castano": "Braun",
   "wd.hair.rubio": "Blond",
-  "lessons.key": "Taste {keys}"
+  "lessons.key": "Taste {keys}",
+  "lessons.words_short": "Kurze Wörter",
+  "lessons.words_long": "Längere Wörter",
+  "lessons.unit.texts": "Texte",
+  "lessons.kind.text": "Text {n}",
+  "lessons.review": "Wiederholung",
+  "lessons.words_mid": "Mittellange Wörter"
 }

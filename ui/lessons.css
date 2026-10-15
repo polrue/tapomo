@@ -30,6 +30,7 @@ body[data-view="lessons"] #range-tabs { visibility: hidden; }
   padding: 14px 16px; border-radius: 14px; background: var(--bg); border: 2px solid var(--line); max-height: 9.5em; overflow-y: auto; cursor: text;
   overflow-wrap: anywhere;
 }
+.ls-word { white-space: nowrap; }
 .ls-ch { border-radius: 4px; }
 .ls-ch.done { color: var(--muted); }
 .ls-ch.err { background: color-mix(in srgb, #ff6f61 22%, transparent); color: var(--ink); }
