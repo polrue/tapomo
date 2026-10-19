@@ -289,7 +289,7 @@
       <path d="M4.5 70 Q4.5 61.5 12.8 61.5 Q21 61.5 21.2 69.5 Q21.4 78 12.8 78 Q4.5 78 4.5 70 Z" fill="__BODY__" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/>
       <path d="M8 66.5 Q10 65 12 66.5 M12.2 66.3 Q14.2 64.8 16.2 66.3" fill="none" stroke="${INK}" stroke-width="1.4" stroke-linecap="round" opacity=".6"/></g>`;
   // Six-pack: soft lighter pads with a faint ink edge, so it reads on every skin (fresa and sésamo too).
-  // ABS_LOW: a slightly smaller pack starting lower, so it shows whole under the (short) beard.
+  // ABS_LOW: a slightly smaller pack starting lower, so it shows whole under the short hipster beard.
   const sixPack = (y0, step, h) => {
     let s = '<g class="rw-abs">';
     for (let r = 0; r < 3; r++) {
@@ -447,7 +447,15 @@
         <path d="M80 92.6 C76.5 89.6 70.5 90.2 67 94 C64.6 96.8 61 97.2 59 94.4 C58.6 98.8 63 101.8 68.4 100.2 C72.8 99.2 77 98 80 96.4 C83 98 87.2 99.2 91.6 100.2 C97 101.8 101.4 98.8 101 94.4 C99 97.2 95.4 96.8 93 94 C89.5 90.2 83.5 89.6 80 92.6 Z" fill="#5a3a2a" stroke="${INK}" stroke-width="2"/>
         <path d="M70 93.6 Q74 92.2 77.4 93.6 M82.6 93.6 Q86 92.2 90 93.6" fill="none" stroke="#9a6a4c" stroke-width="1.3" stroke-linecap="round"/>
       </g>` },
+    // Lumberjack: the original long beard, only raised a little; it covers the six-pack.
     barba: {
+      front: `<g stroke-linejoin="round" transform="translate(0 -6)">
+        <path d="M33 96 Q39 112 58 115 Q70 117 72 120 Q80 124 88 120 Q90 117 102 115 Q121 112 127 96 Q133 128 113 145 Q104 152 96 151 Q88 158 80 154 Q72 158 64 151 Q56 152 47 145 Q27 128 33 96 Z" fill="#b5653a" stroke="${INK}" stroke-width="2.4"/>
+        <path d="M44 120 Q47 130 54 136 M60 124 Q62 134 66 142 M80 128 V146 M100 124 Q98 134 94 142 M116 120 Q113 130 106 136" fill="none" stroke="#8a4724" stroke-width="2" stroke-linecap="round"/>
+        <path d="M40 108 Q44 116 52 119" fill="none" stroke="#e39a6c" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+      </g>` },
+    // Hipster: short, from the cheeks around the mouth; the six-pack shows under it (ABS_LOW).
+    hipster: {
       front: `<g stroke-linejoin="round">
         <path d="M32 82 C26 96 25 113 32 123 C38 131 49 133 56 128 C60 125 62 120 65 117.5 Q72 115.5 76 117 Q80 119.5 84 117 Q88 115.5 95 117.5 C98 120 100 125 104 128 C111 133 122 131 128 123 C135 113 134 96 128 82 C124 88 121 98 118 104 C115 110 108 113 100 111.5 Q94 110 90 111.5 Q80 115 70 111.5 Q66 110 60 111.5 C52 113 45 110 42 104 C39 98 36 88 32 82 Z" fill="#b5653a" stroke="${INK}" stroke-width="2.4"/>
         <path d="M35 98 Q34 110 39 120 M46 113 Q48 121 53 126 M125 98 Q126 110 121 120 M114 113 Q112 121 107 126" fill="none" stroke="#8a4724" stroke-width="2" stroke-linecap="round"/>
@@ -465,7 +473,7 @@
       back: `<g class="rw-arm rw-arm-l">${arm()}</g><g transform="translate(160 0) scale(-1 1)"><g class="rw-arm rw-arm-r">${arm()}</g></g>`,
       front: ABS },
     pesa: {
-      back: `<g transform="translate(160 0) scale(-1 1)"><g class="rw-arm rw-arm-r">${arm(dumbbell)}</g></g>` },
+      back: `<g class="rw-arm rw-arm-l">${arm(dumbbell)}</g><g transform="translate(160 0) scale(-1 1)"><g class="rw-arm rw-arm-r">${arm(dumbbell)}</g></g>` },
     cicatriz: { front: '' }, // drawn from SCAR_POS at paint time
     astronauta: {
       front: `<g stroke-linejoin="round">
@@ -505,9 +513,14 @@
 
   // ------------------------------------------------------------------ catalogue
   const ACC_IDS = ['lacito', 'gafas', 'bufanda', 'auris', 'gorrito', 'pajarita', 'capa', 'chef', 'flores', 'aureola'];
-  const SKIN_IDS = ['clasico', 'fresa', 'matcha', 'mango', 'arandano', 'sesamo', 'dorado', 'mecenas'];
+  // Base colours (cielo … caramelo): free from level 1, like clasico; not level rewards.
+  const BASE_IDS = ['cielo', 'menta', 'lila', 'nube', 'vainilla', 'caramelo'];
+  const SKIN_IDS = ['clasico', ...BASE_IDS, 'fresa', 'matcha', 'mango', 'arandano', 'sesamo', 'dorado', 'mecenas'];
   const SKIN_DEF = {
-    clasico: { base: '#ff9e7a', hi: 0.28 }, fresa: { base: '#ff8fab', hi: 0.3 }, matcha: { base: '#a8cc84', hi: 0.3 },
+    clasico: { base: '#ff9e7a', hi: 0.28 },
+    cielo: { base: '#8ccbf0', hi: 0.3 }, menta: { base: '#74d6bf', hi: 0.3 }, lila: { base: '#c4a8f0', hi: 0.3 },
+    nube: { base: '#c3c9d4', hi: 0.32 }, vainilla: { base: '#f3dcaa', hi: 0.3 }, caramelo: { base: '#c99064', hi: 0.26 },
+    fresa: { base: '#ff8fab', hi: 0.3 }, matcha: { base: '#a8cc84', hi: 0.3 },
     mango: { base: '#ffbf4f', hi: 0.3 }, arandano: { base: '#9aa3ec', hi: 0.3 }, sesamo: { base: '#6d6773', hi: 0.26 },
     dorado: { base: 'gold', hi: 0.34 }, mecenas: { base: '#ffd6e1', hi: 0.4 },
   };
@@ -515,16 +528,16 @@
   // now all real rewards. A pack can hold 1-3 items: never assume pairs.
   const PACKS = [
     [4, 'lacito', 'bigote'], [7, 'gafas', 'gafassol'], [10, 'fresa', 'cejas'], [13, 'bufanda', 'gorra'],
-    [16, 'auris', 'gamer', 'flequillo'], [19, 'matcha', 'parche', 'tupe'], [22, 'gorrito', 'ninja', 'melenita'], [25, 'pajarita', 'barba'],
+    [16, 'auris', 'gamer', 'flequillo'], [19, 'matcha', 'parche', 'tupe'], [22, 'gorrito', 'ninja', 'melenita'], [25, 'pajarita', 'barba', 'hipster'],
     [28, 'mango', 'pesa'], [31, 'capa', 'superheroe'], [34, 'chef', 'vikingo'], [37, 'arandano', 'musculitos'],
     [40, 'flores', 'dino'], [43, 'sesamo', 'cicatriz'], [46, 'aureola', 'astronauta'], [50, 'dorado', null],
   ];
   const THEME = {
     lacito: 'cute', bigote: 'broma', gafas: 'cute', gafassol: 'canero', fresa: 'cute', cejas: 'broma', bufanda: 'cute', gorra: 'canero',
-    auris: 'cute', gamer: 'canero', matcha: 'cute', parche: 'broma', gorrito: 'cute', ninja: 'canero', pajarita: 'cute', barba: 'broma',
+    auris: 'cute', gamer: 'canero', matcha: 'cute', parche: 'broma', gorrito: 'cute', ninja: 'canero', pajarita: 'cute', barba: 'broma', hipster: 'broma',
     mango: 'cute', pesa: 'fuerza', capa: 'cute', superheroe: 'disfraz', chef: 'cute', vikingo: 'canero', arandano: 'cute',
     musculitos: 'fuerza', flores: 'cute', dino: 'disfraz', sesamo: 'cute', cicatriz: 'canero', aureola: 'cute', astronauta: 'disfraz',
-    dorado: 'cute', clasico: 'cute', mecenas: 'cute', flequillo: 'cute', tupe: 'canero', melenita: 'cute',
+    dorado: 'cute', clasico: 'cute', cielo: 'cute', menta: 'cute', lila: 'cute', nube: 'cute', vainilla: 'cute', caramelo: 'cute', mecenas: 'cute', flequillo: 'cute', tupe: 'canero', melenita: 'cute',
   };
   // Where Tapomo's head item ends, per style: how far the record crown and the halo rise above it.
   const LIFT_SUBTLE = { lacito: 0, gorrito: 26, chef: 40, flores: 5 };
@@ -570,6 +583,7 @@
     gamer: { slots: ['orejas'] },
     bigote: { slots: ['bigote'] },
     barba: { slots: ['barba'] },
+    hipster: { slots: ['barba'] },
     cejas: { slots: ['cejas'] },
     parche: { slots: ['ojos'] },
     musculitos: { slots: ['brazos', 'torso'] },
@@ -584,14 +598,14 @@
   };
   const HAIR_IDS = Object.keys(HAIR_ART);
   // The scar's own exclusions depend on where it sits. Only 'mejilla' is used for now.
-  const SCAR_EXCL = { mejilla: [], frente: ['gorrito', 'chef', 'flores', 'gorra', 'vikingo', 'ninja', 'dino'], cuerpo: ['barba', 'bufanda', 'pajarita'] };
+  const SCAR_EXCL = { mejilla: [], frente: ['gorrito', 'chef', 'flores', 'gorra', 'vikingo', 'ninja', 'dino'], cuerpo: ['barba', 'hipster', 'bufanda', 'pajarita'] };
   const SCAR_POS = 'mejilla';
   const slotsOf = (k) => RULES[k].slots;
   const exclOf = (k) => [...(RULES[k].excluye || []), ...(RULES[k].disfraz ? COSTUME_EXCL : []), ...(k === 'cicatriz' ? SCAR_EXCL[SCAR_POS] : [])];
   const excludes = (a, b) => !(RULES[a].permite || []).includes(b) && exclOf(a).some((e) => e === b || (e.startsWith('slot:') && slotsOf(b).includes(e.slice(5))));
   const clash = (a, b) => a !== b && (slotsOf(a).some((z) => slotsOf(b).includes(z)) || excludes(a, b) || excludes(b, a));
 
-  const ITEMS = [{ id: 'clasico', kind: 'skin', level: 1, theme: THEME.clasico, slots: [] }];
+  const ITEMS = ['clasico', ...BASE_IDS].map((id) => ({ id, kind: 'skin', level: 1, base: true, theme: THEME[id], slots: [] }));
   for (const [level, ...ids] of PACKS) {
     for (const id of ids) {
       if (!id) continue;
@@ -610,7 +624,7 @@
   let supporter = false;
   /** Marks this user as a supporter (unlocks the mecenas skin in unlocked()). */
   const setSupporter = (on) => { supporter = !!on; return supporter; };
-  const itemsAt = (level) => ITEMS.filter((i) => i.level === level && i.id !== 'clasico' && !i.supporter).map((i) => i.id);
+  const itemsAt = (level) => ITEMS.filter((i) => i.level === level && !i.base && !i.supporter).map((i) => i.id);
   const unlocked = (level) => ITEMS.filter((i) => (i.supporter ? supporter : i.level <= level)).map((i) => i.id);
   function nextReward(level) {
     const lv = REWARD_LEVELS.find((l) => l > level);
@@ -710,7 +724,7 @@
   }
 
   // Drawing order, back to front: neck, face, hair (over the glasses' arms), hats, brows (over brims), ears, helmet, halo.
-  const FRONT_ORDER = ['capa', 'superheroe', 'musculitos', 'pesa', 'cicatriz', 'barba', 'bufanda', 'pajarita', 'bigote', 'gafas', 'gafassol', 'parche',
+  const FRONT_ORDER = ['capa', 'superheroe', 'musculitos', 'pesa', 'cicatriz', 'barba', 'hipster', 'bufanda', 'pajarita', 'bigote', 'gafas', 'gafassol', 'parche',
     ...HAIR_IDS, 'lacito', 'gorrito', 'chef', 'flores', 'gorra', 'ninja', 'vikingo', 'dino', 'cejas', 'auris', 'gamer', 'astronauta', 'aureola'];
 
   function paint(svg, look, animateNew = true, fresh = null) {
@@ -748,7 +762,7 @@
     const pop = (k) => (animateNew && fresh === k ? ' class="rw-pop"' : '');
     const fix = (html) => tintHair(html, look.hair).replaceAll('__BODY__', bodyFill).replaceAll('-ID)', `-${rw.id})`);
     const backOf = (k) => (PROP_ART[k] ? PROP_ART[k].back || '' : k === 'capa' ? A[k] : '');
-    const frontOf = (k) => (k === 'cicatriz' ? scar(SCAR_XY[SCAR_POS]) : k === 'musculitos' && worn.has('barba') ? ABS_LOW: k === 'flequillo' && worn.has('ninja') ? FRINGE_BAND : PROP_ART[k] ? PROP_ART[k].front || '' : k === 'capa' ? A.capaFront : A[k]);
+    const frontOf = (k) => (k === 'cicatriz' ? scar(SCAR_XY[SCAR_POS]) : k === 'musculitos' && worn.has('hipster') ? ABS_LOW: k === 'flequillo' && worn.has('ninja') ? FRINGE_BAND : PROP_ART[k] ? PROP_ART[k].front || '' : k === 'capa' ? A.capaFront : A[k]);
     const wrap = (k, html) => (html ? `<g data-acc="${k}"${pop(k)}>${html}</g>` : '');
     const order = FRONT_ORDER.filter((k) => worn.has(k));
     rw.back.innerHTML = fix(order.map((k) => wrap(k, backOf(k))).join(''));

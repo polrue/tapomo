@@ -25,6 +25,13 @@
   };
   const SKINS = {
     clasico:  { name: 'Clásico', level: 1, base: '#ff9e7a', hi: .28 },
+    // Proposal (2026-10-17): base colours open from level 1, so Tapomo needn't be coral. Pol picks three.
+    cielo:    { name: 'Azul cielo', level: 1, base: '#8ccbf0', hi: .3, pick: true },
+    menta:    { name: 'Menta', level: 1, base: '#74d6bf', hi: .3, pick: true },
+    lila:     { name: 'Lila', level: 1, base: '#c4a8f0', hi: .3, pick: true },
+    nube:     { name: 'Gris nube', level: 1, base: '#c3c9d4', hi: .32, pick: true },
+    vainilla: { name: 'Vainilla', level: 1, base: '#f3dcaa', hi: .3, pick: true },
+    caramelo: { name: 'Caramelo', level: 1, base: '#c99064', hi: .26, pick: true },
     fresa:    { name: 'Skin fresa', level: 10, base: '#ff8fab', hi: .3 },
     matcha:   { name: 'Skin matcha', level: 19, base: '#a8cc84', hi: .3 },
     mango:    { name: 'Skin mango', level: 28, base: '#ffbf4f', hi: .3 },
@@ -34,7 +41,7 @@
   };
   const REWARDS = [
     ...Object.entries(ACC).map(([id, a]) => ({ id, kind: 'acc', ...a })),
-    ...Object.entries(SKINS).filter(([id]) => id !== 'clasico').map(([id, s]) => ({ id, kind: 'skin', ...s })),
+    ...Object.entries(SKINS).filter(([id, s]) => id !== 'clasico' && !s.pick).map(([id, s]) => ({ id, kind: 'skin', ...s })),
   ].sort((a, b) => a.level - b.level);
 
   // ------------------------------------------------------------------ drawings
@@ -293,11 +300,12 @@
     vikingo:    { name: 'Casco vikingo', tag: 'Cañero', slots: ['cabeza'], lift: 40 },
     gamer:      { name: 'Auriculares gamer', tag: 'Cañero', slots: ['orejas'] },
     bigote:     { name: 'Bigote postizo', tag: 'De broma', slots: ['bigote'] },
-    barba:      { name: 'Barba de leñador', tag: 'De broma', slots: ['barbilla'] },
+    barba:      { name: 'Barba de leñador', tag: 'De broma', slots: ['barbilla'], note: 'La original, un poco más arriba' },
+    hipster:    { name: 'Barba hipster', tag: 'De broma', slots: ['barbilla'], note: 'Corta, de las mejillas alrededor de la boca' },
     cejas:      { name: 'Cejas pobladas', tag: 'De broma', slots: ['cejas'], note: 'Se mueven con la cara' },
     parche:     { name: 'Parche pirata', tag: 'De broma', slots: ['ojos'], note: 'Tapa un ojo' },
     musculitos: { name: 'Musculitos', tag: 'Fuerza', slots: ['brazos', 'torso'], note: 'Brazos y tableta; bíceps al celebrar' },
-    pesa:       { name: 'Pesa', tag: 'Fuerza', slots: ['brazos'], note: 'Un bracito la levanta al celebrar' },
+    pesa:       { name: 'Pesas', tag: 'Fuerza', slots: ['brazos'], note: 'Una en cada bracito; las levanta al celebrar' },
     astronauta: { name: 'Astronauta', tag: 'Disfraz', slots: ['cabeza'], lift: 32 },
     superheroe: { name: 'Superhéroe', tag: 'Disfraz', slots: ['espalda', 'ojos'], note: 'Disfraz completo: capa y antifaz' },
     cicatriz:   { name: 'Cicatriz en X', tag: 'Cañero', slots: ['marca'], note: 'Tres sitios para comparar' },
@@ -309,7 +317,7 @@
   // [level, approved item, proposal, optional hairstyle]: packs hold up to three items.
   const PAIRS = [
     [4, 'lacito', 'bigote'], [7, 'gafas', 'gafassol'], [10, 'fresa', 'cejas'], [13, 'bufanda', 'gorra'],
-    [16, 'auris', 'gamer', 'flequillo'], [19, 'matcha', 'parche', 'tupe'], [22, 'gorrito', 'ninja', 'melenita'], [25, 'pajarita', 'barba'],
+    [16, 'auris', 'gamer', 'flequillo'], [19, 'matcha', 'parche', 'tupe'], [22, 'gorrito', 'ninja', 'melenita'], [25, 'pajarita', 'barba', 'hipster'],
     [28, 'mango', 'pesa'], [31, 'capa', 'superheroe'], [34, 'chef', 'vikingo'], [37, 'arandano', 'musculitos'],
     [40, 'flores', 'dino'], [43, 'sesamo', 'cicatriz'], [46, 'aureola', 'astronauta'], [50, 'dorado', null],
   ];
@@ -338,7 +346,7 @@
       <path d="M4.5 70 Q4.5 61.5 12.8 61.5 Q21 61.5 21.2 69.5 Q21.4 78 12.8 78 Q4.5 78 4.5 70 Z" fill="__BODY__" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/>
       <path d="M8 66.5 Q10 65 12 66.5 M12.2 66.3 Q14.2 64.8 16.2 66.3" fill="none" stroke="${INK}" stroke-width="1.4" stroke-linecap="round" opacity=".6"/></g>`;
   // Six-pack: soft lighter pads with a faint ink edge, so it reads on every skin (fresa and sésamo too).
-  // ABS_LOW: a slightly smaller pack starting lower, so it shows whole under the (short) beard.
+  // ABS_LOW: a slightly smaller pack starting lower, so it shows whole under the short hipster beard.
   const sixPack = (y0, step, h) => {
     let s = '<g class="rw-abs">';
     for (let r = 0; r < 3; r++) {
@@ -497,7 +505,15 @@
         <path d="M80 92.6 C76.5 89.6 70.5 90.2 67 94 C64.6 96.8 61 97.2 59 94.4 C58.6 98.8 63 101.8 68.4 100.2 C72.8 99.2 77 98 80 96.4 C83 98 87.2 99.2 91.6 100.2 C97 101.8 101.4 98.8 101 94.4 C99 97.2 95.4 96.8 93 94 C89.5 90.2 83.5 89.6 80 92.6 Z" fill="#5a3a2a" stroke="${INK}" stroke-width="2"/>
         <path d="M70 93.6 Q74 92.2 77.4 93.6 M82.6 93.6 Q86 92.2 90 93.6" fill="none" stroke="#9a6a4c" stroke-width="1.3" stroke-linecap="round"/>
       </g>` },
+    // Lumberjack: the original long beard (0.3.2 drawing), only raised a little (Pol, 0.7.0).
     barba: {
+      front: `<g stroke-linejoin="round" transform="translate(0 -6)">
+        <path d="M33 96 Q39 112 58 115 Q70 117 72 120 Q80 124 88 120 Q90 117 102 115 Q121 112 127 96 Q133 128 113 145 Q104 152 96 151 Q88 158 80 154 Q72 158 64 151 Q56 152 47 145 Q27 128 33 96 Z" fill="#b5653a" stroke="${INK}" stroke-width="2.4"/>
+        <path d="M44 120 Q47 130 54 136 M60 124 Q62 134 66 142 M80 128 V146 M100 124 Q98 134 94 142 M116 120 Q113 130 106 136" fill="none" stroke="#8a4724" stroke-width="2" stroke-linecap="round"/>
+        <path d="M40 108 Q44 116 52 119" fill="none" stroke="#e39a6c" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+      </g>` },
+    // Hipster: short, from the cheeks around the mouth (the 0.7.0 redraw), leaves the six-pack visible.
+    hipster: {
       front: `<g stroke-linejoin="round">
         <path d="M32 82 C26 96 25 113 32 123 C38 131 49 133 56 128 C60 125 62 120 65 117.5 Q72 115.5 76 117 Q80 119.5 84 117 Q88 115.5 95 117.5 C98 120 100 125 104 128 C111 133 122 131 128 123 C135 113 134 96 128 82 C124 88 121 98 118 104 C115 110 108 113 100 111.5 Q94 110 90 111.5 Q80 115 70 111.5 Q66 110 60 111.5 C52 113 45 110 42 104 C39 98 36 88 32 82 Z" fill="#b5653a" stroke="${INK}" stroke-width="2.4"/>
         <path d="M35 98 Q34 110 39 120 M46 113 Q48 121 53 126 M125 98 Q126 110 121 120 M114 113 Q112 121 107 126" fill="none" stroke="#8a4724" stroke-width="2" stroke-linecap="round"/>
@@ -515,7 +531,7 @@
       back: `<g class="rw-arm rw-arm-l">${arm()}</g><g transform="translate(160 0) scale(-1 1)"><g class="rw-arm rw-arm-r">${arm()}</g></g>`,
       front: ABS },
     pesa: {
-      back: `<g transform="translate(160 0) scale(-1 1)"><g class="rw-arm rw-arm-r">${arm(dumbbell)}</g></g>` },
+      back: `<g class="rw-arm rw-arm-l">${arm(dumbbell)}</g><g transform="translate(160 0) scale(-1 1)"><g class="rw-arm rw-arm-r">${arm(dumbbell)}</g></g>` },
     cicatriz: { front: '' }, // drawn from SCAR_POS at paint time
     astronauta: {
       front: `<g stroke-linejoin="round">
@@ -699,7 +715,7 @@
     fresa: 'sutil: mochi rosa con semillitas · llamativo: disfraz de fresa con hojas',
     dorado: 'sutil: oro quieto · llamativo: destellos de luz cada 5–10 s',
   };
-  const SAME_IN_BOTH = ['flequillo', 'tupe', 'melenita', 'gafas', 'auris', 'pajarita', 'chef', 'aureola', 'gorra', 'gafassol', 'ninja', 'vikingo', 'bigote', 'barba', 'cejas', 'parche', 'pesa', 'cicatriz', 'astronauta', 'superheroe', 'dino', 'clasico', 'matcha', 'mango', 'arandano', 'sesamo'];
+  const SAME_IN_BOTH = ['flequillo', 'tupe', 'melenita', 'gafas', 'auris', 'pajarita', 'chef', 'aureola', 'gorra', 'gafassol', 'ninja', 'vikingo', 'bigote', 'barba', 'hipster', 'cejas', 'parche', 'pesa', 'cicatriz', 'astronauta', 'superheroe', 'dino', 'clasico', 'matcha', 'mango', 'arandano', 'sesamo'];
 
   // ------------------------------------------------------------------ clothing rules
   // Every item declares its slot(s) and what it excludes ('slot:x' = everything in slot x, or an item
@@ -733,6 +749,7 @@
     gamer: { slots: ['orejas'] },
     bigote: { slots: ['bigote'] },
     barba: { slots: ['barba'] },
+    hipster: { slots: ['barba'] },
     cejas: { slots: ['cejas'] },
     parche: { slots: ['ojos'] },
     musculitos: { slots: ['brazos', 'torso'] },
@@ -747,7 +764,7 @@
   };
   const HAIR_IDS = Object.keys(HAIR_ART);
   // The scar's own exclusions depend on where it sits.
-  const SCAR_EXCL = { mejilla: [], frente: ['gorrito', 'chef', 'flores', 'gorra', 'vikingo', 'ninja', 'dino'], cuerpo: ['barba', 'bufanda', 'pajarita'] };
+  const SCAR_EXCL = { mejilla: [], frente: ['gorrito', 'chef', 'flores', 'gorra', 'vikingo', 'ninja', 'dino'], cuerpo: ['barba', 'hipster', 'bufanda', 'pajarita'] };
   const slotsOf = (k) => RULES[k].slots;
   const exclOf = (k) => [...(RULES[k].excluye || []), ...(RULES[k].disfraz ? COSTUME_EXCL : []), ...(k === 'cicatriz' ? SCAR_EXCL[state.scarPos] : [])];
   const excludes = (a, b) => !(RULES[a].permite || []).includes(b) && exclOf(a).some((e) => e === b || (e.startsWith('slot:') && slotsOf(b).includes(e.slice(5))));
@@ -761,7 +778,7 @@
     return off;
   }
   // Drawing order, back to front: neck, face, hair (over the glasses' arms), hats, brows (over brims), ears, helmet, halo.
-  const FRONT_ORDER = ['capa', 'superheroe', 'musculitos', 'pesa', 'cicatriz', 'barba', 'bufanda', 'pajarita', 'bigote', 'gafas', 'gafassol', 'parche',
+  const FRONT_ORDER = ['capa', 'superheroe', 'musculitos', 'pesa', 'cicatriz', 'barba', 'hipster', 'bufanda', 'pajarita', 'bigote', 'gafas', 'gafassol', 'parche',
     ...HAIR_IDS, 'lacito', 'gorrito', 'chef', 'flores', 'gorra', 'ninja', 'vikingo', 'dino', 'cejas', 'auris', 'gamer', 'astronauta', 'aureola'];
 
   function paint(svg, animateNew = true, fresh = null) {
@@ -798,7 +815,7 @@
     const pop = (k) => (animateNew && fresh === k ? ' class="rw-pop"' : '');
     const fix = (html) => tintHair(html, state.hair).replaceAll('__BODY__', bodyFill).replaceAll('-ID)', `-${rw.id})`);
     const backOf = (k) => (PROPS[k] ? PROP_ART[k].back || '' : ACC[k].layer === 'back' ? A[k] : '');
-    const frontOf = (k) => (k === 'cicatriz' ? scar(SCAR_POS[state.scarPos]) : k === 'musculitos' && state.acc.has('barba') ? ABS_LOW: k === 'flequillo' && state.acc.has('ninja') ? FRINGE_BAND : PROPS[k] ? PROP_ART[k].front || '' : k === 'capa' ? A.capaFront : A[k]);
+    const frontOf = (k) => (k === 'cicatriz' ? scar(SCAR_POS[state.scarPos]) : k === 'musculitos' && state.acc.has('hipster') ? ABS_LOW: k === 'flequillo' && state.acc.has('ninja') ? FRINGE_BAND : PROPS[k] ? PROP_ART[k].front || '' : k === 'capa' ? A.capaFront : A[k]);
     const wrap = (k, html) => (html ? `<g data-acc="${k}"${pop(k)}>${html}</g>` : '');
     rw.back.innerHTML = fix(FRONT_ORDER.filter((k) => state.acc.has(k)).map((k) => wrap(k, backOf(k))).join(''));
     rw.front.innerHTML = fix((calyx ? CALYX : '') + FRONT_ORDER.filter((k) => state.acc.has(k)).map((k) => wrap(k, frontOf(k))).join(''));
@@ -881,7 +898,7 @@
     });
     holder.append(b);
   }
-  Object.entries(SKINS).forEach(([k, s]) => chip($('rw-skins'), k, s, 'skin'));
+  Object.entries(SKINS).forEach(([k, s]) => chip($(s.pick || k === 'clasico' ? 'rw-bases' : 'rw-skins'), k, s, 'skin'));
   Object.entries(ACC).forEach(([k, a]) => chip($('rw-acc'), k, a, 'acc'));
 
   const track = $('rw-track');
@@ -894,7 +911,7 @@
 
   function syncChips() {
     syncProps();
-    document.querySelectorAll('#rw-skins .chip').forEach((b) => {
+    document.querySelectorAll('#rw-skins .chip, #rw-bases .chip').forEach((b) => {
       b.classList.toggle('on', b.dataset.key === state.skin);
       b.setAttribute('aria-pressed', String(b.dataset.key === state.skin));
     });
@@ -1023,7 +1040,7 @@
       const p = prop && PROPS[prop];
       tr.innerHTML = `<td class="num">${lv}</td><td class="num">${fmt(xpFor(lv))}</td><td>${a.name}</td>`
         + (p ? `<td>${p.name}<span class="tg ${TAGCLS[p.tag]}">${p.tag}</span></td>` : '<td class="free">hueco libre</td>')
-        + (hairId ? `<td>${PROPS[hairId].name}<span class="tg ${TAGCLS.Pelo}">Pelo</span></td>` : '<td></td>')
+        + (hairId ? `<td>${PROPS[hairId].name}<span class="tg ${TAGCLS[PROPS[hairId].tag]}">${PROPS[hairId].tag}</span></td>` : '<td></td>')
         + '<td></td>';
       const b = document.createElement('button');
       b.type = 'button';
@@ -1101,7 +1118,7 @@
         <li><b>Corona de récord</b> y <b>Modo Supermochi</b> son efectos: van con todo. La corona se sube encima del sombrero o del tupé. El pelo dorado de Supermochi solo sale si llevas un peinado (que se esconde mientras dura); sin peinado, o con sombrero o casco, solo queda el aura.</li>
         <li><b>Peinados</b> (flequillo, tupé, melenita): uno cada vez. Los gorros, cascos y disfraces lo quitan, y ponerte un peinado quita el gorro. La cinta ninja va encima de cualquier peinado (con el flequillo, los mechones asoman por debajo de la cinta). Tres colores de pelo (negro, castaño, rubio) para cualquier peinado. Lazo, flores, auriculares y aureola van encima del pelo.</li>
         <li><b>Capa y musculitos</b> van juntos: la capa queda detrás del cuerpo y de los brazos (relajados o sacando bíceps), la tableta se ve entera y el broche solo va en el cuello.</li>
-        <li><b>Barba</b>: sale de las mejillas y rodea la boca; con musculitos la tableta baja un poco y se ve entera debajo. La cicatriz de la mejilla queda por encima de la barba.</li></ul>
+        <li><b>Barbas</b> (leñador, hipster): una cada vez. La de leñador es larga y tapa la tableta de los musculitos; la hipster sale de las mejillas y rodea la boca, y con musculitos la tableta baja un poco y se ve entera debajo. La cicatriz de la mejilla queda por encima de la barba.</li></ul>
       <p class="rw-sub">Estilo sutil / llamativo (ajuste del usuario)</p>
       <ul class="rules-ex">${Object.entries(STYLE_VARIES).map(([k, v]) => `<li><b>${(itemOf(k) || SKINS[k]).name}</b> cambia. ${v}</li>`).join('')}</ul>
       <p class="note">Iguales en los dos estilos: ${SAME_IN_BOTH.map((k) => (itemOf(k) || SKINS[k]).name.toLowerCase()).join(', ')}.</p>
