@@ -162,6 +162,17 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
              COMMIT;",
         )?;
     }
+    if version < 9 {
+        // Streak protectors replace the weekly comodín from today on; days before keep the old
+        // rule, so no streak made under it breaks. New installs start them on their first day.
+        conn.execute_batch(
+            "BEGIN;
+             INSERT OR IGNORE INTO settings(key, value)
+               VALUES ('protectors_since', CAST(CAST(ROUND(julianday(date('now', 'localtime')) - 2440587.5) AS INTEGER) AS TEXT));
+             PRAGMA user_version = 9;
+             COMMIT;",
+        )?;
+    }
     Ok(())
 }
 
@@ -429,6 +440,13 @@ pub struct DailyGoal {
     pub streak_days: u32,
     pub freeze_used_this_week: bool,
     pub freeze_saved_streak_recently: bool,
+    /// Streak protectors in the bank (0..=2).
+    pub protectors: u8,
+}
+
+/// The day the streak protectors replaced the weekly comodín (set by migration 9).
+pub fn protectors_since(conn: &Connection) -> rusqlite::Result<Option<i64>> {
+    Ok(get_raw(conn, "protectors_since")?.and_then(|v| v.parse().ok()))
 }
 
 /// `open_ms` is the burst still being typed, which is not stored yet.
@@ -437,7 +455,8 @@ pub fn daily_goal(conn: &Connection, open_ms: u64) -> rusqlite::Result<DailyGoal
     let today = today_day(conn)?;
     let mut days = daily_active(conn)?;
     days.push((today, open_ms));
-    let status = tapomo_core::goal_status(&days, today, u64::from(settings.daily_goal_min) * 60_000, settings.weekend_rest);
+    let since = protectors_since(conn)?;
+    let status = tapomo_core::goal_status(&days, today, u64::from(settings.daily_goal_min) * 60_000, settings.weekend_rest, since);
     Ok(DailyGoal {
         goal_min: settings.daily_goal_min,
         today_ms: status.today_ms,
@@ -445,6 +464,7 @@ pub fn daily_goal(conn: &Connection, open_ms: u64) -> rusqlite::Result<DailyGoal
         streak_days: status.streak_days,
         freeze_used_this_week: status.freeze_used_this_week,
         freeze_saved_streak_recently: status.freeze_saved_streak_recently,
+        protectors: status.protectors,
     })
 }
 

@@ -483,18 +483,29 @@ pub struct GoalStatus {
     pub streak_days: u32,
     /// The weekly "comodín" (one free miss per ISO week) has already been spent this week.
     pub freeze_used_this_week: bool,
-    /// The last scheduled day before today was a miss that the comodín covered.
+    /// The last scheduled day before today was a miss that the comodín or a protector covered.
     pub freeze_saved_streak_recently: bool,
+    /// Streak protectors in the bank (0..=[`MAX_PROTECTORS`]); 0 while the protectors are not on.
+    pub protectors: u8,
 }
+
+/// Most streak protectors one can hold.
+pub const MAX_PROTECTORS: u8 = 2;
 
 /// Progress of the daily goal from `(day, active_ms)` pairs (one per day; repeats add up).
 ///
 /// The streak is replayed forward from the first day the goal was met: a met day adds one;
-/// a missed day is covered by the week's comodín if it is still unspent (the streak neither
-/// grows nor breaks), otherwise the streak restarts. With `weekend_rest`, Saturdays and
-/// Sundays only count when met and are never misses. Today never breaks anything: while it
-/// is unmet it is simply still in progress. `goal_ms == 0` means the goal is off.
-pub fn goal_status(days: &[(i64, u64)], today: i64, goal_ms: u64, weekend_rest: bool) -> GoalStatus {
+/// a missed day is covered if there is cover left (the streak neither grows nor breaks),
+/// otherwise the streak restarts. With `weekend_rest`, Saturdays and Sundays only count when
+/// met and are never misses. Today never breaks anything: while it is unmet it is simply still
+/// in progress. `goal_ms == 0` means the goal is off.
+///
+/// Cover: before `protectors_since` (and always when it is `None`) it is the weekly comodín, one
+/// free miss per ISO week that does not carry over. From `protectors_since` on it is the streak
+/// protectors: one in the bank on that day, one more for every full week (Monday to Sunday)
+/// with the streak alive and no protector spent, never more than [`MAX_PROTECTORS`]. Past
+/// streaks keep the rule they were made under.
+pub fn goal_status(days: &[(i64, u64)], today: i64, goal_ms: u64, weekend_rest: bool, protectors_since: Option<i64>) -> GoalStatus {
     let mut by_day: std::collections::HashMap<i64, u64> = std::collections::HashMap::new();
     for &(d, ms) in days.iter().filter(|(d, _)| *d <= today) {
         *by_day.entry(d).or_insert(0) += ms;
@@ -504,24 +515,51 @@ pub fn goal_status(days: &[(i64, u64)], today: i64, goal_ms: u64, weekend_rest: 
         return GoalStatus { today_ms, ..GoalStatus::default() };
     }
     let met = |d: i64| by_day.get(&d).is_some_and(|&ms| ms >= goal_ms);
+    let since = protectors_since.unwrap_or(i64::MAX);
 
     let mut streak = 0u32;
     let mut spent: std::collections::HashSet<i64> = std::collections::HashSet::new();
     let mut last_covered = false;
-    if let Some(first) = by_day.keys().copied().filter(|&d| d < today && met(d)).min() {
+    let mut bank = 0u8;
+    // This week can still earn a protector: it started on its Monday with the protectors on and
+    // nothing broke or was spent since.
+    let mut week_ok = false;
+    let first = by_day.keys().copied().filter(|&d| d < today && met(d)).min();
+    if let Some(first) = first {
+        if first >= since {
+            bank = 1;
+        }
         for d in first..today {
+            if d == since {
+                bank = 1;
+            }
+            if d >= since && weekday(d) == 0 {
+                week_ok = true;
+            }
             if met(d) {
                 streak += 1;
                 last_covered = false;
             } else if weekend_rest && weekday(d) >= 5 {
-                continue;
-            } else if spent.insert(week_start(d)) {
+                // a rest day: neither a miss nor a met day
+            } else if d < since && spent.insert(week_start(d)) {
                 last_covered = true;
+            } else if d >= since && bank > 0 {
+                bank -= 1;
+                last_covered = true;
+                week_ok = false;
             } else {
                 streak = 0;
                 last_covered = false;
+                week_ok = false;
+            }
+            if weekday(d) == 6 && week_ok && streak > 0 {
+                bank = (bank + 1).min(MAX_PROTECTORS);
             }
         }
+    }
+    // With no met day yet, or protectors that start today, the first one is simply waiting.
+    if (first.is_none() && since <= today) || since == today {
+        bank = 1;
     }
     let met_today = met(today);
     if met_today {
@@ -533,6 +571,7 @@ pub fn goal_status(days: &[(i64, u64)], today: i64, goal_ms: u64, weekend_rest: 
         streak_days: streak,
         freeze_used_this_week: spent.contains(&week_start(today)),
         freeze_saved_streak_recently: last_covered && streak > 0,
+        protectors: if today >= since { bank } else { 0 },
     }
 }
 
@@ -780,28 +819,28 @@ mod tests {
 
     #[test]
     fn goal_empty_and_off() {
-        assert_eq!(goal_status(&[], MON, 20 * MIN, false), GoalStatus::default());
-        let off = goal_status(&[met(MON - 1), met(MON)], MON, 0, false);
+        assert_eq!(goal_status(&[], MON, 20 * MIN, false, None), GoalStatus::default());
+        let off = goal_status(&[met(MON - 1), met(MON)], MON, 0, false, None);
         assert_eq!((off.streak_days, off.met_today), (0, false));
         assert_eq!(off.today_ms, 20 * MIN);
     }
 
     #[test]
     fn goal_today_in_progress_does_not_break_the_streak() {
-        let s = goal_status(&[met(MON - 2), met(MON - 1), (MON, 5 * MIN)], MON, 20 * MIN, false);
+        let s = goal_status(&[met(MON - 2), met(MON - 1), (MON, 5 * MIN)], MON, 20 * MIN, false, None);
         assert_eq!((s.streak_days, s.met_today, s.today_ms), (2, false, 5 * MIN));
-        let s = goal_status(&[met(MON - 2), met(MON - 1), met(MON)], MON, 20 * MIN, false);
+        let s = goal_status(&[met(MON - 2), met(MON - 1), met(MON)], MON, 20 * MIN, false, None);
         assert_eq!((s.streak_days, s.met_today), (3, true));
     }
 
     #[test]
     fn goal_one_miss_is_covered() {
         // Mon met, Tue missed, Wed met; today Thursday in progress.
-        let s = goal_status(&[met(MON), met(MON + 2)], MON + 3, 20 * MIN, false);
+        let s = goal_status(&[met(MON), met(MON + 2)], MON + 3, 20 * MIN, false, None);
         assert_eq!(s.streak_days, 2);
         assert!(s.freeze_used_this_week && !s.freeze_saved_streak_recently);
         // Same, but yesterday was the miss: the comodín just saved the streak.
-        let s = goal_status(&[met(MON)], MON + 2, 20 * MIN, false);
+        let s = goal_status(&[met(MON)], MON + 2, 20 * MIN, false, None);
         assert_eq!(s.streak_days, 1);
         assert!(s.freeze_saved_streak_recently);
     }
@@ -809,7 +848,7 @@ mod tests {
     #[test]
     fn goal_two_misses_in_one_week_break() {
         // Mon met, Tue covered, Wed met, Thu missed (breaks), Fri met; today Saturday in progress.
-        let s = goal_status(&[met(MON), met(MON + 2), met(MON + 4)], MON + 5, 20 * MIN, false);
+        let s = goal_status(&[met(MON), met(MON + 2), met(MON + 4)], MON + 5, 20 * MIN, false, None);
         assert_eq!(s.streak_days, 1);
         assert!(!s.freeze_saved_streak_recently);
     }
@@ -818,11 +857,11 @@ mod tests {
     fn goal_new_week_gives_a_new_comodin() {
         // Fri, Sat met; Sun missed (covered, previous week); Mon met; Tue missed (covered, new week); Wed met.
         let days = [met(MON - 3), met(MON - 2), met(MON), met(MON + 2)];
-        let s = goal_status(&days, MON + 3, 20 * MIN, false);
+        let s = goal_status(&days, MON + 3, 20 * MIN, false, None);
         assert_eq!(s.streak_days, 4);
         assert!(s.freeze_used_this_week);
         // The Sunday miss belongs to the previous ISO week, so it does not use this week's comodín.
-        let s = goal_status(&[met(MON - 2), met(MON)], MON + 1, 20 * MIN, false);
+        let s = goal_status(&[met(MON - 2), met(MON)], MON + 1, 20 * MIN, false, None);
         assert_eq!(s.streak_days, 2);
         assert!(!s.freeze_used_this_week);
     }
@@ -831,22 +870,67 @@ mod tests {
     fn goal_weekend_rest_skips_saturday_and_sunday() {
         // Fri met, weekend untouched, Mon met; today Tuesday in progress.
         let days = [met(MON - 3), met(MON)];
-        assert_eq!(goal_status(&days, MON + 1, 20 * MIN, true).streak_days, 2);
+        assert_eq!(goal_status(&days, MON + 1, 20 * MIN, true, None).streak_days, 2);
         // Without the rest option Sat is covered and Sun breaks the streak.
-        assert_eq!(goal_status(&days, MON + 1, 20 * MIN, false).streak_days, 1);
+        assert_eq!(goal_status(&days, MON + 1, 20 * MIN, false, None).streak_days, 1);
         // A weekend day that is met still counts.
-        assert_eq!(goal_status(&[met(MON - 3), met(MON - 2), met(MON)], MON + 1, 20 * MIN, true).streak_days, 3);
+        assert_eq!(goal_status(&[met(MON - 3), met(MON - 2), met(MON)], MON + 1, 20 * MIN, true, None).streak_days, 3);
     }
 
     #[test]
     fn goal_misses_after_a_long_gap_and_future_days_are_ignored() {
-        let s = goal_status(&[met(MON - 30), met(MON - 29)], MON, 20 * MIN, false);
+        let s = goal_status(&[met(MON - 30), met(MON - 29)], MON, 20 * MIN, false, None);
         assert_eq!(s.streak_days, 0);
-        let s = goal_status(&[met(MON), met(MON + 1)], MON, 20 * MIN, false);
+        let s = goal_status(&[met(MON), met(MON + 1)], MON, 20 * MIN, false, None);
         assert_eq!(s.streak_days, 1);
         // Pieces of the same day add up.
-        let s = goal_status(&[(MON, 12 * MIN), (MON, 9 * MIN)], MON, 20 * MIN, false);
+        let s = goal_status(&[(MON, 12 * MIN), (MON, 9 * MIN)], MON, 20 * MIN, false, None);
         assert!(s.met_today);
+    }
+
+    #[test]
+    fn protectors_start_with_one_and_cover_a_miss() {
+        // Protectors on since Monday: Mon met, Tue missed (spends the one), Wed met; today Thursday.
+        let s = goal_status(&[met(MON), met(MON + 2)], MON + 3, 20 * MIN, false, Some(MON));
+        assert_eq!((s.streak_days, s.protectors), (2, 0));
+        // A second miss with the bank empty breaks the streak.
+        let s = goal_status(&[met(MON), met(MON + 2), met(MON + 4)], MON + 5, 20 * MIN, false, Some(MON));
+        assert_eq!((s.streak_days, s.protectors), (1, 0));
+        // No history yet: the first protector is already waiting.
+        assert_eq!(goal_status(&[], MON + 3, 20 * MIN, false, Some(MON)).protectors, 1);
+        // Before the protectors start there are none to show.
+        assert_eq!(goal_status(&[met(MON)], MON + 1, 20 * MIN, false, Some(MON + 5)).protectors, 0);
+    }
+
+    #[test]
+    fn a_clean_week_earns_a_protector_up_to_two() {
+        let week = |from: i64, n: i64| (from..from + n).map(met).collect::<Vec<_>>();
+        // One full week met: 1 + 1 = 2, and two misses in a row are then covered.
+        let mut days = week(MON - 7, 7);
+        assert_eq!(goal_status(&days, MON, 20 * MIN, false, Some(MON - 7)).protectors, 2);
+        days.push(met(MON + 2));
+        let s = goal_status(&days, MON + 3, 20 * MIN, false, Some(MON - 7));
+        assert_eq!((s.streak_days, s.protectors), (8, 0));
+        // Two clean weeks still give only two.
+        assert_eq!(goal_status(&week(MON - 14, 14), MON, 20 * MIN, false, Some(MON - 14)).protectors, 2);
+        // A week that started on Wednesday is not a full week.
+        assert_eq!(goal_status(&week(MON + 2, 5), MON + 7, 20 * MIN, false, Some(MON + 2)).protectors, 1);
+        // A week where one was spent earns nothing.
+        let mut days = week(MON - 7, 7);
+        days.remove(2);
+        assert_eq!(goal_status(&days, MON, 20 * MIN, false, Some(MON - 7)).protectors, 0);
+        // With weekend rest, Monday to Friday met is a full week.
+        let s = goal_status(&week(MON - 7, 5), MON, 20 * MIN, true, Some(MON - 7));
+        assert_eq!((s.streak_days, s.protectors), (5, 2));
+    }
+
+    #[test]
+    fn days_before_the_protectors_keep_the_weekly_comodin() {
+        // Fri, Sat met; Sun missed (comodín); Mon met; Tue missed (comodín); Wed met. Protectors
+        // start today, Thursday: the streak made under the old rule stays whole.
+        let days = [met(MON - 3), met(MON - 2), met(MON), met(MON + 2)];
+        let s = goal_status(&days, MON + 3, 20 * MIN, false, Some(MON + 3));
+        assert_eq!((s.streak_days, s.protectors), (4, 1));
     }
 
     /// Feeds keys described as (class, same as prev, same as prev2) at `gap_ms` apart.

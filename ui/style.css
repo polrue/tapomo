@@ -366,6 +366,8 @@ a.pill, button.pill { display: inline-block; text-decoration: none; padding: 2px
 .goal-streak[data-zero] .flame-core { fill: var(--cell-empty); }
 .goal-days { font-weight: 800; }
 .goal-saved { color: var(--ink); font-size: 0.85rem; font-weight: 700; }
+.goal-shields { font-size: 0.9rem; letter-spacing: 2px; cursor: help; }
+.goal-shields [data-empty] { filter: grayscale(1); opacity: .3; }
 @keyframes goal-pop { 0% { transform: scale(1); } 40% { transform: scale(1.14); } 100% { transform: scale(1); } }
 @media (max-width: 560px) {
   .goal { gap: 10px 16px; }

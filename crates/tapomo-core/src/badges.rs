@@ -131,8 +131,8 @@ pub fn record_count<I: IntoIterator<Item = f64>>(values: I) -> u32 {
     n
 }
 
-/// Longest day streak ever, replaying [`crate::goal_status`] rules day by day (with the weekly comodín).
-pub fn best_day_streak(days: &[(i64, u64)], today: i64, goal_ms: u64, weekend_rest: bool) -> u32 {
+/// Longest day streak ever, replaying [`crate::goal_status`] rules day by day (comodín, then protectors).
+pub fn best_day_streak(days: &[(i64, u64)], today: i64, goal_ms: u64, weekend_rest: bool, protectors_since: Option<i64>) -> u32 {
     if goal_ms == 0 {
         return 0;
     }
@@ -140,7 +140,7 @@ pub fn best_day_streak(days: &[(i64, u64)], today: i64, goal_ms: u64, weekend_re
     met.sort_unstable();
     met.dedup();
     // The streak can only peak on a met day; checking each met day as "today" finds the maximum.
-    met.iter().map(|&d| crate::goal_status(days, d, goal_ms, weekend_rest).streak_days).max().unwrap_or(0)
+    met.iter().map(|&d| crate::goal_status(days, d, goal_ms, weekend_rest, protectors_since).streak_days).max().unwrap_or(0)
 }
 
 /// Some ISO week with the goal met on all its required days (all 7, or Monday–Friday with weekend rest).
@@ -215,8 +215,8 @@ mod tests {
         // 8 met days in a row, a two-miss break, then 2 days.
         let mut days: Vec<(i64, u64)> = (0..8).map(|k| met(MON - 20 + k)).collect();
         days.extend([met(MON - 5), met(MON - 4)]);
-        assert_eq!(best_day_streak(&days, MON, 20 * MIN, false), 8);
-        assert_eq!(best_day_streak(&days, MON, 0, false), 0);
+        assert_eq!(best_day_streak(&days, MON, 20 * MIN, false, None), 8);
+        assert_eq!(best_day_streak(&days, MON, 0, false, None), 0);
     }
 
     #[test]
