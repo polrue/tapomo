@@ -68,9 +68,9 @@ fn award(conn: &Connection, day: i64, kind: &str, amount: u32) -> rusqlite::Resu
 }
 
 /// The goal status of `day`: met, and the day streak it makes.
-fn goal_on(days: &[(i64, u64)], day: i64, settings: &db::Settings) -> Option<u32> {
+fn goal_on(days: &[(i64, u64)], day: i64, settings: &db::Settings, protectors_since: Option<i64>) -> Option<u32> {
     let goal_ms = u64::from(settings.daily_goal_min) * 60_000;
-    let s = tapomo_core::goal_status(days, day, goal_ms, settings.weekend_rest);
+    let s = tapomo_core::goal_status(days, day, goal_ms, settings.weekend_rest, protectors_since);
     s.met_today.then_some(s.streak_days)
 }
 
@@ -115,13 +115,14 @@ pub fn settle(conn: &Connection) -> rusqlite::Result<Settled> {
     let settings = db::get_settings(conn)?;
     let days = db::daily_active(conn)?;
     let chars = daily_chars(conn)?;
+    let protectors = db::protectors_since(conn)?;
     let since = match db::get_raw(conn, "xp_since_day")?.and_then(|v| v.parse::<i64>().ok()) {
         Some(d) => d,
         None => {
             let retro: u32 = chars
                 .iter()
                 .filter(|(d, _)| **d < today)
-                .map(|(&d, &c)| xp::typing_xp(c) + goal_on(&days, d, &settings).map_or(0, |s| xp::GOAL_XP + xp::streak_xp(s)))
+                .map(|(&d, &c)| xp::typing_xp(c) + goal_on(&days, d, &settings, protectors).map_or(0, |s| xp::GOAL_XP + xp::streak_xp(s)))
                 .sum();
             award(conn, today, "retro", retro)?;
             db::set_raw(conn, "xp_since_day", &today.to_string())?;
@@ -135,7 +136,7 @@ pub fn settle(conn: &Connection) -> rusqlite::Result<Settled> {
         let used = shortcuts.iter().filter(|(d, _)| *d == day).map(|(_, n)| *n).sum();
         award(conn, day, "shortcuts", tapomo_core::shortcuts::shortcut_xp(used))?;
         award(conn, day, "typing", xp::typing_xp(chars.get(&day).copied().unwrap_or(0)))?;
-        if let Some(streak) = goal_on(&days, day, &settings) {
+        if let Some(streak) = goal_on(&days, day, &settings, protectors) {
             award(conn, day, "goal", xp::GOAL_XP)?;
             award(conn, day, "streak", xp::streak_xp(streak))?;
         }
