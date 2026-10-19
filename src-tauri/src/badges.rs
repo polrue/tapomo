@@ -57,7 +57,7 @@ fn facts(conn: &Connection) -> rusqlite::Result<Facts> {
         peak_records: badges::record_count(column("SELECT peak_wpm FROM bursts WHERE peak_wpm IS NOT NULL ORDER BY start_ms")?),
         crown_records: badges::record_count(column("SELECT best_streak FROM bursts ORDER BY start_ms")?),
         beating_bursts: beating_bursts(conn)?,
-        best_day_streak: badges::best_day_streak(&days, today, goal_ms, settings.weekend_rest),
+        best_day_streak: badges::best_day_streak(&days, today, goal_ms, settings.weekend_rest, db::protectors_since(conn)?),
         early_bird: exists(format!("SELECT 1 FROM bursts WHERE {HOUR} < 8"))?,
         night_owl: exists(format!("SELECT 1 FROM bursts WHERE {HOUR} >= 23"))?,
         full_goal_week: badges::full_goal_week(&days, goal_ms, settings.weekend_rest),

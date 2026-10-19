@@ -107,6 +107,19 @@ async function renderGoal() {
   const saved = $('goal-saved');
   saved.hidden = !g.freeze_saved_streak_recently || g.streak_days === 0;
   if (!saved.hidden) saved.textContent = t('goal.saved');
+  // Streak protectors: filled shields in the bank, faded ones for the empty slots.
+  const shields = $('goal-shields');
+  const n = g.protectors || 0;
+  shields.hidden = g.protectors === undefined;
+  shields.replaceChildren(...[0, 1].map((i) => {
+    const s = document.createElement('span');
+    s.textContent = '🛡️';
+    s.toggleAttribute('data-empty', i >= n);
+    s.setAttribute('aria-hidden', 'true');
+    return s;
+  }));
+  shields.setAttribute('aria-label', t('goal.protectors', { n: fmt(n) }));
+  shields.title = `${t('goal.protectors', { n: fmt(n) })}\n${t('goal.protectors_tip')}`;
 }
 
 /** Goal reached: the ring pulses and Tapomo throws stars. */
