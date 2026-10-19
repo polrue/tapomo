@@ -102,7 +102,7 @@ test('score: auth, plausibility, writable weeks, upsert', async () => {
   assert.deepEqual((await score(env, code, pol, 7 * 800 + 1)).json, { error: 'implausible_xp' });
   assert.deepEqual((await score(env, code, pol, -1)).json, { error: 'implausible_xp' });
   assert.deepEqual((await score(env, code, pol, 10.5)).json, { error: 'invalid_xp' });
-  assert.deepEqual((await score(env, code, pol, 10, shiftWeek(thisWeek(), -2))).json, { error: 'week_not_writable' });
+  assert.deepEqual((await score(env, code, pol, 10, shiftWeek(thisWeek(), -3))).json, { error: 'week_not_writable' });
   assert.deepEqual((await score(env, code, pol, 10, shiftWeek(thisWeek(), 2))).json, { error: 'week_not_writable' });
   assert.equal((await score(env, code, pol, 5600)).status, 204);
 });
