@@ -132,3 +132,11 @@
 .wd-swatch { width: 30px; height: 30px; border-radius: 999px; padding: 0; background: var(--sw); border: 3px solid var(--card); box-shadow: 0 0 0 2px var(--line); cursor: pointer; }
 .wd-swatch:hover { box-shadow: 0 0 0 2px var(--accent); background: var(--sw); }
 .wd-swatch[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--accent-strong); }
+
+/* ------------------------------------------- corrected keys (0.9) */
+.cr-keys { list-style: none; display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 10px; padding: 0; }
+.cr-keys:empty { display: none; }
+.cr-keys li { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.cr-keys kbd { min-width: 2.6rem; padding: 8px 10px; text-align: center; font: 800 1.3rem ui-monospace, Consolas, monospace; border-radius: 10px; background: var(--card); border: 1px solid var(--line); border-bottom-width: 3px; }
+.cr-keys small { color: var(--muted); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.cr-go { margin: 0 0 6px; }

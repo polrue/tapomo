@@ -153,8 +153,18 @@ const Lessons = (() => {
   function practiceText(lesson, layout, seed) {
     const r = rng(seed);
     const hard = [...lesson.newKeys];
-    const pool = (LessonWords[langOf(layout).lang] || []).filter((w) => hard.some((k) => w.includes(k)));
+    const words = LessonWords[langOf(layout).lang] || [];
+    const pool = words.filter((w) => hard.some((k) => w.includes(k)));
     const all = langOf(layout).letters;
+    // Words that contain the hardest letter pairs join the mix (0.9: «binomios»).
+    const pairs = lesson.bigrams || [];
+    const pairWords = pairs.length ? words.filter((w) => pairs.some((b) => w.includes(b))) : [];
+    if (pairWords.length >= 3) {
+      const parts = [drill({ newKeys: lesson.newKeys, known: all }, seed, 60)];
+      if (pool.length >= 5) parts.push(fill(r, pool, 70));
+      parts.push(fill(r, pairWords, 80));
+      return parts.join(' ');
+    }
     const half = drill({ newKeys: lesson.newKeys, known: all }, seed, 90);
     return pool.length >= 5 ? `${half} ${fill(r, pool, 100)}` : drill({ newKeys: lesson.newKeys, known: all }, seed, 180);
   }
@@ -247,11 +257,50 @@ const Lessons = (() => {
   }
 
   let hard = [];
+  let bigrams = [];
+  let practiceKeys = [];
+
+  /** Keys to practise: the lesson ones first, then the most corrected keys of everyday typing that are
+   * not there yet, at most 6. */
+  function mergeKeys(lessonKeys, corrected) {
+    const out = [];
+    const has = (c) => out.some((o) => o.toLowerCase() === c.toLowerCase());
+    for (const c of [...lessonKeys, ...corrected]) {
+      if (out.length >= 6) break;
+      if (c && /\S/.test(c) && !has(c)) out.push(c);
+    }
+    return out;
+  }
+
+  async function correctedChars() {
+    if (typeof settings !== 'undefined' && settings && settings.count_corrections === false) return [];
+    const rows = await invoke('top_corrected_keys', { days: 30, n: 5 }).catch(() => []);
+    const map = Keyboard.charMap(layout);
+    return rows.map((r) => Keyboard.charForVk(layout, r.vk)).filter((c) => c && map.has(c));
+  }
 
   async function refresh() {
     layout = layout || defaultLayout();
-    [progress, hard] = await Promise.all([invoke('get_lessons_progress', { layout }), invoke('get_hard_keys', { layout }).catch(() => [])]);
+    let corrected;
+    [progress, hard, bigrams, corrected] = await Promise.all([
+      invoke('get_lessons_progress', { layout }),
+      invoke('get_hard_keys', { layout }).catch(() => []),
+      invoke('get_hard_bigrams', { layout }).catch(() => []),
+      correctedChars(),
+    ]);
+    practiceKeys = mergeKeys(hard, corrected);
     renderMap();
+  }
+
+  function startPractice() {
+    start({ id: 'practice', unit: 'practice', index: 0, newKeys: practiceKeys.join(''), bigrams: bigrams.slice(0, 3), known: '', kind: 'practice', base: 20 });
+  }
+
+  /** From the «Teclas que más corriges» card: open the lessons and start the practice at once. */
+  async function practiceNow() {
+    open();
+    await refresh();
+    if (practiceKeys.length) startPractice();
   }
 
   function renderMap() {
@@ -296,11 +345,13 @@ const Lessons = (() => {
     }
     // "Práctica de tus teclas difíciles": once the lessons know a few keys you miss more.
     const prac = $('ls-practice');
-    const keys = hard.filter((k) => /\S/.test(k)).slice(0, 5);
-    prac.hidden = keys.length < 3;
+    prac.hidden = practiceKeys.length < 3;
     if (!prac.hidden) {
-      $('ls-practice-keys').textContent = keys.join('  ');
-      $('ls-practice-go').onclick = () => start({ id: 'practice', unit: 'practice', index: 0, newKeys: keys.join(''), known: '', kind: 'practice', base: 20 });
+      $('ls-practice-keys').textContent = practiceKeys.join('  ');
+      const pairs = $('ls-practice-pairs');
+      pairs.hidden = bigrams.length === 0;
+      pairs.textContent = bigrams.length ? t('lessons.practice.bigrams', { pairs: bigrams.slice(0, 3).join(' · ') }) : '';
+      $('ls-practice-go').onclick = startPractice;
     }
     const ba = progress.before_after;
     $('ls-real').hidden = !ba;
@@ -313,7 +364,7 @@ const Lessons = (() => {
   // --------------------------------------------------------------- runner
   function start(lesson, seed = Date.now()) {
     const text = textFor(lesson, layout, seed);
-    run = { lesson, text, pos: 0, errAt: new Set(), keys: new Map(), started: 0, lastAt: 0, target: targetFor(lesson) };
+    run = { lesson, text, pos: 0, errAt: new Set(), keys: new Map(), pairs: new Map(), started: 0, lastAt: 0, target: targetFor(lesson) };
     $('ls-map').hidden = true;
     $('ls-result').hidden = true;
     $('ls-run').hidden = false;
@@ -373,6 +424,9 @@ const Lessons = (() => {
     if (!run.started) run.started = run.lastAt = now;
     const want = run.text[run.pos];
     const stat = run.keys.get(want) || { key: want, hits: 0, misses: 0, ms: 0 };
+    // The pair "previous letter + this letter" of OUR lesson text (letters only, never across a space).
+    const pairKey = run.pos > 0 ? (run.text[run.pos - 1] + want).toLowerCase() : '';
+    const pair = /^\p{L}\p{L}$/u.test(pairKey) ? (run.pairs.get(pairKey) || { pair: pairKey, hits: 0, misses: 0, ms: 0 }) : null;
     const code = Keyboard.charMap(layout).get(want);
     const firstCode = Array.isArray(code) ? code[0].code : code && code.code;
     if (ch === want) {
@@ -381,17 +435,19 @@ const Lessons = (() => {
       run.bestClean = Math.max(run.bestClean || 0, run.clean);
       stat.hits++;
       stat.ms += Math.round(now - run.lastAt);
+      if (pair) { pair.hits++; pair.ms += Math.round(now - run.lastAt); }
       run.lastAt = now;
       run.pos++;
       kb.flash(firstCode, true);
       Mascot.keyTick($('mascot'));
     } else {
       run.clean = 0;
-      if (!run.errAt.has(run.pos)) stat.misses++;
+      if (!run.errAt.has(run.pos)) { stat.misses++; if (pair) pair.misses++; }
       run.errAt.add(run.pos);
       kb.flash(firstCode, false);
     }
     run.keys.set(want, stat);
+    if (pair) run.pairs.set(pair.pair, pair);
     paint();
     if (run.pos >= run.text.length) finish();
   }
@@ -405,7 +461,7 @@ const Lessons = (() => {
     try {
       saved = await invoke('save_lesson', {
         run: {
-          lesson_id: run.lesson.id, layout, duration_ms: Math.round(ms), wpm, accuracy, target_wpm: run.target, keys: [...run.keys.values()],
+          lesson_id: run.lesson.id, layout, duration_ms: Math.round(ms), wpm, accuracy, target_wpm: run.target, keys: [...run.keys.values()], bigrams: [...run.pairs.values()],
           chars: run.text.length, best_run: run.bestClean || 0,
         },
       });
@@ -471,5 +527,5 @@ const Lessons = (() => {
     $('ls-text').addEventListener('click', () => input.focus());
   }
 
-  return { bind, open, close, refresh, catalogue, textFor, UNITS };
+  return { bind, open, close, refresh, practiceNow, layout: () => layout || defaultLayout(), catalogue, textFor, UNITS };
 })();

@@ -43,8 +43,9 @@ thread_local! {
     /// Which virtual keys are currently held (hook thread only), to spot auto-repeat.
     /// A lost key-up (e.g. Win+L) only costs that key's next press.
     static DOWN: RefCell<[bool; 256]> = const { RefCell::new([false; 256]) };
-    /// The last two character keys (hook thread only, never sent anywhere): only "same as before?"
-    /// leaves the hook, to recognise mashing like "aaaa" or "asasas".
+    /// The last two character keys (hook thread only): only "same as before?" leaves the hook, to
+    /// recognise mashing like "aaaa" or "asasas". The one exception is the key right before a plain
+    /// Backspace (see `corrected_vk`), sent as a single number and turned into a daily counter.
     static LAST: RefCell<[u32; 2]> = const { RefCell::new([u32::MAX; 2]) };
 }
 
@@ -145,6 +146,15 @@ unsafe fn handle(wparam: WPARAM, lparam: LPARAM) {
                     r
                 })
             } else {
+                // A plain Backspace right after a character key: that one key (and only that one,
+                // so held-down backspaces count once) goes out as a number, before LAST is reset.
+                if class == KeyClass::Backspace {
+                    if let Some(key) = LAST.with(|l| super::corrected_vk(l.borrow()[0])) {
+                        if let Some(tx) = SENDER.get() {
+                            let _ = tx.send(Msg::Corrected { vk: key, hwnd: GetForegroundWindow().0 as isize });
+                        }
+                    }
+                }
                 LAST.with(|l| *l.borrow_mut() = [u32::MAX; 2]);
                 tapomo_core::Repeat::default()
             };

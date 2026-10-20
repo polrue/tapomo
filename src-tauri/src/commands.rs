@@ -172,6 +172,18 @@ pub fn get_hard_keys(state: State<AppState>, layout: String) -> CmdResult<Vec<St
     state.with_db(|c| crate::lessons::hard_keys(c, &layout, 6))
 }
 
+/// Letter pairs of the lesson texts the user misses most (for the custom practice).
+#[tauri::command]
+pub fn get_hard_bigrams(state: State<AppState>, layout: String) -> CmdResult<Vec<String>> {
+    state.with_db(|c| crate::lessons::hard_bigrams(c, &layout, 3))
+}
+
+/// The keys pressed most often right before a Backspace in the last `days` days.
+#[tauri::command]
+pub fn top_corrected_keys(state: State<AppState>, days: u32, n: usize) -> CmdResult<Vec<crate::corrections::Corrected>> {
+    state.with_db(|c| crate::corrections::top(c, days, n.min(20)))
+}
+
 /// Today's shortcut tip (one a day), if any.
 #[tauri::command]
 pub fn get_shortcut_tip(state: State<AppState>, lang: String) -> CmdResult<Option<crate::catalog::Tip>> {
@@ -364,6 +376,7 @@ fn changed_settings(old: &Settings, new: &Settings) -> Vec<&'static str> {
         ("count_shortcuts", old.count_shortcuts != new.count_shortcuts),
         ("lessons_in_goal", old.lessons_in_goal != new.lessons_in_goal),
         ("shortcut_tips", old.shortcut_tips != new.shortcut_tips),
+        ("count_corrections", old.count_corrections != new.count_corrections),
     ]
     .into_iter()
     .filter_map(|(name, changed)| changed.then_some(name))

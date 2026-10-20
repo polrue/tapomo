@@ -52,6 +52,7 @@
         <div class="ls-practice" id="ls-practice" hidden>
           <div><strong data-i18n="lessons.practice.title"></strong><p class="hint" data-i18n="lessons.practice.text"></p></div>
           <span class="ls-practice-keys" id="ls-practice-keys"></span>
+          <p class="hint ls-practice-pairs" id="ls-practice-pairs" hidden></p>
           <button type="button" id="ls-practice-go" data-i18n="lessons.practice.go"></button>
         </div>
         <div class="ls-units" id="ls-units"></div>
@@ -163,6 +164,14 @@
       </div>
       <p class="sc-line muted" id="sc-line"></p>
       <ul class="chips sc-kinds" id="sc-kinds"></ul>
+    </section>
+
+    <section class="card corrections" id="corrections" aria-labelledby="cr-title" hidden>
+      <h2><span id="cr-title" data-i18n="corrections.title"></span></h2>
+      <p class="muted cr-empty" id="cr-empty" data-i18n="corrections.empty" hidden></p>
+      <ul class="cr-keys" id="cr-keys"></ul>
+      <button type="button" class="cr-go" id="cr-go" data-i18n="corrections.practice" hidden></button>
+      <p class="hint" data-i18n="corrections.privacy"></p>
     </section>
 
     <section class="card challenges" id="challenges" aria-labelledby="ch-title" hidden>
@@ -347,6 +356,8 @@
 
       <label class="check"><input id="s-shortcuts" type="checkbox"><span data-i18n="settings.count_shortcuts"></span></label>
       <p class="hint" data-i18n="settings.count_shortcuts.hint"></p>
+      <label class="check"><input id="s-corrections" type="checkbox"><span data-i18n="settings.count_corrections"></span></label>
+      <p class="hint" data-i18n="settings.count_corrections.hint"></p>
       <label class="check"><input id="s-sc-tips" type="checkbox"><span data-i18n="settings.shortcut_tips"></span></label>
       <label class="check"><input id="s-autostart" type="checkbox"><span data-i18n="settings.autostart"></span></label>
       <label class="check"><input id="s-fullscreen" type="checkbox"><span data-i18n="settings.fullscreen"></span></label>
@@ -397,6 +408,7 @@
       <p class="privacy" data-i18n="about.privacy"></p>
       <p class="privacy" data-i18n="about.privacy_passwords"></p>
       <p class="privacy" data-i18n="about.privacy_shortcuts"></p>
+      <p class="privacy" data-i18n="about.privacy_corrections"></p>
       <p><button type="button" id="welcome-again" data-i18n="welcome.again"></button></p>
       <p class="links">
         <a href="https://github.com/polrue/tapomo" target="_blank" rel="noopener" data-i18n="about.source"></a>
@@ -519,6 +531,7 @@
   <script src="lessons.js"></script>
   <script src="records.js"></script>
   <script src="shortcuts.js"></script>
+  <script src="corrections.js"></script>
   <script src="album.js"></script>
   <script src="social.js"></script>
   <script src="support.js"></script>

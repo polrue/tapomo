@@ -98,29 +98,51 @@ XP **acumulada** para llegar al nivel *n*: `47 × (n − 1)^1.8`.
   - Un usuario normal llega al nivel 50 en un año.
   - No hay tope: se puede seguir subiendo después del 50.
 - **Premios:**
-  - Hay uno cada 3 niveles y otro final en el 50.
+  - Hay un premio en los niveles 4, 7, 10, 13, 16 y 19, y luego en cada nivel del 21 al 50; el último es el skin dorado del 50.
   - En la primera semana, un usuario normal recibe como mucho un premio, y uno intenso, dos.
 
-Cada nivel con premio desbloquea un **pack de dos** (decidido el 14-10-2026): uno tierno y otro cañero, de broma, de fuerza o un disfraz. Se elige estilo, no se etiqueta para chicos o chicas.
+Cada nivel con premio desbloquea **un solo premio** (antes eran packs de dos o tres cada 3 niveles): tierno, cañero, de broma, de fuerza o un disfraz. Se elige estilo, no se etiqueta para chicos o chicas.
 
-| Nivel | XP | Premio 1 | Premio 2 |
-|---|---|---|---|
-| 4 | 340 | Lacito | Bigote postizo |
-| 7 | 1.182 | Gafas redondas | Gafas de sol de chulito |
-| 10 | 2.453 | Skin fresa | Cejas pobladas |
-| 13 | 4.117 | Bufanda | Gorra al revés |
-| 16 | 6.153 | Auriculares | Auriculares gamer |
-| 19 | 8.543 | Skin matcha | Parche pirata |
-| 22 | 11.274 | Gorrito de lana | Cinta ninja |
-| 25 | 14.338 | Pajarita | Barba de leñador |
-| 28 | 17.724 | Skin mango | Pesa |
-| 31 | 21.425 | Capa | Disfraz de superhéroe |
-| 34 | 25.434 | Gorro de chef | Casco vikingo |
-| 37 | 29.747 | Skin arándano | Musculitos |
-| 40 | 34.357 | Corona de flores | Disfraz de dinosaurio |
-| 43 | 39.260 | Skin sésamo negro | Cicatriz en X |
-| 46 | 44.451 | Aureola de estrellitas | Disfraz de astronauta |
-| 50 | 51.814 | Skin Tapomo dorado | *(libre)* |
+**Quien ya tenía premios no pierde ninguno:** la primera vez que arranca la versión nueva, la app guarda (`tapomo.legacy_unlocked`, en `localStorage`) la lista de lo que la tabla antigua ya le había desbloqueado a su nivel. Esa lista se suma a la tabla nueva y esos premios no se vuelven a anunciar al subir de nivel. Si el nivel 4 no se había alcanzado, la lista queda vacía. La tabla antigua sigue en `ui/wardrobe.js` como `LEGACY_PACKS`.
+
+| Nivel | XP | Premio |
+|---|---|---|
+| 4 | 340 | Gafas de sol de chulito |
+| 7 | 1.182 | Lacito |
+| 10 | 2.453 | Skin fresa |
+| 13 | 4.117 | Bigote postizo |
+| 16 | 6.153 | Flequillo |
+| 19 | 8.543 | Bufanda |
+| 21 | 10.326 | Gorra al revés |
+| 22 | 11.274 | Cejas pobladas |
+| 23 | 12.259 | Gafas redondas |
+| 24 | 13.280 | Skin matcha |
+| 25 | 14.338 | Auriculares gamer |
+| 26 | 15.431 | Tupé |
+| 27 | 16.560 | Parche pirata |
+| 28 | 17.724 | Auriculares |
+| 29 | 18.923 | Barba de leñador |
+| 30 | 20.156 | Gorrito de lana |
+| 31 | 21.425 | Cinta ninja |
+| 32 | 22.727 | Skin mango |
+| 33 | 24.064 | Melenita |
+| 34 | 25.434 | Pajarita |
+| 35 | 26.839 | Pesa |
+| 36 | 28.276 | Capa |
+| 37 | 29.747 | Barba hipster |
+| 38 | 31.251 | Disfraz de superhéroe |
+| 39 | 32.788 | Skin arándano |
+| 40 | 34.357 | Casco vikingo |
+| 41 | 35.959 | Gorro de chef |
+| 42 | 37.593 | Musculitos |
+| 43 | 39.260 | Corona de flores |
+| 44 | 40.958 | Cicatriz en X |
+| 45 | 42.689 | Disfraz de dinosaurio |
+| 46 | 44.451 | Skin sésamo negro |
+| 47 | 46.245 | Aureola de estrellitas |
+| 48 | 48.070 | Disfraz de astronauta |
+| 49 | 49.927 | Traje de rockero |
+| 50 | 51.814 | Skin Tapomo dorado |
 
 - **Reglas del personaje:**
   - Los accesorios se añaden encima de Tapomo.
@@ -183,4 +205,4 @@ Cada atajo del catálogo tiene su propio nivel, según los **días distintos** e
    - Niveles de atajo: «Aprendiendo», «Cogiendo el tranquillo», «Casi lo tienes» y «Dominado».
 2. **Reparto:** se queda en un 55 % escribir y un 45 % hábitos.
 3. **Ritmo de los niveles:** el usuario normal llega al nivel 50 en un año. Ver «Niveles».
-4. **Premios:** uno cada 3 niveles, con accesorios y skins.
+4. **Premios:** uno casi cada nivel, con accesorios y skins.
