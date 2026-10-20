@@ -27,6 +27,8 @@ const FULLSCREEN_CHECK: Duration = Duration::from_millis(500);
 const EXE_CACHE_TTL: Duration = Duration::from_secs(30);
 /// How often counted shortcuts are turned into XP.
 const SHORTCUT_SETTLE: Duration = Duration::from_secs(30);
+/// How often the tick looks for a new local week (the cached weekly record is rebuilt on Monday).
+const WEEK_CHECK: Duration = Duration::from_secs(60);
 
 /// Messages for the worker thread.
 pub enum Msg {
@@ -77,6 +79,8 @@ pub struct Shared {
     /// When the last key of any kind arrived, in ms since the Unix epoch (0 = none yet). Only a
     /// time: the updater uses it to install while nobody is typing.
     pub last_key_ms: AtomicU64,
+    /// A stored peak was changed from outside the tracker (the record was deleted): rebuild the cached peaks.
+    pub peaks_dirty: AtomicBool,
 }
 
 impl Shared {
@@ -113,6 +117,8 @@ struct Live {
     zone: Option<&'static str>,
     /// All-time best 10 s peak as a percentage of the reference.
     record_percent: Option<f64>,
+    /// This week's best 10 s peak as a percentage of the reference (the «récord semanal» marker).
+    week_record_percent: Option<f64>,
     calibrating: Option<Calibrating>,
     streak: Streak,
 }
@@ -163,6 +169,10 @@ struct Tracker {
     reference: Option<f64>,
     peak_count: usize,
     max_peak: Option<f64>,
+    /// Best peak since Monday, and the Monday (Unix ms) it was read for, so a new week resets it.
+    week_max_peak: Option<f64>,
+    week_start: i64,
+    week_checked: Instant,
     /// Time of the last accepted key of the open burst; `None` once it is closed.
     last_key_ms: Option<u64>,
     live_active: bool,
@@ -205,6 +215,9 @@ impl Tracker {
             reference: None,
             peak_count: 0,
             max_peak: None,
+            week_max_peak: None,
+            week_start: 0,
+            week_checked: Instant::now(),
             last_key_ms: None,
             live_active: false,
             goal_ms: 0,
@@ -284,6 +297,7 @@ impl Tracker {
                     self.last_key_ms = None;
                 }
                 self.finish_burst(burst);
+                self.sync_week();
                 self.sync_goal();
                 self.shared.streak.store(self.engine.current_streak(), Ordering::Relaxed);
                 self.emit_live(now);
@@ -435,7 +449,10 @@ impl Tracker {
             return;
         }
         // Records against the values from before this burst (the first peak or run is not a record).
+        // The week may have turned since the last burst: compare with this week's best, not last week's.
+        self.sync_week();
         let peak_record = burst.peak_wpm.zip(self.max_peak).is_some_and(|(p, max)| p > max);
+        let week_record = burst.peak_wpm.zip(self.week_max_peak).is_some_and(|(p, max)| p > max);
         let streak_record = self.saved_best > 0 && burst.best_streak > self.saved_best;
         if burst.peak_wpm.zip(self.reference).is_some_and(|(p, r)| p >= r * badges::BEATING_SHARE) {
             if let Err(e) = badges::add_beating_burst(&self.conn) {
@@ -446,6 +463,10 @@ impl Tracker {
         self.refresh_reference();
         self.goal_stored_ms += burst.duration_ms();
         let _ = self.app.emit("tapomo://burst", ());
+        // Speed records: the absolute one wins over the weekly one (never both).
+        if peak_record || week_record {
+            let _ = self.app.emit("tapomo://peak-record", serde_json::json!({ "all_time": peak_record }));
+        }
         if peak_record || streak_record {
             if let Err(e) = xp::add_record(&self.conn) {
                 log::error!("could not save record XP: {e}");
@@ -544,6 +565,26 @@ impl Tracker {
             }
             Err(e) => log::error!("could not read peaks: {e}"),
         }
+        match db::week_max_peak(&self.conn) {
+            Ok(max) => self.week_max_peak = max,
+            Err(e) => log::error!("could not read the week's peak: {e}"),
+        }
+        if let Ok(start) = db::week_start_ms(&self.conn) {
+            self.week_start = start;
+        }
+        self.week_checked = Instant::now();
+    }
+
+    /// Rebuilds the cached peaks when one was deleted from the UI, and when Monday comes round
+    /// (checked once a minute: the week's best must not outlive the week).
+    fn sync_week(&mut self) {
+        let dirty = self.shared.peaks_dirty.swap(false, Ordering::Relaxed);
+        let due = self.week_checked.elapsed() >= WEEK_CHECK;
+        if dirty || (due && db::week_start_ms(&self.conn).is_ok_and(|s| s != self.week_start)) {
+            self.refresh_reference();
+        } else if due {
+            self.week_checked = Instant::now();
+        }
     }
 
     /// `tapomo://live` every tick while a burst is open, plus one empty payload when it closes.
@@ -567,6 +608,7 @@ impl Tracker {
             percent,
             zone: percent.map(|p| Zone::of(p).id()),
             record_percent: self.max_peak.zip(self.reference).map(|(m, r)| m / r * 100.0),
+            week_record_percent: self.week_max_peak.zip(self.reference).map(|(m, r)| m / r * 100.0),
             calibrating: self
                 .reference
                 .is_none()

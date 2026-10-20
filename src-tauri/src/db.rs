@@ -344,6 +344,92 @@ pub fn peak_data(conn: &Connection) -> rusqlite::Result<(Vec<f64>, Option<f64>)>
     Ok((peaks, max))
 }
 
+/// This week's best 10 s peak (the week starts on Monday, local time), if any burst long enough was typed.
+pub fn week_max_peak(conn: &Connection) -> rusqlite::Result<Option<f64>> {
+    conn.query_row("SELECT MAX(peak_wpm) FROM bursts WHERE peak_wpm IS NOT NULL AND start_ms >= ?1", [week_start_ms(conn)?], |r| r.get(0))
+}
+
+/// Monday 00:00 of the current week in Unix ms; the week boundary uses the local time zone.
+/// `weekday 0` moves to the coming Sunday (or stays on one), so `-6 days` is always that week's Monday.
+pub(crate) fn week_start_ms(conn: &Connection) -> rusqlite::Result<i64> {
+    conn.query_row(
+        "SELECT CAST(strftime('%s', 'now', 'localtime', 'weekday 0', '-6 days', 'start of day', 'utc') AS INTEGER) * 1000",
+        [],
+        |r| r.get(0),
+    )
+}
+
+/// The four speeds under the live bar. Each is `None` while there is nothing to show.
+#[derive(Debug, Serialize, PartialEq)]
+pub struct SpeedSummary {
+    /// Best 10 s peak since Monday.
+    pub week_record: Option<f64>,
+    /// Gross speed of today's bursts, duration-weighted like `summary`.
+    pub today_avg: Option<f64>,
+    /// Gross speed of the latest burst long enough to have a peak.
+    pub last_burst: Option<f64>,
+    /// Best 10 s peak ever.
+    pub all_time: Option<f64>,
+}
+
+/// Gross wpm of `intervals` (chars - 1) typed in `ms`, as `summary` and `Burst::gross_wpm` do.
+fn gross_wpm(intervals: i64, ms: i64) -> Option<f64> {
+    (ms > 0).then(|| intervals.max(0) as f64 / 5.0 / (ms as f64 / 60_000.0))
+}
+
+pub fn speed_summary(conn: &Connection) -> rusqlite::Result<SpeedSummary> {
+    let (intervals, dur_ms): (i64, i64) = conn.query_row(
+        "SELECT COALESCE(SUM(MAX(chars - 1, 0)), 0), COALESCE(SUM(end_ms - start_ms), 0) FROM bursts WHERE start_ms >= ?1",
+        [range_start_ms(conn, "today")?],
+        |r| Ok((r.get(0)?, r.get(1)?)),
+    )?;
+    let last: Option<(i64, i64)> = conn
+        .query_row(
+            "SELECT chars - 1, end_ms - start_ms FROM bursts WHERE peak_wpm IS NOT NULL ORDER BY start_ms DESC LIMIT 1",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .optional()?;
+    Ok(SpeedSummary {
+        week_record: week_max_peak(conn)?,
+        today_avg: gross_wpm(intervals, dur_ms),
+        last_burst: last.and_then(|(intervals, ms)| gross_wpm(intervals, ms)),
+        all_time: conn.query_row("SELECT MAX(peak_wpm) FROM bursts WHERE peak_wpm IS NOT NULL", [], |r| r.get(0))?,
+    })
+}
+
+/// The all-time best peak with its context, and the runner-up (what a reset would fall back to).
+#[derive(Debug, Serialize, PartialEq)]
+pub struct TopPeak {
+    pub burst_id: i64,
+    pub value: f64,
+    pub at_ms: i64,
+    pub app: String,
+    pub next: Option<f64>,
+}
+
+pub fn top_peak(conn: &Connection) -> rusqlite::Result<Option<TopPeak>> {
+    let mut stmt = conn.prepare(
+        "SELECT b.id, b.peak_wpm, b.start_ms, COALESCE(NULLIF(a.alias, ''), a.exe)
+         FROM bursts b JOIN apps a ON a.id = b.app_id WHERE b.peak_wpm IS NOT NULL
+         ORDER BY b.peak_wpm DESC, b.start_ms ASC LIMIT 2",
+    )?;
+    let rows = stmt
+        .query_map([], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, f64>(1)?, r.get::<_, i64>(2)?, r.get::<_, String>(3)?)))?
+        .collect::<rusqlite::Result<Vec<_>>>()?;
+    let next = rows.get(1).map(|r| r.1);
+    Ok(rows.into_iter().next().map(|(burst_id, value, at_ms, app)| TopPeak { burst_id, value, at_ms, app, next }))
+}
+
+/// Forgets the speed of the top peak (only that: characters, XP and badges stay). Returns whether it
+/// did; a stale `burst_id` that is no longer the top does nothing.
+pub fn discard_peak(conn: &Connection, burst_id: i64) -> rusqlite::Result<bool> {
+    if top_peak(conn)?.is_none_or(|t| t.burst_id != burst_id) {
+        return Ok(false);
+    }
+    Ok(conn.execute("UPDATE bursts SET peak_wpm = NULL WHERE id = ?1", [burst_id])? > 0)
+}
+
 pub fn set_alias(conn: &Connection, exe: &str, alias: &str) -> rusqlite::Result<()> {
     let alias = alias.trim();
     let alias = (!alias.is_empty()).then_some(alias);
@@ -606,4 +692,89 @@ pub fn apps(conn: &Connection, range: &str) -> rusqlite::Result<Vec<AppStat>> {
         })
     })?;
     rows.collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tapomo_core::Burst;
+
+    fn mem() -> Connection {
+        static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+        let n = N.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!("tapomo-db-{}-{n}.db", std::process::id()));
+        let _ = std::fs::remove_file(&path);
+        open(&path).unwrap()
+    }
+
+    fn now(c: &Connection) -> i64 {
+        c.query_row("SELECT CAST(strftime('%s', 'now') AS INTEGER) * 1000", [], |r| r.get(0)).unwrap()
+    }
+
+    fn burst(c: &Connection, exe: &str, start: i64, secs: i64, chars: u32, peak: Option<f64>) {
+        let app = intern_app(c, exe).unwrap();
+        let (start_ms, end_ms) = (start as u64, (start + secs * 1000) as u64);
+        insert_burst(c, &Burst { app_id: app, start_ms, end_ms, chars, backspaces: 0, word_deletes: 0, peak_wpm: peak, best_streak: 0, mash: false }).unwrap();
+    }
+
+    #[test]
+    fn week_starts_on_a_monday_at_midnight() {
+        let c = mem();
+        let start = week_start_ms(&c).unwrap();
+        let n = now(&c);
+        assert!(start <= n && n - start < 7 * 86_400_000 + 3_600_000);
+        // %w is 1 for Monday.
+        let (wd, hms): (String, String) = c
+            .query_row(
+                "SELECT strftime('%w', ?1 / 1000, 'unixepoch', 'localtime'), strftime('%H:%M:%S', ?1 / 1000, 'unixepoch', 'localtime')",
+                [start],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .unwrap();
+        assert_eq!((wd.as_str(), hms.as_str()), ("1", "00:00:00"));
+        // The same modifiers on fixed dates: Sunday maps six days back, Monday to itself.
+        let monday = |day: &str| -> String { c.query_row("SELECT date(?1, 'weekday 0', '-6 days')", [day], |r| r.get(0)).unwrap() };
+        assert_eq!(monday("2026-10-18"), "2026-10-12"); // Sunday
+        assert_eq!(monday("2026-10-19"), "2026-10-19"); // Monday
+        assert_eq!(monday("2026-10-24"), "2026-10-19"); // Saturday
+    }
+
+    #[test]
+    fn speed_summary_empty_and_with_data() {
+        let c = mem();
+        assert_eq!(speed_summary(&c).unwrap(), SpeedSummary { week_record: None, today_avg: None, last_burst: None, all_time: None });
+        let n = now(&c);
+        // 61 chars in 60 s and 31 in 30 s are both 12 wpm; the newest burst is short (no peak), so it is skipped for last_burst.
+        burst(&c, "a.exe", n - 200_000, 60, 61, Some(50.0));
+        burst(&c, "a.exe", n - 120_000, 30, 31, Some(40.0));
+        burst(&c, "a.exe", n - 60_000, 2, 100, None);
+        // Older than any week, and the best ever.
+        burst(&c, "a.exe", n - 30 * 86_400_000, 60, 61, Some(90.0));
+        let s = speed_summary(&c).unwrap();
+        assert_eq!(s.all_time, Some(90.0));
+        assert_eq!(s.last_burst.map(|v| v.round()), Some(12.0));
+        assert_eq!(s.week_record, Some(50.0));
+    }
+
+    #[test]
+    fn discard_peak_only_removes_the_top() {
+        let c = mem();
+        assert!(top_peak(&c).unwrap().is_none());
+        let n = now(&c);
+        burst(&c, "a.exe", n - 300_000, 30, 100, Some(60.0));
+        burst(&c, "b.exe", n - 200_000, 30, 100, Some(80.0));
+        burst(&c, "a.exe", n - 100_000, 30, 100, Some(70.0));
+        let top = top_peak(&c).unwrap().unwrap();
+        assert_eq!((top.value, top.next, top.app.as_str()), (80.0, Some(70.0), "b.exe"));
+        // A burst that is not the top is left alone.
+        assert!(!discard_peak(&c, top.burst_id - 1).unwrap());
+        assert_eq!(top_peak(&c).unwrap().unwrap().value, 80.0);
+        assert!(discard_peak(&c, top.burst_id).unwrap());
+        let top = top_peak(&c).unwrap().unwrap();
+        assert_eq!((top.value, top.next), (70.0, Some(60.0)));
+        // The burst and its characters are still there.
+        let chars: i64 = c.query_row("SELECT SUM(chars) FROM bursts", [], |r| r.get(0)).unwrap();
+        assert_eq!(chars, 300);
+        assert_eq!(speed_summary(&c).unwrap().all_time, Some(70.0));
+    }
 }

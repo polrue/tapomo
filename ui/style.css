@@ -234,6 +234,10 @@ a { color: var(--accent-strong); font-weight: 700; }
 .live-label-record { bottom: 0; color: #b07d00; }
 /* Pinned at the right end: the label sits under the marker, ending just past it. */
 .live-label-record[data-pinned] { transform: translateX(calc(-100% + 8px)); }
+.live-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 12px; margin: 0 0 10px; }
+.live-stats dt { font-size: 0.72rem; color: var(--muted); }
+.live-stats dd { margin: 0; font-weight: 800; font-variant-numeric: tabular-nums; }
+@media (max-width: 520px) { .live-stats { grid-template-columns: repeat(2, 1fr); } }
 .live-note { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; min-height: 1.4em; }
 .live-text { margin: 0; color: var(--muted); min-height: 1.4em; }
 .live[data-calibrating] .live-tick, .live[data-calibrating] .live-label-pace { display: none; }
