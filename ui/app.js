@@ -319,9 +319,34 @@ function renderLanguageSelect() {
   for (const code of LANGUAGES) select.append(new Option(dictionaries[code].name || code, code));
 }
 
+/** The four small speeds under the live bar. */
+async function renderSpeedStats() {
+  const s = await invoke('speed_summary');
+  const show = (id, v) => { $(id).textContent = v == null ? '–' : `${fmt(v)} ${t('unit.wpm')}`; };
+  show('stat-week', s.week_record);
+  show('stat-today', s.today_avg);
+  show('stat-last', s.last_burst);
+  show('stat-best', s.all_time);
+}
+
+/** Settings: forget the top speed peak (e.g. one made by mashing the keyboard) after confirming it. */
+async function resetTopPeak() {
+  const top = await invoke('top_peak');
+  if (!top) {
+    alert(t('settings.peak_reset.none'));
+    return;
+  }
+  const date = new Date(top.at_ms).toLocaleDateString(document.documentElement.lang, { weekday: 'long', day: 'numeric', month: 'long' });
+  const vars = { wpm: fmt(top.value), date, app: top.app.replace(/\.exe$/i, ''), next: top.next == null ? '' : fmt(top.next) };
+  if (!confirm(t(top.next == null ? 'settings.peak_reset.confirm_last' : 'settings.peak_reset.confirm', vars))) return;
+  await invoke('discard_top_peak', { burstId: top.burst_id });
+  renderSpeedStats().catch(showError);
+}
+
 async function refreshAll() {
   renderTabs();
   try {
+    renderSpeedStats().catch(showError);
     renderYesterday().catch(showError);
     renderGoal().catch(showError);
     Progress.refresh(range).then(() => Badges.refresh()).then(() => League.refresh()).catch(showError);
@@ -411,6 +436,7 @@ function bindControls() {
   });
 
   $('open-logs').addEventListener('click', () => invoke('open_logs_dir').catch(showError));
+  $('peak-reset').addEventListener('click', () => resetTopPeak().catch(showError));
   $('crypt-btn').addEventListener('click', async () => {
     if (!confirm(t('crypt.confirm'))) return;
     $('crypt-btn').disabled = true;
@@ -544,17 +570,25 @@ function paintLive(p) {
   // Record marker: only once there is a reference to compare against.
   const rec = $('live-record');
   const recLabel = $('live-record-label');
-  const showRec = !cal && p.record_percent != null;
+  const recPercent = p.week_record_percent;
+  const showRec = !cal && recPercent != null;
   rec.hidden = recLabel.hidden = !showRec;
   if (showRec) {
-    const pinned = p.record_percent > BAR_MAX;
-    const left = `${(Math.min(p.record_percent, BAR_MAX) / BAR_MAX) * 100}%`;
+    const pinned = recPercent > BAR_MAX;
+    const left = `${(Math.min(recPercent, BAR_MAX) / BAR_MAX) * 100}%`;
     rec.style.left = recLabel.style.left = left;
     rec.toggleAttribute('data-pinned', pinned);
     recLabel.toggleAttribute('data-pinned', pinned);
-    const recWpm = ref ? (p.record_percent * ref) / 100 : null;
-    const recText = recWpm ? `${t('live.record')} · ${fmt(recWpm)} ${t('unit.wpm')}` : t('live.record');
+    const recWpm = ref ? (recPercent * ref) / 100 : null;
+    const recText = recWpm ? `${t('live.week_record')} · ${fmt(recWpm)} ${t('unit.wpm')}` : t('live.week_record');
     recLabel.textContent = pinned ? `${recText} →` : recText;
+    // Near the end of a narrow bar the centred label would spill out of the card: keep it inside.
+    const wrapW = recLabel.parentElement.clientWidth;
+    const half = recLabel.offsetWidth / 2;
+    if (!pinned && wrapW > 0) {
+      const x = (Math.min(recPercent, BAR_MAX) / BAR_MAX) * wrapW;
+      recLabel.style.left = `${Math.min(Math.max(x, half), wrapW - half)}px`;
+    }
   }
 }
 
@@ -799,6 +833,7 @@ async function bindEvents() {
   await listen('tapomo://live', (e) => renderLive(e.payload));
   await listen('tapomo://burst', scheduleRefresh);
   await listen('tapomo://record', blush);
+  await listen('tapomo://peak-record', (e) => { if (e.payload && e.payload.all_time) blush(); });
   await listen('tapomo://goal', goalReached);
   await listen('tapomo://xp', (e) => Progress.onXp(e.payload).catch(showError));
   await listen('tapomo://shortcut', () => Shortcuts.bump());

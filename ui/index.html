@@ -94,6 +94,12 @@
           <span class="live-label live-label-record" id="live-record-label" hidden></span>
         </div>
       </div>
+      <dl class="live-stats" id="live-stats">
+        <div><dt data-i18n="live.stat.week"></dt><dd id="stat-week">–</dd></div>
+        <div><dt data-i18n="live.stat.today"></dt><dd id="stat-today">–</dd></div>
+        <div><dt data-i18n="live.stat.last"></dt><dd id="stat-last">–</dd></div>
+        <div><dt data-i18n="live.stat.best"></dt><dd id="stat-best">–</dd></div>
+      </dl>
       <div class="live-note"><p class="live-text" id="live-text"></p><button type="button" class="info" id="live-burst-info" data-tip="tip.longburst" data-i18n-aria="tip.more" hidden>i</button></div>
     </section>
 
@@ -366,6 +372,10 @@
       <h3 data-i18n="settings.logs"></h3>
       <p class="hint" data-i18n="settings.logs.hint"></p>
       <button type="button" id="open-logs" data-i18n="settings.logs.open"></button>
+
+      <h3 data-i18n="settings.peak_reset"></h3>
+      <p class="hint" data-i18n="settings.peak_reset.hint"></p>
+      <button type="button" class="ghost" id="peak-reset" data-i18n="settings.peak_reset.button"></button>
 
       <h3 data-i18n="settings.exclusions"></h3>
       <p class="hint" data-i18n="settings.exclusions.hint"></p>

@@ -105,6 +105,30 @@ pub fn get_records(state: State<AppState>) -> CmdResult<Vec<crate::records::Reco
     state.with_db(crate::records::list)
 }
 
+/// The four speeds under the live bar (weekly record, today's average, last burst, all-time record).
+#[tauri::command]
+pub fn speed_summary(state: State<AppState>) -> CmdResult<db::SpeedSummary> {
+    state.with_db(db::speed_summary)
+}
+
+/// The all-time best peak with its context and the runner-up, for the «borrar récord» confirmation.
+#[tauri::command]
+pub fn top_peak(state: State<AppState>) -> CmdResult<Option<db::TopPeak>> {
+    state.with_db(db::top_peak)
+}
+
+/// Forgets the speed of the top peak only (nothing else changes). Returns false when `burst_id` is no
+/// longer the top. The tracker rebuilds its cached records and every window reloads its data.
+#[tauri::command]
+pub fn discard_top_peak(app: AppHandle, state: State<AppState>, burst_id: i64) -> CmdResult<bool> {
+    let done = state.with_db(|c| db::discard_peak(c, burst_id))?;
+    if done {
+        state.shared.peaks_dirty.store(true, Ordering::Relaxed);
+        let _ = app.emit("tapomo://burst", ());
+    }
+    Ok(done)
+}
+
 /// Stores a finished lesson, gives its XP and tells every window, like the tracker does for typing.
 #[tauri::command]
 pub fn save_lesson(app: AppHandle, state: State<AppState>, run: crate::lessons::LessonRun) -> CmdResult<crate::lessons::Saved> {
