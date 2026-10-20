@@ -5,7 +5,7 @@
 // mochi, never its shape or face. Styles live in wardrobe.css. Load after mascot.js.
 //
 // API: Wardrobe.ITEMS, REWARD_LEVELS, itemsAt, unlocked, nextReward, clashes, wear, set, get,
-//      decorate, preview, setSupporter. Display names are NOT here: the app uses the i18n keys `item.<id>`.
+//      decorate, preview, setSupporter, grandfather. Display names are NOT here: the app uses the i18n keys `item.<id>`.
 (() => {
   'use strict';
   if (window.Wardrobe) return;
@@ -475,6 +475,17 @@
     pesa: {
       back: `<g class="rw-arm rw-arm-l">${arm(dumbbell)}</g><g transform="translate(160 0) scale(-1 1)"><g class="rw-arm rw-arm-r">${arm(dumbbell)}</g></g>` },
     cicatriz: { front: '' }, // drawn from SCAR_POS at paint time
+    // White and gold stage suit: a tall collar behind the body, and trousers with a big buckle clipped to it.
+    rockero: {
+      back: `<g stroke-linejoin="round"><path d="M36 112 C22 100 10 78 6 50 C16 58 26 64 34 66 Z" fill="#fbf8f1" stroke="${INK}" stroke-width="2.4"/><path d="M30 105 C20 94 12 76 10 58" fill="none" stroke="#f4c542" stroke-width="3" stroke-linecap="round"/><circle cx="17" cy="66" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="21" cy="81" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="27" cy="94" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/><g transform="translate(160 0) scale(-1 1)"><path d="M36 112 C22 100 10 78 6 50 C16 58 26 64 34 66 Z" fill="#fbf8f1" stroke="${INK}" stroke-width="2.4"/><path d="M30 105 C20 94 12 76 10 58" fill="none" stroke="#f4c542" stroke-width="3" stroke-linecap="round"/><circle cx="17" cy="66" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="21" cy="81" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="27" cy="94" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/></g></g>`,
+      front: `<g clip-path="url(#rw-clip-ID)" stroke-linejoin="round">
+        <path d="M22 116 Q80 124 138 116 L138 146 L22 146 Z" fill="#fbf8f1" stroke="${INK}" stroke-width="2.2"/>
+        <circle cx="36" cy="121" r="1.5" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="48" cy="122.2" r="1.5" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="60" cy="123" r="1.5" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="100" cy="123" r="1.5" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="112" cy="122.2" r="1.5" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="124" cy="121" r="1.5" fill="#f4c542" stroke="${INK}" stroke-width="1"/>
+        <path d="M22 123 Q80 131 138 123 L138 131 Q80 139 22 131 Z" fill="#f4c542" stroke="${INK}" stroke-width="2"/>
+        <circle cx="40" cy="129" r="1.3" fill="#fff"/><circle cx="52" cy="130" r="1.3" fill="#fff"/><circle cx="108" cy="130" r="1.3" fill="#fff"/><circle cx="120" cy="129" r="1.3" fill="#fff"/>
+        <rect x="69" y="124" width="22" height="13" rx="3.5" fill="#ffd95a" stroke="${INK}" stroke-width="2"/>
+        <circle cx="80" cy="130.5" r="3" fill="#e8455a" stroke="${INK}" stroke-width="1.2"/>
+      </g>` },
     astronauta: {
       front: `<g stroke-linejoin="round">
         <path d="M28.7 128 A66 70 0 1 1 131.3 128" fill="#cfe9ff" fill-opacity=".2" stroke="${INK}" stroke-width="2.6"/>
@@ -524,9 +535,17 @@
     mango: { base: '#ffbf4f', hi: 0.3 }, arandano: { base: '#9aa3ec', hi: 0.3 }, sesamo: { base: '#6d6773', hi: 0.26 },
     dorado: { base: 'gold', hi: 0.34 }, mecenas: { base: '#ffd6e1', hi: 0.4 },
   };
-  // [level, approved item, second item, optional third (hairstyles)]; the original lab "PAIRS" table,
-  // now all real rewards. A pack can hold 1-3 items: never assume pairs.
+  // [level, item id]: one reward per level (0.8.0), so ITEMS/itemsAt/nextReward keep working per level.
   const PACKS = [
+    [4, 'gafassol'], [7, 'lacito'], [10, 'fresa'], [13, 'bigote'], [16, 'flequillo'], [19, 'bufanda'], [21, 'gorra'], [22, 'cejas'], [23, 'gafas'],
+    [24, 'matcha'], [25, 'gamer'], [26, 'tupe'], [27, 'parche'], [28, 'auris'], [29, 'barba'], [30, 'gorrito'], [31, 'ninja'], [32, 'mango'],
+    [33, 'melenita'], [34, 'pajarita'], [35, 'pesa'], [36, 'capa'], [37, 'hipster'], [38, 'superheroe'], [39, 'arandano'], [40, 'vikingo'],
+    [41, 'chef'], [42, 'musculitos'], [43, 'flores'], [44, 'cicatriz'], [45, 'dino'], [46, 'sesamo'], [47, 'aureola'], [48, 'astronauta'],
+    [49, 'rockero'], [50, 'dorado'],
+  ];
+  // The table of 0.7.x (packs every 3 levels, rockero absent). Kept only so nobody loses what they had:
+  // grandfather() snapshots what it unlocked at the user's level the first time the new code runs.
+  const LEGACY_PACKS = [
     [4, 'lacito', 'bigote'], [7, 'gafas', 'gafassol'], [10, 'fresa', 'cejas'], [13, 'bufanda', 'gorra'],
     [16, 'auris', 'gamer', 'flequillo'], [19, 'matcha', 'parche', 'tupe'], [22, 'gorrito', 'ninja', 'melenita'], [25, 'pajarita', 'barba', 'hipster'],
     [28, 'mango', 'pesa'], [31, 'capa', 'superheroe'], [34, 'chef', 'vikingo'], [37, 'arandano', 'musculitos'],
@@ -535,7 +554,7 @@
   const THEME = {
     lacito: 'cute', bigote: 'broma', gafas: 'cute', gafassol: 'canero', fresa: 'cute', cejas: 'broma', bufanda: 'cute', gorra: 'canero',
     auris: 'cute', gamer: 'canero', matcha: 'cute', parche: 'broma', gorrito: 'cute', ninja: 'canero', pajarita: 'cute', barba: 'broma', hipster: 'broma',
-    mango: 'cute', pesa: 'fuerza', capa: 'cute', superheroe: 'disfraz', chef: 'cute', vikingo: 'canero', arandano: 'cute',
+    mango: 'cute', pesa: 'fuerza', capa: 'cute', superheroe: 'disfraz', rockero: 'broma', chef: 'cute', vikingo: 'canero', arandano: 'cute',
     musculitos: 'fuerza', flores: 'cute', dino: 'disfraz', sesamo: 'cute', cicatriz: 'canero', aureola: 'cute', astronauta: 'disfraz',
     dorado: 'cute', clasico: 'cute', cielo: 'cute', menta: 'cute', lila: 'cute', nube: 'cute', vainilla: 'cute', caramelo: 'cute', mecenas: 'cute', flequillo: 'cute', tupe: 'canero', melenita: 'cute',
   };
@@ -589,9 +608,10 @@
     musculitos: { slots: ['brazos', 'torso'] },
     pesa: { slots: ['brazos'] },
     cicatriz: { slots: ['marca'] },
-    astronauta: { slots: ['cuerpo', 'cabeza'], disfraz: true },
+    astronauta: { slots: ['cuerpo', 'cabeza'], disfraz: true, permite: ['flequillo', 'tupe', 'melenita'] },
+    rockero: { slots: ['cuello', 'torso'], excluye: ['slot:espalda', 'slot:cuerpo'] },
     dino: { slots: ['cuerpo', 'cabeza'], disfraz: true },
-    superheroe: { slots: ['cuerpo', 'espalda', 'ojos'], disfraz: true, permite: ['musculitos'] },
+    superheroe: { slots: ['cuerpo', 'espalda', 'ojos'], disfraz: true, permite: ['musculitos', 'pesa', 'flequillo', 'tupe', 'melenita'] },
     flequillo: { slots: ['pelo'] },
     tupe: { slots: ['pelo'] },
     melenita: { slots: ['pelo'] },
@@ -624,10 +644,27 @@
   let supporter = false;
   /** Marks this user as a supporter (unlocks the mecenas skin in unlocked()). */
   const setSupporter = (on) => { supporter = !!on; return supporter; };
-  const itemsAt = (level) => ITEMS.filter((i) => i.level === level && !i.base && !i.supporter).map((i) => i.id);
-  const unlocked = (level) => ITEMS.filter((i) => (i.supporter ? supporter : i.level <= level)).map((i) => i.id);
+
+  // Ids the old (0.7.x) table had already unlocked for this user. Taken once, the first time the real level
+  // is known, then stored for good (localStorage: the settings live in Rust and need no new field for this).
+  const LEGACY_KEY = 'tapomo.legacy_unlocked';
+  let legacy = new Set();
+  const legacyAt = (level) => LEGACY_PACKS.filter((p) => p[0] <= level).flatMap((p) => p.slice(1)).filter(Boolean);
+  /** Call with the user's real level (>= 1) as soon as it is known; later calls do nothing. */
+  function grandfather(level) {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(LEGACY_KEY)); } catch (_) { /* storage can be unavailable */ }
+    if (!Array.isArray(saved)) {
+      if (!(level >= 1)) return;
+      saved = legacyAt(level);
+      try { localStorage.setItem(LEGACY_KEY, JSON.stringify(saved)); } catch (_) { /* then it is retaken next launch */ }
+    }
+    legacy = new Set(saved.filter((id) => BY_ID[id]));
+  }
+  const itemsAt = (level) => ITEMS.filter((i) => i.level === level && !i.base && !i.supporter && !legacy.has(i.id)).map((i) => i.id);
+  const unlocked = (level) => ITEMS.filter((i) => (i.supporter ? supporter : i.level <= level || legacy.has(i.id))).map((i) => i.id);
   function nextReward(level) {
-    const lv = REWARD_LEVELS.find((l) => l > level);
+    const lv = REWARD_LEVELS.find((l) => l > level && itemsAt(l).length);
     return lv === undefined ? null : { level: lv, ids: itemsAt(lv) };
   }
   const clashes = (a, b) => isAcc(a) && isAcc(b) && clash(a, b);
@@ -724,7 +761,7 @@
   }
 
   // Drawing order, back to front: neck, face, hair (over the glasses' arms), hats, brows (over brims), ears, helmet, halo.
-  const FRONT_ORDER = ['capa', 'superheroe', 'musculitos', 'pesa', 'cicatriz', 'barba', 'hipster', 'bufanda', 'pajarita', 'bigote', 'gafas', 'gafassol', 'parche',
+  const FRONT_ORDER = ['capa', 'superheroe', 'rockero', 'musculitos', 'pesa', 'cicatriz', 'barba', 'hipster', 'bufanda', 'pajarita', 'bigote', 'gafas', 'gafassol', 'parche',
     ...HAIR_IDS, 'lacito', 'gorrito', 'chef', 'flores', 'gorra', 'ninja', 'vikingo', 'dino', 'cejas', 'auris', 'gamer', 'astronauta', 'aureola'];
 
   function paint(svg, look, animateNew = true, fresh = null) {
@@ -762,13 +799,13 @@
     const pop = (k) => (animateNew && fresh === k ? ' class="rw-pop"' : '');
     const fix = (html) => tintHair(html, look.hair).replaceAll('__BODY__', bodyFill).replaceAll('-ID)', `-${rw.id})`);
     const backOf = (k) => (PROP_ART[k] ? PROP_ART[k].back || '' : k === 'capa' ? A[k] : '');
-    const frontOf = (k) => (k === 'cicatriz' ? scar(SCAR_XY[SCAR_POS]) : k === 'musculitos' && worn.has('hipster') ? ABS_LOW: k === 'flequillo' && worn.has('ninja') ? FRINGE_BAND : PROP_ART[k] ? PROP_ART[k].front || '' : k === 'capa' ? A.capaFront : A[k]);
+    const frontOf = (k) => (k === 'astronauta' && worn.has('tupe') ? `<g transform="translate(80 132) scale(1.16) translate(-80 -132)">${PROP_ART.astronauta.front}</g>` : k === 'cicatriz' ? scar(SCAR_XY[SCAR_POS]) : k === 'musculitos' && worn.has('hipster') ? ABS_LOW: k === 'flequillo' && worn.has('ninja') ? FRINGE_BAND : PROP_ART[k] ? PROP_ART[k].front || '' : k === 'capa' ? A.capaFront : A[k]);
     const wrap = (k, html) => (html ? `<g data-acc="${k}"${pop(k)}>${html}</g>` : '');
     const order = FRONT_ORDER.filter((k) => worn.has(k));
     rw.back.innerHTML = fix(order.map((k) => wrap(k, backOf(k))).join(''));
     rw.front.innerHTML = fix((calyx ? CALYX : '') + order.map((k) => wrap(k, frontOf(k))).join(''));
     const headLift = !head ? 0 : ((!bold && STYLE_VARIES.includes(head) ? LIFT_SUBTLE[head] : LIFT_BOLD[head]) || 0);
-    const up = Math.max(headLift, hair ? LIFT_HAIR[hair] : 0) + (calyx ? 12 : 0);
+    const up = Math.max(headLift, hair ? LIFT_HAIR[hair] : 0) + (calyx ? 12 : 0) + (head === 'astronauta' && hair === 'tupe' ? 19 : 0);
     rw.lift.setAttribute('transform', `translate(0 ${-up})`);
     const zzz = svg.querySelector('.m-zzz');
     const zUp = Math.max(0, ...look.acc.map((k) => (!bold && ZZZ_LIFT_SUBTLE[k] !== undefined ? ZZZ_LIFT_SUBTLE[k] : ZZZ_LIFT[k]) || 0)) + (calyx ? 8 : 0);
@@ -850,5 +887,5 @@
   /** A small CSS colour for a hair-colour swatch in the UI (the palette's base fill). */
   const hairSwatch = (c) => hairPal(c).base;
 
-  window.Wardrobe = { HAIR_COLORS, hairSwatch, ITEMS, REWARD_LEVELS, itemsAt, unlocked, nextReward, clashes, wear, set, get, decorate, preview, setSupporter };
+  window.Wardrobe = { HAIR_COLORS, hairSwatch, ITEMS, REWARD_LEVELS, itemsAt, unlocked, nextReward, clashes, wear, set, get, decorate, preview, setSupporter, grandfather };
 })();

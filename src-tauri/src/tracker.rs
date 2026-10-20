@@ -19,7 +19,7 @@ use tauri::{AppHandle, Emitter};
 const SUPER_UNSETTLED_MAX: f64 = 107.0;
 
 use crate::hook::RawKey;
-use crate::{badges, db, pet, platform, shortcuts, xp};
+use crate::{badges, corrections, db, pet, platform, shortcuts, xp};
 
 /// Worker tick: closes finished bursts and drives the live bar.
 const TICK: Duration = Duration::from_millis(250);
@@ -28,6 +28,8 @@ const EXE_CACHE_TTL: Duration = Duration::from_secs(30);
 /// How often counted shortcuts are turned into XP.
 const SHORTCUT_SETTLE: Duration = Duration::from_secs(30);
 /// How often the tick looks for a new local week (the cached weekly record is rebuilt on Monday).
+/// How often the corrected-key counters are written to the database.
+const CORRECTIONS_FLUSH: Duration = Duration::from_secs(30);
 const WEEK_CHECK: Duration = Duration::from_secs(60);
 
 /// Messages for the worker thread.
@@ -43,6 +45,8 @@ pub enum Msg {
     Lesson(LessonBurst),
     /// A shortcut of this kind was used in the window with this handle (the key itself is never sent).
     Shortcut(tapomo_core::shortcuts::ShortcutKind, Option<u32>, isize),
+    /// A plain Backspace followed this character key (virtual-key code) in the window with this handle.
+    Corrected { vk: u32, hwnd: isize },
     /// Flush the open burst, save and stop. The sender is acknowledged when done.
     Shutdown(SyncSender<()>),
 }
@@ -187,6 +191,11 @@ struct Tracker {
     xp_total: u64,
     /// Setting `count_shortcuts`.
     count_shortcuts: bool,
+    /// Setting `count_corrections`.
+    count_corrections: bool,
+    /// Corrected keys not yet written (`vk` -> times), flushed every `CORRECTIONS_FLUSH` and on exit.
+    corrections: HashMap<u32, u32>,
+    corrections_flushed: Instant,
     /// App language (es, ca, en…), the default guess for the Office language.
     ui_lang: &'static str,
     /// Shortcuts counted since the last XP settle, and when that was.
@@ -227,6 +236,9 @@ impl Tracker {
             goal_refreshed: Instant::now(),
             xp_total: 0,
             count_shortcuts: true,
+            count_corrections: true,
+            corrections: HashMap::new(),
+            corrections_flushed: Instant::now(),
             ui_lang: "en",
             shortcuts_pending: false,
             last_settle: Instant::now(),
@@ -256,6 +268,7 @@ impl Tracker {
                     self.on_key(key);
                 }
                 Ok(Msg::Reload) => self.reload(),
+                Ok(Msg::Corrected { vk, hwnd }) => self.on_corrected(vk, hwnd),
                 Ok(Msg::Shortcut(kind, combo, hwnd)) => self.on_shortcut(kind, combo, hwnd),
                 Ok(Msg::Lesson(l)) => self.on_lesson(l),
                 Ok(Msg::XpRefresh) => {
@@ -283,6 +296,7 @@ impl Tracker {
                     let burst = self.engine.flush();
                     self.finish_burst(burst);
                     self.persist_best();
+                    self.flush_corrections();
                     let _ = ack.send(());
                     return;
                 }
@@ -302,6 +316,9 @@ impl Tracker {
                 self.shared.streak.store(self.engine.current_streak(), Ordering::Relaxed);
                 self.emit_live(now);
                 self.watch_fullscreen();
+                if self.corrections_flushed.elapsed() >= CORRECTIONS_FLUSH {
+                    self.flush_corrections();
+                }
                 // Shortcut XP is folded in now and then, not on every Ctrl+C.
                 if self.shortcuts_pending && self.last_settle.elapsed() >= SHORTCUT_SETTLE {
                     self.settle_xp();
@@ -317,6 +334,10 @@ impl Tracker {
                 self.paused = s.paused;
                 self.ignore_fullscreen = s.ignore_fullscreen;
                 self.count_shortcuts = s.count_shortcuts;
+                self.count_corrections = s.count_corrections;
+                if !s.count_corrections {
+                    self.corrections.clear();
+                }
                 self.ui_lang = crate::i18n::resolve(&s.language);
                 let flushed = if self.paused && !was_paused { self.last_key_ms = None; self.engine.flush() } else { None };
                 self.engine.set_config(Config::default().with_pause_ms(s.pause_ms));
@@ -361,6 +382,31 @@ impl Tracker {
         }
         self.finish_burst(burst);
         self.sync_goal();
+    }
+
+    /// Counts the key that was just corrected, under the same rules as typing (not while paused, in a
+    /// fullscreen game, in an excluded app or in Tapomo itself) and the `count_corrections` setting.
+    /// Only a per-key number is kept in memory, then a daily total in the database.
+    fn on_corrected(&mut self, vk: u32, hwnd: isize) {
+        if self.paused || !self.count_corrections || (self.ignore_fullscreen && self.fullscreen_busy()) {
+            return;
+        }
+        let Some(exe) = self.exe_for(hwnd) else { return };
+        if self.excluded.contains(&exe.to_lowercase()) || is_own_exe(&exe) {
+            return;
+        }
+        *self.corrections.entry(vk).or_insert(0) += 1;
+    }
+
+    fn flush_corrections(&mut self) {
+        self.corrections_flushed = Instant::now();
+        if self.corrections.is_empty() {
+            return;
+        }
+        match corrections::add_many(&self.conn, &self.corrections) {
+            Ok(()) => self.corrections.clear(),
+            Err(e) => log::error!("could not save corrected keys: {e}"),
+        }
     }
 
     /// Counts a shortcut under the same rules as typing: not while paused, in a fullscreen game or in an

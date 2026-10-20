@@ -359,6 +359,7 @@ function goToSleep() {
 async function applyLook(settings) {
   const [xp, supporter] = await Promise.all([invoke('get_xp'), invoke('get_supporter').catch(() => false)]);
   if (Wardrobe.setSupporter) Wardrobe.setSupporter(supporter);
+  if (Wardrobe.grandfather) Wardrobe.grandfather(xp.level);
   const open = new Set(Wardrobe.unlocked(xp.level));
   Wardrobe.set({
     skin: open.has(settings.skin) ? settings.skin : 'clasico',

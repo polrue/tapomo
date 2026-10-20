@@ -20,6 +20,15 @@ pub struct KeyCount {
     pub ms: u64,
 }
 
+/// Per-pair counts from one lesson: `pair` is two consecutive letters of OUR lesson text.
+#[derive(Debug, Deserialize)]
+pub struct PairCount {
+    pub pair: String,
+    pub hits: u32,
+    pub misses: u32,
+    pub ms: u64,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct LessonRun {
     pub lesson_id: String,
@@ -30,6 +39,8 @@ pub struct LessonRun {
     pub accuracy: f64,
     pub target_wpm: f64,
     pub keys: Vec<KeyCount>,
+    #[serde(default)]
+    pub bigrams: Vec<PairCount>,
     /// Characters of the lesson text typed (0.7.2: lessons count as typing).
     #[serde(default)]
     pub chars: u32,
@@ -53,6 +64,11 @@ fn layout_id(s: &str) -> &'static str {
         "de" => "de",
         _ => "es",
     }
+}
+
+/// Exactly two letters (no spaces, digits or punctuation).
+fn is_pair(s: &str) -> bool {
+    s.chars().count() == 2 && s.chars().all(char::is_alphabetic)
 }
 
 fn clean_id(s: &str) -> String {
@@ -84,6 +100,13 @@ pub fn save(conn: &Connection, run: &LessonRun) -> rusqlite::Result<Saved> {
             "INSERT INTO key_stats(layout, key, hits, misses, total_ms) VALUES (?1, ?2, ?3, ?4, ?5)
              ON CONFLICT(layout, key) DO UPDATE SET hits = hits + excluded.hits, misses = misses + excluded.misses, total_ms = total_ms + excluded.total_ms",
             params![layout, k.key, k.hits, k.misses, k.ms.min(600_000) as i64],
+        )?;
+    }
+    for b in run.bigrams.iter().take(400).filter(|b| is_pair(&b.pair)) {
+        tx.execute(
+            "INSERT INTO bigram_stats(layout, pair, hits, misses, total_ms) VALUES (?1, ?2, ?3, ?4, ?5)
+             ON CONFLICT(layout, pair) DO UPDATE SET hits = hits + excluded.hits, misses = misses + excluded.misses, total_ms = total_ms + excluded.total_ms",
+            params![layout, b.pair.to_lowercase(), b.hits, b.misses, b.ms.min(600_000) as i64],
         )?;
     }
     // Daily lesson XP, capped: the amount only grows up to the cap.
@@ -154,6 +177,19 @@ pub fn hard_keys(conn: &Connection, layout: &str, n: usize) -> rusqlite::Result<
     Ok(rows.into_iter().take(n).map(|r| r.0).collect())
 }
 
+/// Letter pairs of OUR lesson texts with the most misses or slowest times, hardest first.
+pub fn hard_bigrams(conn: &Connection, layout: &str, n: usize) -> rusqlite::Result<Vec<String>> {
+    let layout = layout_id(layout);
+    let mut stmt = conn.prepare(
+        "SELECT pair, (misses + 1.0) / (hits + misses + 2.0) AS miss_rate, total_ms * 1.0 / MAX(hits, 1) AS avg_ms
+         FROM bigram_stats WHERE layout = ?1 AND hits + misses >= 5",
+    )?;
+    let mut rows: Vec<(String, f64, f64)> = stmt.query_map([layout], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?.collect::<rusqlite::Result<_>>()?;
+    let mean_ms = if rows.is_empty() { 1.0 } else { rows.iter().map(|r| r.2).sum::<f64>() / rows.len() as f64 };
+    rows.sort_by(|a, b| (b.1 * 3.0 + b.2 / mean_ms).total_cmp(&(a.1 * 3.0 + a.2 / mean_ms)));
+    Ok(rows.into_iter().take(n).map(|r| r.0).collect())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -167,7 +203,7 @@ mod tests {
     }
 
     fn run(acc: f64, wpm: f64, keys: Vec<KeyCount>) -> LessonRun {
-        LessonRun { lesson_id: "home-1".into(), layout: "es".into(), duration_ms: 120_000, wpm, accuracy: acc, target_wpm: 20.0, keys, chars: 0, best_run: 0 }
+        LessonRun { lesson_id: "home-1".into(), layout: "es".into(), duration_ms: 120_000, wpm, accuracy: acc, target_wpm: 20.0, keys, bigrams: vec![], chars: 0, best_run: 0 }
     }
 
     #[test]
@@ -237,5 +273,21 @@ mod tests {
         assert_eq!(hard[0], "ñ");
         assert!(!hard.contains(&"x".to_string()), "too few tries to judge");
         assert!(hard_keys(&c, "us", 3).unwrap().is_empty());
+    }
+
+    #[test]
+    fn hard_bigrams_rank_misses_first_and_skip_junk() {
+        let c = mem();
+        let p = |pair: &str, hits, misses, ms| PairCount { pair: pair.into(), hits, misses, ms };
+        let mut r = run(0.9, 15.0, vec![]);
+        r.bigrams = vec![p("es", 50, 0, 10_000), p("br", 10, 8, 9_000), p("ue", 30, 3, 9_000), p("xy", 2, 2, 1_000), p("a ", 9, 9, 9), p("abc", 9, 9, 9), p("1a", 9, 9, 9)];
+        save(&c, &r).unwrap();
+        save(&c, &r).unwrap(); // totals add up across lessons
+        let hard = hard_bigrams(&c, "es", 2).unwrap();
+        assert_eq!(hard, vec!["br".to_string(), "xy".to_string()], "50 % misses beat 9 %, once there are 5 samples");
+        let all = hard_bigrams(&c, "es", 10).unwrap();
+        assert_eq!(all.len(), 4, "es, br, ue and xy (4 + 4 samples after two lessons)");
+        assert!(!all.iter().any(|x| x == "a " || x == "abc" || x == "1a"));
+        assert!(hard_bigrams(&c, "us", 3).unwrap().is_empty());
     }
 }

@@ -46,3 +46,5 @@ body[data-view="lessons"] #range-tabs { visibility: hidden; }
 .ls-practice > div { flex: 1; min-width: 200px; }
 .ls-practice .hint { margin: 2px 0 0; }
 .ls-practice-keys { font-family: ui-monospace, Consolas, monospace; font-size: 1.3rem; font-weight: 800; letter-spacing: .1em; }
+
+.ls-practice-pairs { flex-basis: 100%; margin: 0; }
