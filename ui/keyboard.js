@@ -306,6 +306,30 @@ const Keyboard = (() => {
     return map;
   }
 
+  // Windows virtual keys of the punctuation keys -> physical key code. Windows gives these keys a
+  // different VK on each layout (Ñ is VK_OEM_3 on Spanish, º is VK_OEM_5), so each layout has its own map.
+  // Letter VKs follow the printed letter on every layout (AZERTY and QWERTZ included).
+  const OEM_CODES = {
+    us: { 0xBA: 'Semicolon', 0xBB: 'Equal', 0xBC: 'Comma', 0xBD: 'Minus', 0xBE: 'Period', 0xBF: 'Slash', 0xC0: 'Backquote', 0xDB: 'BracketLeft', 0xDC: 'Backslash', 0xDD: 'BracketRight', 0xDE: 'Quote', 0xE2: 'IntlBackslash' },
+    es: { 0xBA: 'BracketLeft', 0xBB: 'BracketRight', 0xBC: 'Comma', 0xBD: 'Slash', 0xBE: 'Period', 0xBF: 'Backslash', 0xC0: 'Semicolon', 0xDB: 'Minus', 0xDC: 'Backquote', 0xDD: 'Equal', 0xDE: 'Quote', 0xE2: 'IntlBackslash' },
+    fr: { 0xBA: 'BracketRight', 0xBB: 'Equal', 0xBC: 'KeyM', 0xBE: 'Comma', 0xBF: 'Period', 0xC0: 'Quote', 0xDB: 'Minus', 0xDC: 'Backslash', 0xDD: 'BracketLeft', 0xDE: 'Backquote', 0xDF: 'Slash', 0xE2: 'IntlBackslash' },
+    de: { 0xBA: 'BracketLeft', 0xBB: 'BracketRight', 0xBC: 'Comma', 0xBD: 'Slash', 0xBE: 'Period', 0xBF: 'Backslash', 0xC0: 'Semicolon', 0xDB: 'Minus', 0xDC: 'Backquote', 0xDD: 'Equal', 0xDE: 'Quote', 0xE2: 'IntlBackslash' },
+  };
+
+  /** The unshifted character a Windows virtual key types on this layout (letters are the letter
+   * itself; digits and punctuation are looked up by key position), or '' if unknown. */
+  function charForVk(layout, vk) {
+    if (vk >= 0x41 && vk <= 0x5A) return String.fromCharCode(vk).toLowerCase();
+    const lay = resolve(layout);
+    const code = vk >= 0x30 && vk <= 0x39 ? `Digit${vk - 0x30}` : (OEM_CODES[lay.id] || OEM_CODES.us)[vk];
+    if (!code) return '';
+    for (const row of lay.rows) {
+      const k = row.find((x) => x.code === code && !x.mod);
+      if (k) return k.label && k.label.length === 1 ? k.label : '';
+    }
+    return '';
+  }
+
   /** Always an array of strokes (empty if the character can't be typed on this layout). */
   function strokesFor(layout, ch) {
     const s = charMap(layout).get(ch);
@@ -577,7 +601,7 @@ const Keyboard = (() => {
     return ul;
   }
 
-  return { LAYOUTS, charMap, strokesFor, render, fingerName };
+  return { LAYOUTS, charMap, charForVk, strokesFor, render, fingerName };
 })();
 
 if (typeof window !== 'undefined') window.Keyboard = Keyboard;

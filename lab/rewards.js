@@ -306,7 +306,8 @@
     parche:     { name: 'Parche pirata', tag: 'De broma', slots: ['ojos'], note: 'Tapa un ojo' },
     musculitos: { name: 'Musculitos', tag: 'Fuerza', slots: ['brazos', 'torso'], note: 'Brazos y tableta; bíceps al celebrar' },
     pesa:       { name: 'Pesas', tag: 'Fuerza', slots: ['brazos'], note: 'Una en cada bracito; las levanta al celebrar' },
-    astronauta: { name: 'Astronauta', tag: 'Disfraz', slots: ['cabeza'], lift: 32 },
+    astronauta: { name: 'Astronauta', tag: 'Disfraz', slots: ['cabeza'], lift: 32, note: 'Con cualquier peinado; con el tupé el casco crece un poco' },
+    rockero:    { name: 'Traje de rockero', tag: 'De broma', slots: ['cuello', 'torso'], note: 'Blanco y dorado, cuello alto y cinturón con hebilla; con tupé y barba' },
     superheroe: { name: 'Superhéroe', tag: 'Disfraz', slots: ['espalda', 'ojos'], note: 'Disfraz completo: capa y antifaz' },
     cicatriz:   { name: 'Cicatriz en X', tag: 'Cañero', slots: ['marca'], note: 'Tres sitios para comparar' },
     dino:       { name: 'Dinosaurio', tag: 'Disfraz', slots: ['cabeza'], lift: 18 },
@@ -319,7 +320,7 @@
     [4, 'lacito', 'bigote'], [7, 'gafas', 'gafassol'], [10, 'fresa', 'cejas'], [13, 'bufanda', 'gorra'],
     [16, 'auris', 'gamer', 'flequillo'], [19, 'matcha', 'parche', 'tupe'], [22, 'gorrito', 'ninja', 'melenita'], [25, 'pajarita', 'barba', 'hipster'],
     [28, 'mango', 'pesa'], [31, 'capa', 'superheroe'], [34, 'chef', 'vikingo'], [37, 'arandano', 'musculitos'],
-    [40, 'flores', 'dino'], [43, 'sesamo', 'cicatriz'], [46, 'aureola', 'astronauta'], [50, 'dorado', null],
+    [40, 'flores', 'dino'], [43, 'sesamo', 'cicatriz'], [46, 'aureola', 'astronauta'], [50, 'dorado', 'rockero'],
   ];
 
   // Arms live in the BACK layer, so the body itself hides the shoulder joint and they grow out of
@@ -533,6 +534,17 @@
     pesa: {
       back: `<g class="rw-arm rw-arm-l">${arm(dumbbell)}</g><g transform="translate(160 0) scale(-1 1)"><g class="rw-arm rw-arm-r">${arm(dumbbell)}</g></g>` },
     cicatriz: { front: '' }, // drawn from SCAR_POS at paint time
+    // White and gold stage suit: a tall collar behind the body, and trousers with a big buckle clipped to it.
+    rockero: {
+      back: `<g stroke-linejoin="round"><path d="M36 112 C22 100 10 78 6 50 C16 58 26 64 34 66 Z" fill="#fbf8f1" stroke="${INK}" stroke-width="2.4"/><path d="M30 105 C20 94 12 76 10 58" fill="none" stroke="#f4c542" stroke-width="3" stroke-linecap="round"/><circle cx="17" cy="66" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="21" cy="81" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="27" cy="94" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/><g transform="translate(160 0) scale(-1 1)"><path d="M36 112 C22 100 10 78 6 50 C16 58 26 64 34 66 Z" fill="#fbf8f1" stroke="${INK}" stroke-width="2.4"/><path d="M30 105 C20 94 12 76 10 58" fill="none" stroke="#f4c542" stroke-width="3" stroke-linecap="round"/><circle cx="17" cy="66" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="21" cy="81" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="27" cy="94" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/></g></g>`,
+      front: `<g clip-path="url(#rw-clip-ID)" stroke-linejoin="round">
+        <path d="M22 116 Q80 124 138 116 L138 146 L22 146 Z" fill="#fbf8f1" stroke="${INK}" stroke-width="2.2"/>
+        <circle cx="36" cy="121" r="1.5" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="48" cy="122.2" r="1.5" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="60" cy="123" r="1.5" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="100" cy="123" r="1.5" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="112" cy="122.2" r="1.5" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="124" cy="121" r="1.5" fill="#f4c542" stroke="${INK}" stroke-width="1"/>
+        <path d="M22 123 Q80 131 138 123 L138 131 Q80 139 22 131 Z" fill="#f4c542" stroke="${INK}" stroke-width="2"/>
+        <circle cx="40" cy="129" r="1.3" fill="#fff"/><circle cx="52" cy="130" r="1.3" fill="#fff"/><circle cx="108" cy="130" r="1.3" fill="#fff"/><circle cx="120" cy="129" r="1.3" fill="#fff"/>
+        <rect x="69" y="124" width="22" height="13" rx="3.5" fill="#ffd95a" stroke="${INK}" stroke-width="2"/>
+        <circle cx="80" cy="130.5" r="3" fill="#e8455a" stroke="${INK}" stroke-width="1.2"/>
+      </g>` },
     astronauta: {
       front: `<g stroke-linejoin="round">
         <path d="M28.7 128 A66 70 0 1 1 131.3 128" fill="#cfe9ff" fill-opacity=".2" stroke="${INK}" stroke-width="2.6"/>
@@ -715,7 +727,7 @@
     fresa: 'sutil: mochi rosa con semillitas · llamativo: disfraz de fresa con hojas',
     dorado: 'sutil: oro quieto · llamativo: destellos de luz cada 5–10 s',
   };
-  const SAME_IN_BOTH = ['flequillo', 'tupe', 'melenita', 'gafas', 'auris', 'pajarita', 'chef', 'aureola', 'gorra', 'gafassol', 'ninja', 'vikingo', 'bigote', 'barba', 'hipster', 'cejas', 'parche', 'pesa', 'cicatriz', 'astronauta', 'superheroe', 'dino', 'clasico', 'matcha', 'mango', 'arandano', 'sesamo'];
+  const SAME_IN_BOTH = ['flequillo', 'tupe', 'melenita', 'gafas', 'auris', 'pajarita', 'chef', 'aureola', 'gorra', 'gafassol', 'ninja', 'vikingo', 'bigote', 'barba', 'hipster', 'cejas', 'parche', 'pesa', 'cicatriz', 'astronauta', 'superheroe', 'rockero', 'dino', 'clasico', 'matcha', 'mango', 'arandano', 'sesamo'];
 
   // ------------------------------------------------------------------ clothing rules
   // Every item declares its slot(s) and what it excludes ('slot:x' = everything in slot x, or an item
@@ -755,9 +767,10 @@
     musculitos: { slots: ['brazos', 'torso'] },
     pesa: { slots: ['brazos'] },
     cicatriz: { slots: ['marca'] },
-    astronauta: { slots: ['cuerpo', 'cabeza'], disfraz: true },
+    astronauta: { slots: ['cuerpo', 'cabeza'], disfraz: true, permite: ['flequillo', 'tupe', 'melenita'] },
+    rockero: { slots: ['cuello', 'torso'], excluye: ['slot:espalda', 'slot:cuerpo'] },
     dino: { slots: ['cuerpo', 'cabeza'], disfraz: true },
-    superheroe: { slots: ['cuerpo', 'espalda', 'ojos'], disfraz: true, permite: ['musculitos'] },
+    superheroe: { slots: ['cuerpo', 'espalda', 'ojos'], disfraz: true, permite: ['musculitos', 'pesa', 'flequillo', 'tupe', 'melenita'] },
     flequillo: { slots: ['pelo'] },
     tupe: { slots: ['pelo'] },
     melenita: { slots: ['pelo'] },
@@ -778,7 +791,7 @@
     return off;
   }
   // Drawing order, back to front: neck, face, hair (over the glasses' arms), hats, brows (over brims), ears, helmet, halo.
-  const FRONT_ORDER = ['capa', 'superheroe', 'musculitos', 'pesa', 'cicatriz', 'barba', 'hipster', 'bufanda', 'pajarita', 'bigote', 'gafas', 'gafassol', 'parche',
+  const FRONT_ORDER = ['capa', 'superheroe', 'rockero', 'musculitos', 'pesa', 'cicatriz', 'barba', 'hipster', 'bufanda', 'pajarita', 'bigote', 'gafas', 'gafassol', 'parche',
     ...HAIR_IDS, 'lacito', 'gorrito', 'chef', 'flores', 'gorra', 'ninja', 'vikingo', 'dino', 'cejas', 'auris', 'gamer', 'astronauta', 'aureola'];
 
   function paint(svg, animateNew = true, fresh = null) {
@@ -815,12 +828,12 @@
     const pop = (k) => (animateNew && fresh === k ? ' class="rw-pop"' : '');
     const fix = (html) => tintHair(html, state.hair).replaceAll('__BODY__', bodyFill).replaceAll('-ID)', `-${rw.id})`);
     const backOf = (k) => (PROPS[k] ? PROP_ART[k].back || '' : ACC[k].layer === 'back' ? A[k] : '');
-    const frontOf = (k) => (k === 'cicatriz' ? scar(SCAR_POS[state.scarPos]) : k === 'musculitos' && state.acc.has('hipster') ? ABS_LOW: k === 'flequillo' && state.acc.has('ninja') ? FRINGE_BAND : PROPS[k] ? PROP_ART[k].front || '' : k === 'capa' ? A.capaFront : A[k]);
+    const frontOf = (k) => (k === 'astronauta' && state.acc.has('tupe') ? `<g transform="translate(80 132) scale(1.16) translate(-80 -132)">${PROP_ART.astronauta.front}</g>` : k === 'cicatriz' ? scar(SCAR_POS[state.scarPos]) : k === 'musculitos' && state.acc.has('hipster') ? ABS_LOW: k === 'flequillo' && state.acc.has('ninja') ? FRINGE_BAND : PROPS[k] ? PROP_ART[k].front || '' : k === 'capa' ? A.capaFront : A[k]);
     const wrap = (k, html) => (html ? `<g data-acc="${k}"${pop(k)}>${html}</g>` : '');
     rw.back.innerHTML = fix(FRONT_ORDER.filter((k) => state.acc.has(k)).map((k) => wrap(k, backOf(k))).join(''));
     rw.front.innerHTML = fix((calyx ? CALYX : '') + FRONT_ORDER.filter((k) => state.acc.has(k)).map((k) => wrap(k, frontOf(k))).join(''));
     const headLift = !head ? 0 : PROPS[head] ? PROPS[head].lift || 0 : (!bold && STYLE_VARIES[head] ? ACC[head].lift : LIFT_BOLD[head]) || 0;
-    const up = Math.max(headLift, hair ? PROPS[hair].lift : 0) + (calyx ? 12 : 0);
+    const up = Math.max(headLift, hair ? PROPS[hair].lift : 0) + (calyx ? 12 : 0) + (head === 'astronauta' && hair === 'tupe' ? 19 : 0);
     rw.lift.setAttribute('transform', `translate(0 ${-up})`);
     const zzz = svg.querySelector('.m-zzz');
     const zUp = Math.max(0, ...worn.map((k) => (!bold && ZZZ_LIFT_SUBTLE[k] !== undefined ? ZZZ_LIFT_SUBTLE[k] : ZZZ_LIFT[k]) || 0)) + (calyx ? 8 : 0);
@@ -1113,10 +1126,10 @@
       <p class="note">Cada prenda ocupa una o más zonas. Al ponerte una, se quita sola lo que comparte zona o lo que ella excluye, y lo verás en una nota «Quitado: …».</p>
       <p class="rw-sub">Zonas</p><div class="tbl-wrap"><table class="pack"><tbody>${bySlot}</tbody></table></div>
       <p class="rw-sub">Exclusiones</p><ul class="rules-ex">${ex}
-        <li><b>Disfraces completos</b> (astronauta, dinosaurio, superhéroe) quitan todo lo de fuera: sombreros, peinados, cintas, auriculares, capas, brazos, bufanda, pajarita y lazo. Solo se quedan los ojos o gafas, cejas, bigote, barba, cicatriz y la aureola, que flota por encima. Excepción: el superhéroe permite los musculitos (brazos por delante de la capa y tableta sobre el cuerpo); el dinosaurio y el astronauta los siguen quitando.</li>
+        <li><b>Disfraces completos</b> (astronauta, dinosaurio, superhéroe) quitan todo lo de fuera: sombreros, peinados, cintas, auriculares, capas, brazos, bufanda, pajarita y lazo. Solo se quedan los ojos o gafas, cejas, bigote, barba, cicatriz y la aureola, que flota por encima. Excepción: el superhéroe permite los musculitos (brazos por delante de la capa y tableta sobre el cuerpo), las pesas y los peinados; el astronauta permite los tres peinados (con el tupé el casco crece); el dinosaurio los sigue quitando todos.</li>
         <li><b>Cicatriz</b>: en la mejilla va con todo; en la frente quita gorros, casco, cinta y dinosaurio; en el cuerpo quita barba, bufanda y pajarita.</li>
         <li><b>Corona de récord</b> y <b>Modo Supermochi</b> son efectos: van con todo. La corona se sube encima del sombrero o del tupé. El pelo dorado de Supermochi solo sale si llevas un peinado (que se esconde mientras dura); sin peinado, o con sombrero o casco, solo queda el aura.</li>
-        <li><b>Peinados</b> (flequillo, tupé, melenita): uno cada vez. Los gorros, cascos y disfraces lo quitan, y ponerte un peinado quita el gorro. La cinta ninja va encima de cualquier peinado (con el flequillo, los mechones asoman por debajo de la cinta). Tres colores de pelo (negro, castaño, rubio) para cualquier peinado. Lazo, flores, auriculares y aureola van encima del pelo.</li>
+        <li><b>Peinados</b> (flequillo, tupé, melenita): uno cada vez. Los gorros, cascos y disfraces lo quitan (menos el superhéroe), y ponerte un peinado quita el gorro. La cinta ninja va encima de cualquier peinado (con el flequillo, los mechones asoman por debajo de la cinta). Tres colores de pelo (negro, castaño, rubio) para cualquier peinado. Lazo, flores, auriculares y aureola van encima del pelo.</li>
         <li><b>Capa y musculitos</b> van juntos: la capa queda detrás del cuerpo y de los brazos (relajados o sacando bíceps), la tableta se ve entera y el broche solo va en el cuello.</li>
         <li><b>Barbas</b> (leñador, hipster): una cada vez. La de leñador es larga y tapa la tableta de los musculitos; la hipster sale de las mejillas y rodea la boca, y con musculitos la tableta baja un poco y se ve entera debajo. La cicatriz de la mejilla queda por encima de la barba.</li></ul>
       <p class="rw-sub">Estilo sutil / llamativo (ajuste del usuario)</p>

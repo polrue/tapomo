@@ -173,6 +173,29 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
              COMMIT;",
         )?;
     }
+    if version < 10 {
+        // Corrected keys (passive, daily aggregate: the key pressed right before a Backspace) and
+        // lesson bigrams (OUR lesson text only). Additive only.
+        conn.execute_batch(
+            "BEGIN;
+             CREATE TABLE corrected_keys (
+                 day INTEGER NOT NULL,
+                 vk INTEGER NOT NULL,
+                 n INTEGER NOT NULL,
+                 PRIMARY KEY (day, vk)
+             );
+             CREATE TABLE bigram_stats (
+                 layout TEXT NOT NULL,
+                 pair TEXT NOT NULL,
+                 hits INTEGER NOT NULL,
+                 misses INTEGER NOT NULL,
+                 total_ms INTEGER NOT NULL,
+                 PRIMARY KEY (layout, pair)
+             );
+             PRAGMA user_version = 10;
+             COMMIT;",
+        )?;
+    }
     Ok(())
 }
 
@@ -215,6 +238,8 @@ pub struct Settings {
     pub lessons_in_goal: bool,
     /// One shortcut tip a day (only with `count_shortcuts`).
     pub shortcut_tips: bool,
+    /// Count the key pressed right before a Backspace, as a daily total per key (never a sequence).
+    pub count_corrections: bool,
 }
 
 fn default_hair() -> String {
@@ -268,6 +293,7 @@ pub fn get_settings(conn: &Connection) -> rusqlite::Result<Settings> {
         count_shortcuts: flag("count_shortcuts", true)?,
         lessons_in_goal: flag("lessons_in_goal", true)?,
         shortcut_tips: flag("shortcut_tips", true)?,
+        count_corrections: flag("count_corrections", true)?,
     })
 }
 
@@ -291,7 +317,8 @@ pub fn set_settings(conn: &Connection, s: &Settings) -> rusqlite::Result<()> {
     set_raw(conn, "hair_color", if matches!(s.hair_color.as_str(), "negro" | "castano" | "rubio") { &s.hair_color } else { "castano" })?;
     set_raw(conn, "count_shortcuts", b(s.count_shortcuts))?;
     set_raw(conn, "lessons_in_goal", b(s.lessons_in_goal))?;
-    set_raw(conn, "shortcut_tips", b(s.shortcut_tips))
+    set_raw(conn, "shortcut_tips", b(s.shortcut_tips))?;
+    set_raw(conn, "count_corrections", b(s.count_corrections))
 }
 
 /// Saved position of the floating Tapomo (physical px). Kept out of [`Settings`]

@@ -3,6 +3,7 @@
 mod badges;
 mod catalog;
 mod commands;
+mod corrections;
 mod db;
 mod hook;
 mod i18n;
@@ -86,6 +87,8 @@ fn main() {
             commands::save_lesson,
             commands::get_lessons_progress,
             commands::get_hard_keys,
+            commands::get_hard_bigrams,
+            commands::top_corrected_keys,
             commands::get_shortcut_tip,
             commands::mark_shortcut_known,
             commands::get_shortcut_album,

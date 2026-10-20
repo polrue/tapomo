@@ -294,6 +294,7 @@ const Progress = (() => {
   async function refresh(r = range) {
     range = r;
     st = await invoke('get_xp');
+    Wardrobe.grandfather(st.level);
     applyLook();
     renderLevel();
     renderChallenges();
@@ -304,6 +305,7 @@ const Progress = (() => {
   /** `tapomo://xp`: XP changed; a level-up opens the reveal, a finished challenge gets its stamp. */
   async function onXp(p) {
     st = await invoke('get_xp');
+    Wardrobe.grandfather(st.level);
     League.refresh().catch(showError);
     applyLook();
     renderLevel();

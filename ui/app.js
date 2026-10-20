@@ -294,6 +294,7 @@ function renderSettings() {
   $('s-goal').value = String(settings.daily_goal_min);
   $('s-weekend').checked = settings.weekend_rest;
   $('s-shortcuts').checked = settings.count_shortcuts;
+  $('s-corrections').checked = settings.count_corrections;
   $('s-lessons-goal').checked = settings.lessons_in_goal;
   $('s-sc-tips').checked = settings.shortcut_tips;
   $('s-sc-tips').disabled = !settings.count_shortcuts;
@@ -351,6 +352,7 @@ async function refreshAll() {
     renderGoal().catch(showError);
     Progress.refresh(range).then(() => Badges.refresh()).then(() => League.refresh()).catch(showError);
     Shortcuts.refresh(range).catch(showError);
+    Corrections.refresh().catch(showError);
     Album.refreshTip(range).catch(showError);
     Social.refresh().catch(() => {});
     Support.refresh().catch(() => {});
@@ -421,6 +423,7 @@ function bindControls() {
   $('s-pet').addEventListener('change', () => saveSettings({ show_pet: $('s-pet').checked }));
   $('s-sc-tips').addEventListener('change', () => saveSettings({ shortcut_tips: $('s-sc-tips').checked }).then(() => Album.refreshTip()).catch(showError));
   $('s-lessons-goal').addEventListener('change', () => saveSettings({ lessons_in_goal: $('s-lessons-goal').checked }).then(() => renderGoal()).catch(showError));
+  $('s-corrections').addEventListener('change', () => saveSettings({ count_corrections: $('s-corrections').checked }).then(() => { renderSettings(); Corrections.refresh(); }).catch(showError));
   $('s-shortcuts').addEventListener('change', () => saveSettings({ count_shortcuts: $('s-shortcuts').checked }).then(() => { renderSettings(); Shortcuts.refresh(); Album.refreshTip(); }).catch(showError));
   $('s-updates').addEventListener('change', async () => {
     await saveSettings({ check_updates: $('s-updates').checked });
