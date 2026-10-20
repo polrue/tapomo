@@ -323,6 +323,19 @@ function onRecord() {
   say('pet.record', 2200, true);
 }
 
+/** A speed record: the absolute one jumps like a streak record; the weekly one is a small hop. */
+function onPeakRecord(p) {
+  if (state.paused || state.asleep) return;
+  if (p && p.all_time) {
+    lastBurstAt = Date.now();
+    Mascot.jump(svg, { big: true });
+    say('pet.peak_record', 2200, true);
+  } else {
+    Mascot.jump(svg);
+    say('pet.week_record', 2200, false);
+  }
+}
+
 /** Today's goal reached: a hop, a full burst (even if a smaller one was just thrown) and a big bubble. */
 function onGoal() {
   if (state.paused || state.asleep) return;
@@ -573,6 +586,7 @@ async function init() {
     listen('tapomo://mash', onMash),
     listen('tapomo://live', (e) => onLive(e.payload)),
     listen('tapomo://record', onRecord),
+    listen('tapomo://peak-record', (e) => onPeakRecord(e.payload)),
     listen('tapomo://goal', onGoal),
     listen('tapomo://xp', (e) => onXp(e.payload)),
     listen('tapomo://shortcut-learnt', (e) => onShortcutLearnt(e.payload)),
