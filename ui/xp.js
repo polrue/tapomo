@@ -68,9 +68,12 @@ const Progress = (() => {
 
   // ------------------------------------------------------------ challenges
 
+  /** "18:00" in the user's language (en: "06:00 PM"). */
+  const clock = (min) => new Date(2000, 0, 1, Math.floor(min / 60), min % 60).toLocaleTimeString(document.documentElement.lang, { hour: '2-digit', minute: '2-digit' });
+
   function challengeText(c) {
     if (c.id === 'beat_avg') return t('ch.beat_avg', { wpm: fmt(c.target) });
-    if (c.id === 'early_goal') return t('ch.early_goal');
+    if (c.id === 'early_goal') return t('ch.early_goal', { goal: fmt(c.target), time: clock(c.deadline_min ?? 0) });
     if (c.id === 'long_bursts' || c.id === 'bursts') return tn(`ch.${c.id}`, c.target, { n: fmt(c.target) });
     if (c.id === 'shortcuts') return t('ch.shortcuts', { n: fmt(c.target) });
     if (c.id === 'lesson') return t('ch.lesson');
@@ -79,7 +82,40 @@ const Progress = (() => {
   }
 
   /** Yes/no challenges have no counter; the others show "2 of 3". */
-  const counted = (c) => !['beat_avg', 'early_goal', 'lesson', 'learnt'].includes(c.id);
+  const counted = (c) => !['beat_avg', 'lesson', 'learnt'].includes(c.id);
+
+  /** A challenge with a deadline that is still open but whose time has run out: lost, no second chance. */
+  function expired(c, now = new Date()) {
+    return c.deadline_min != null && !c.done && now.getHours() * 60 + now.getMinutes() >= c.deadline_min;
+  }
+
+  /** The longer explanation shown when a row is opened, with real numbers. */
+  function howText(c) {
+    const baseline = { n: fmt(c.target), p: fmt(c.progress), m: fmt(c.progress), goal: fmt(c.target), wpm: fmt(c.target), time: c.deadline_min != null ? clock(c.deadline_min) : '' };
+    return t(`ch.${c.id}.how`, baseline);
+  }
+
+  /** Where the explanation can send you: [label key, action]. */
+  const GO = {
+    early_goal: ['ch.go.goal', () => goToSetting('s-goal')],
+    lesson: ['ch.go.lessons', () => { window.scrollTo({ top: 0 }); Lessons.open(); }],
+    shortcuts: ['ch.go.shortcuts', () => SectionNav.jump('shortcuts')],
+    learnt: ['ch.go.shortcuts', () => SectionNav.jump('shortcuts')],
+  };
+
+  /** Opens Settings (leaving the lessons view if needed), scrolls to a field and highlights it briefly. */
+  function goToSetting(id) {
+    if (document.body.dataset.view === 'lessons') Lessons.close();
+    SectionNav.jump('settings');
+    const el = $(id);
+    const target = el.closest('.row, label, div') || el;
+    target.classList.add('flash');
+    setTimeout(() => { el.focus({ preventScroll: true }); }, Mascot.reduced() ? 0 : 500);
+    setTimeout(() => target.classList.remove('flash'), 2600);
+  }
+
+  let openChallenge = null; // id of the row whose explanation is open (one at a time)
+  let expiryTimer = null;
 
   function renderChallenges(fresh = []) {
     const card = $('challenges');
@@ -87,29 +123,70 @@ const Progress = (() => {
     if (card.hidden) return;
     const list = $('ch-list');
     list.replaceChildren();
+    clearTimeout(expiryTimer);
+    const now = new Date();
     for (const c of st.challenges) {
+      const lost = expired(c, now);
       const li = document.createElement('li');
       li.className = 'ch';
       li.toggleAttribute('data-done', c.done);
+      li.toggleAttribute('data-expired', lost);
       if (fresh.includes(c.id) && !Mascot.reduced()) li.classList.add('ch-new');
+      const head = document.createElement('button');
+      head.type = 'button';
+      head.className = 'ch-head';
+      const isOpen = openChallenge === c.id;
+      head.setAttribute('aria-expanded', String(isOpen));
+      head.setAttribute('aria-controls', `ch-how-${c.id}`);
       const text = document.createElement('span');
       text.className = 'ch-text';
       text.textContent = challengeText(c);
       const meta = document.createElement('span');
       meta.className = 'ch-meta';
-      meta.textContent = c.done ? t('ch.done') : counted(c) ? t('ch.progress', { p: fmt(c.progress), t: fmt(c.target) }) : t('ch.xp');
+      const progressKey = c.id === 'early_goal' ? 'ch.progress_min' : 'ch.progress';
+      meta.textContent = c.done ? t('ch.done') : lost ? t('ch.expired') : counted(c) ? t(progressKey, { p: fmt(c.progress), t: fmt(c.target) }) : t('ch.xp');
       const stamp = document.createElement('span');
       stamp.className = 'ch-stamp';
       stamp.setAttribute('aria-hidden', 'true');
-      if (counted(c) && !c.done) {
+      head.append(stamp, text, meta);
+      if (counted(c) && !c.done && !lost) {
         const bar = document.createElement('i');
         bar.className = 'ch-bar';
         bar.style.setProperty('--p', `${Math.min(100, (c.progress / Math.max(1, c.target)) * 100)}%`);
-        li.append(stamp, text, meta, bar);
-      } else {
-        li.append(stamp, text, meta);
+        head.append(bar);
       }
+      const how = document.createElement('div');
+      how.className = 'ch-how';
+      how.id = `ch-how-${c.id}`;
+      how.hidden = !isOpen;
+      const p = document.createElement('p');
+      p.textContent = howText(c);
+      how.append(p);
+      const go = GO[c.id];
+      if (go) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'ch-go';
+        b.textContent = t(go[0]);
+        b.addEventListener('click', go[1]);
+        how.append(b);
+      }
+      head.addEventListener('click', () => {
+        openChallenge = openChallenge === c.id ? null : c.id;
+        list.querySelectorAll('.ch-head').forEach((h) => {
+          const on = h.getAttribute('aria-controls') === `ch-how-${openChallenge}`;
+          h.setAttribute('aria-expanded', String(on));
+          $(h.getAttribute('aria-controls')).hidden = !on;
+        });
+      });
+      li.append(head, how);
       list.append(li);
+    }
+    // Re-draw the moment an open deadline runs out, so the row turns into «Se acabó el tiempo» by itself.
+    const next = st.challenges.filter((c) => c.deadline_min != null && !c.done && !expired(c, now))[0];
+    if (next) {
+      const ms = ((next.deadline_min - (now.getHours() * 60 + now.getMinutes())) * 60 - now.getSeconds()) * 1000 + 500;
+      expiryTimer = setTimeout(() => renderChallenges(), Math.min(ms, 2_000_000_000));
     }
     const full = st.challenges.every((c) => c.done);
     $('ch-full').hidden = !full;

@@ -140,5 +140,5 @@ const SectionNav = (() => {
     render();
   }
 
-  return { bind, render };
+  return { bind, render, jump };
 })();

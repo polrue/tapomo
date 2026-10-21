@@ -41,7 +41,7 @@ Un día normal da unos **200 XP**: algo más de la mitad viene de escribir y el 
   - Haz 3 ráfagas de más de 1 minuto.
   - Supera tu ritmo medio en una ráfaga.
   - Escribe 300 caracteres seguidos sin borrar (ajustado a tu media).
-  - Cumple el objetivo antes de las 13:00 (solo si sueles cumplirlo).
+  - Cumple tu objetivo diario antes de una hora límite personal (solo si sueles cumplirlo; ver abajo).
   - Escribe en 3 programas distintos.
   - Usa 10 atajos (con atajos activados).
   - Usa hoy el atajo que aprendiste ayer (fase B).
@@ -52,10 +52,16 @@ Un día normal da unos **200 XP**: algo más de la mitad viene de escribir y el 
   - Ráfagas largas (más de 1 minuto): tantas como tu media diaria, entre 1 y 3.
   - Superar tu ritmo medio: en una ráfaga de al menos 20 s, por encima de tu media ponderada de 14 días.
   - Sin borrar: el 80 % de tu mediana diaria de racha sin borrar, redondeado a 50, entre 100 y 1.500.
-  - Objetivo antes de las 13:00: solo si cumpliste el objetivo al menos la mitad de tus días activos.
+  - Objetivo antes de la hora límite: solo si cumpliste el objetivo al menos la mitad de tus días activos **y** en al menos 3 días de los últimos 14 se puede saber a qué hora lo alcanzaste.
+    - **Hora de alcance** de un día: se ordenan sus ráfagas por hora de inicio y se acumula su duración; es el inicio de la ráfaga que cruza el objetivo más la parte de ella que hizo falta (en minutos).
+    - **Hora límite** = la hora (redondeada hacia abajo: 18:40 → 18:00) de la mediana de esas horas de alcance, entre 09:00 y 22:00.
+    - **Progreso** = minutos escritos hoy en ráfagas que empiezan antes de la hora límite; se completa al llegar al objetivo (en minutos). Se muestra «{m} de {objetivo} min». Como el cálculo solo mira esas ráfagas, una vez pasada la hora no se puede completar ni cobrar.
+    - Pasada la hora sin completarlo, la tarjeta lo muestra apagado con «Se acabó el tiempo» en lugar de los XP. No hay segunda oportunidad (y, como siempre, no se avisa de nada más).
   - 3 programas distintos: solo si sueles escribir en 1,5 o más programas al día.
   - Bienvenida: 3 ráfagas, 1.000 caracteres y 100 sin borrar.
   - La elección depende solo de los días anteriores, así que no cambia durante el día.
+  - **Sin repetir:** un reto que salió ayer no sale hoy mientras el repertorio tenga otros suficientes (el trío de bienvenida queda fuera de la regla). Los retos de ayer se leen de lo que la app guardó (`ch_shown_<día>` en `settings`); si no hay nada guardado, se recalculan con la misma función pura repitiendo la elección desde 7 días atrás.
+- **Pulsar un reto** lo despliega con una explicación corta con tus cifras reales (uno abierto a la vez; cada fila es un botón, con `aria-expanded`). Algunos añaden un botón: objetivo diario → Ajustes y el campo «Objetivo diario» (con un resalte breve), lección → Lecciones, atajos → sección de atajos.
 
 ## Logros (insignias)
 
