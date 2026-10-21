@@ -169,6 +169,41 @@ const Lessons = (() => {
     return pool.length >= 5 ? `${half} ${fill(r, pool, 100)}` : drill({ newKeys: lesson.newKeys, known: all }, seed, 180);
   }
 
+  const L = LessonLogic;
+
+  /** This layout's text library (ui/library/*.js), or null while there is none. */
+  function library(lay) {
+    const all = typeof window !== 'undefined' && window.LessonLibrary;
+    const lib = all && all[L.libLang(lay)];
+    return lib && Array.isArray(lib.texts) && lib.texts.length ? lib : null;
+  }
+
+  /** Repeats a generator with fresh seeds until about `len` characters, cut at a space. */
+  function sized(len, gen, seed) {
+    let text = '';
+    for (let i = 0; text.length < len && i < 30; i++) text = text ? `${text} ${gen(seed + i)}` : gen(seed);
+    return L.trimTo(text, len);
+  }
+
+  /** Sprint: sentences of the library texts up to the user's level, in a seeded endless flow. Part
+   * `n` of the flow is the next ~400 characters. */
+  function sprintMore(lesson, seed, n) {
+    return fill(rng(seed + 7919 * n), lesson.pool || [], 400);
+  }
+
+  /** «Entrenador de dedos»: a drill of the finger's keys with home-row anchors, then real words dense
+   * in its letters (texts of the library and the lesson word list). */
+  function fingerText(lesson, lay, seed) {
+    const r = rng(seed);
+    const keys = lesson.keys || [];
+    const home = swap(lay, UNITS[0].keys[lay] || UNITS[0].keys.us);
+    const drillPart = drill({ newKeys: keys.join(''), known: home + keys.join('') }, seed, 70);
+    const lib = library(lay);
+    const libWords = lib ? lib.texts.flatMap((x) => L.plainText(x.text).split(' ').map((w) => w.replace(/[^\p{L}]/gu, ''))) : [];
+    const words = L.fingerWords([...(LessonWords[langOf(lay).lang] || []), ...libWords], keys);
+    return words.length >= 5 ? `${drillPart} ${fill(r, words, 100)}` : drill({ newKeys: keys.join(''), known: home + keys.join('') }, seed, 170);
+  }
+
   // Capitalised, very short or interjection-like words look odd ("Ja", "Mas"): capitals use longer words.
   const capWords = (words) => words.filter((w) => w.length >= 4 && !['hala', 'jaja', 'lass', 'lads', 'gals', 'fads'].includes(w));
   const cap = (w) => w.charAt(0).toUpperCase() + w.slice(1);
@@ -181,7 +216,11 @@ const Lessons = (() => {
     switch (lesson.kind) {
       case 'drill': return drill(lesson, seed);
       case 'review': return drill({ ...lesson, newKeys: lesson.known }, seed);
-      case 'practice': return practiceText(lesson, layout, seed);
+      case 'practice': return lesson.len ? sized(lesson.len, (sd) => practiceText(lesson, layout, sd), seed) : practiceText(lesson, layout, seed);
+      case 'library': return L.plainText(lesson.text);
+      case 'pangrams': return fill(r, ((library(layout) || {}).pangrams || []).map(L.plainText), 200);
+      case 'sprint': return sprintMore(lesson, seed, 0);
+      case 'finger': return fingerText(lesson, layout, seed);
       case 'words': case 'words-short': case 'words-mid': case 'words-long': {
         const k = WORD_KINDS[lesson.kind];
         return wordsText(lesson, layout, seed, k.len, k.max);
@@ -216,6 +255,20 @@ const Lessons = (() => {
   let progress = { lessons: [], everyday_wpm: null, before_after: null };
   let kb = null;
   let run = null; // the lesson being typed
+  let tick = 0; // interval of the sprint clock and the «Ritmo» pacer
+
+  const MODE_STORE = 'tapomo.lessonMode';
+  const FINGER_STORE = 'tapomo.lessonFinger';
+  const MODES = ['normal', 'precision', 'pace'];
+  const FINGERS = [0, 1, 2, 3, 6, 7, 8, 9]; // thumbs only type the space
+  const SPRINT_MS = 60_000;
+  function stored(key) {
+    try { return localStorage.getItem(key); } catch (_) { return null; }
+  }
+  function store(key, value) {
+    try { localStorage.setItem(key, String(value)); } catch (_) { /* optional */ }
+  }
+  let mode = MODES.includes(stored(MODE_STORE)) ? stored(MODE_STORE) : 'normal';
 
   const STORE = 'tapomo.lessons.layout';
   function savedLayout() {
@@ -233,6 +286,8 @@ const Lessons = (() => {
     return ['es', 'ca'].includes(document.documentElement.lang) ? 'es' : 'us';
   }
   const bestOf = (id) => (progress.lessons.find((l) => l[0] === id) || [id, 0, 0])[1];
+  const bestWpmOf = (id) => (progress.lessons.find((l) => l[0] === id) || [])[3] || 0;
+  const todayStars = (id) => ((progress.today || []).find((l) => l[0] === id) || [id, 0])[1];
   const targetFor = (lesson) => {
     const cap = progress.everyday_wpm > 0 ? progress.everyday_wpm * 0.8 : lesson.base;
     return Math.max(5, Math.round(Math.min(lesson.base, cap)));
@@ -246,7 +301,11 @@ const Lessons = (() => {
     if (l.kind === 'review') return t('lessons.review');
     if (l.kind === 'words-long') return t('lessons.words_long');
     if (l.kind.startsWith('text-')) return t('lessons.kind.text', { n: l.index + 1 });
-    if (l.kind === 'practice') return t('lessons.practice.title');
+    if (l.kind === 'practice') return t(l.len ? 'lessons.today_practice.kicker' : 'lessons.practice.title');
+    if (l.kind === 'library') return l.title;
+    if (l.kind === 'pangrams') return t('lessons.pangrams.title');
+    if (l.kind === 'sprint') return t('lessons.sprint.title');
+    if (l.kind === 'finger') return t('lessons.fingers.drill', { finger: t(`finger.${l.finger}`) });
     if (l.kind.startsWith('sentences')) return t('lessons.kind.sentences', { n: l.index + 1 });
     return t(`lessons.kind.${l.kind}`);
   }
@@ -292,8 +351,152 @@ const Lessons = (() => {
     renderMap();
   }
 
-  function startPractice() {
-    start({ id: 'practice', unit: 'practice', index: 0, newKeys: practiceKeys.join(''), bigrams: bigrams.slice(0, 3), known: '', kind: 'practice', base: 20 });
+  /** The hard-keys practice; `daily` sizes it to about 3 minutes at the user's pace («Tu práctica del día»). */
+  function startPractice(daily) {
+    const len = daily ? L.practiceChars(progress.recent_wpm || progress.everyday_wpm || 0) : 0;
+    start({ id: 'practice', unit: 'practice', index: 0, newKeys: practiceKeys.join(''), bigrams: bigrams.slice(0, 3), known: '', kind: 'practice', base: 20, len });
+  }
+
+  // New exercises (0.9). Library texts keep their permanent id, so the path, the daily text and the
+  // stars share one progress.
+  const libLesson = (x, i, daily) => ({
+    id: x.id, unit: 'lib', index: i, newKeys: '', known: '', kind: 'library', base: 16 + 2 * (x.level || 1),
+    title: x.title, source: x.source || '', text: x.text, level: x.level, daily: !!daily,
+  });
+  const pangramLesson = () => ({ id: 'pangrams', unit: 'lib', index: 0, newKeys: '', known: '', kind: 'pangrams', base: 20 });
+  function sprintLesson() {
+    const lib = library(layout);
+    const max = L.levelReached(lib.texts, bestOf);
+    const pool = lib.texts.filter((x) => (x.level || 1) <= max).flatMap((x) => L.sentences(x.text));
+    return { id: 'sprint-1m', unit: 'sprint', index: 0, newKeys: '', known: '', kind: 'sprint', base: 20, pool: pool.length ? pool : lib.texts.map((x) => L.plainText(x.text)) };
+  }
+  const fingerLesson = (f) => ({
+    id: `finger-${f}`, unit: 'fingers', index: f, newKeys: '', known: '', kind: 'finger', finger: f, base: 15,
+    keys: L.drillableKeys(Keyboard.keysForFinger(layout, f)),
+  });
+  /** Text exercises where the «Normal / Precisión / Ritmo» modes make sense. */
+  const hasModes = (l) => ['library', 'pangrams', 'practice'].includes(l.kind) || /^text-\d$/.test(l.kind);
+
+  function setSource(node, source) {
+    node.hidden = !source;
+    node.textContent = source || '';
+  }
+  function starLine(node, label, n) {
+    const s = document.createElement('span');
+    s.className = 'ls-stars';
+    s.innerHTML = starIcons(n);
+    s.setAttribute('aria-label', t('lessons.stars_aria', { n }));
+    s.setAttribute('role', 'img');
+    node.replaceChildren(document.createTextNode(`${label} `), s);
+  }
+
+  /** Top cards: «Texto del día», «Tu práctica del día» and the sprint. */
+  function renderTop() {
+    const lib = library(layout);
+    $('ls-daily').hidden = !lib;
+    $('ls-sprint').hidden = !lib;
+    if (lib) {
+      const i = L.dailyIndex(new Date(), lib.texts.length);
+      const x = lib.texts[i];
+      const st = todayStars(x.id);
+      $('ls-daily-title').textContent = x.title;
+      setSource($('ls-daily-source'), x.source);
+      starLine($('ls-daily-meta'), `${t('lessons.level', { n: x.level || 1 })} · ${t('lessons.daily.today')}`, st);
+      $('ls-daily').classList.toggle('done', st > 0);
+      $('ls-daily-go').onclick = () => start(libLesson(x, i, true));
+      const best = bestWpmOf('sprint-1m');
+      $('ls-sprint-best').textContent = best > 0 ? t('lessons.sprint.best', { wpm: fmt(best) }) : t('lessons.sprint.no_best');
+      $('ls-sprint-go').onclick = () => start(sprintLesson());
+    }
+    // «Tu práctica del día»: once the lessons know a few keys you miss more.
+    const ready = practiceKeys.length >= 3;
+    $('ls-practice-ready').hidden = !ready;
+    $('ls-practice-empty').hidden = ready;
+    $('ls-practice').classList.toggle('done', ready && todayStars('practice') > 0);
+    if (ready) {
+      $('ls-practice-text').textContent = t('lessons.today_practice.text');
+      $('ls-practice-keys').textContent = practiceKeys.join('  ');
+      const pairs = $('ls-practice-pairs');
+      pairs.hidden = bigrams.length === 0;
+      pairs.textContent = bigrams.length ? t('lessons.practice.bigrams', { pairs: bigrams.slice(0, 3).join(' · ') }) : '';
+      $('ls-practice-go').onclick = () => startPractice(true);
+    }
+  }
+
+  /** «Biblioteca de textos»: «Todas las letras» and the path of texts by level. */
+  function renderLib() {
+    const lib = library(layout);
+    $('ls-lib').hidden = !lib;
+    if (!lib) return;
+    const hasPangrams = (lib.pangrams || []).length > 0;
+    $('ls-pangrams-go').closest('.ls-pangrams').hidden = !hasPangrams;
+    $('ls-pangrams-stars').innerHTML = starIcons(bestOf('pangrams'));
+    $('ls-pangrams-go').onclick = () => start(pangramLesson());
+    const open = L.pathUnlocked(lib.texts, bestOf);
+    // The level with the next text to do starts unfolded (the first one for a new user).
+    const nextIdx = lib.texts.findIndex((x, i) => open[i] && bestOf(x.id) < 2);
+    const nextLevel = (lib.texts[nextIdx < 0 ? lib.texts.length - 1 : nextIdx] || {}).level;
+    const box = $('ls-path');
+    box.replaceChildren();
+    for (const [level, texts] of L.byLevel(lib.texts)) {
+      const det = document.createElement('details');
+      det.className = 'ls-unit ls-level';
+      det.open = level === nextLevel;
+      const sum = document.createElement('summary');
+      const done = texts.filter((x) => bestOf(x.id) >= 2).length;
+      sum.innerHTML = '<span class="ls-level-name"></span><span class="ls-level-count"></span>';
+      sum.querySelector('.ls-level-name').textContent = t('lessons.level', { n: level });
+      sum.querySelector('.ls-level-count').textContent = t('lessons.lib.count', { done, n: texts.length });
+      const ol = document.createElement('ol');
+      ol.className = 'ls-list';
+      for (const x of texts) {
+        const i = lib.texts.indexOf(x);
+        const best = bestOf(x.id);
+        const li = document.createElement('li');
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = `ls-lesson ls-text-item${best === 3 ? ' gold' : ''}`;
+        b.disabled = !open[i];
+        b.innerHTML = '<span class="ls-name"><span class="ls-ttl"></span><small class="ls-source"></small></span><span class="ls-stars"></span>';
+        b.querySelector('.ls-ttl').textContent = x.title;
+        setSource(b.querySelector('small'), x.source);
+        b.querySelector('.ls-stars').innerHTML = open[i] ? starIcons(best) : '<span class="ls-lock" aria-hidden="true">🔒</span>';
+        b.setAttribute('aria-label', `${x.title}. ${open[i] ? t('lessons.stars_aria', { n: best }) : t('lessons.lib.locked')}`);
+        if (!open[i]) b.title = t('lessons.lib.locked');
+        b.addEventListener('click', () => start(libLesson(x, i, false)));
+        li.append(b);
+        ol.append(li);
+      }
+      det.append(sum, ol);
+      box.append(det);
+    }
+  }
+
+  /** «Entrenador de dedos»: one chip per finger (no thumbs); the last one picked stays marked. */
+  function renderFingers() {
+    const ok = typeof Keyboard.keysForFinger === 'function';
+    $('ls-fingers').hidden = !ok;
+    if (!ok) return;
+    const last = stored(FINGER_STORE);
+    const box = $('ls-finger-chips');
+    box.replaceChildren();
+    for (const f of FINGERS) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ls-chip';
+      b.setAttribute('aria-pressed', String(last === String(f)));
+      const keys = L.drillableKeys(Keyboard.keysForFinger(layout, f)).filter((k) => /\p{L}/u.test(k));
+      b.innerHTML = '<span class="ls-chip-name"></span><span class="ls-chip-keys"></span><span class="ls-stars"></span>';
+      b.querySelector('.ls-chip-name').textContent = t(`finger.${f}`);
+      b.querySelector('.ls-chip-keys').textContent = keys.join(' ');
+      b.querySelector('.ls-stars').innerHTML = starIcons(bestOf(`finger-${f}`));
+      b.setAttribute('aria-label', `${t(`finger.${f}`)}: ${keys.join(' ')}. ${t('lessons.stars_aria', { n: bestOf(`finger-${f}`) })}`);
+      b.addEventListener('click', () => {
+        store(FINGER_STORE, f);
+        start(fingerLesson(f));
+      });
+      box.append(b);
+    }
   }
 
   /** From the «Teclas que más corriges» card: open the lessons and start the practice at once. */
@@ -343,39 +546,27 @@ const Lessons = (() => {
       sec.append(h, keys, ol);
       box.append(sec);
     }
-    // "Práctica de tus teclas difíciles": once the lessons know a few keys you miss more.
-    const prac = $('ls-practice');
-    prac.hidden = practiceKeys.length < 3;
-    if (!prac.hidden) {
-      $('ls-practice-keys').textContent = practiceKeys.join('  ');
-      const pairs = $('ls-practice-pairs');
-      pairs.hidden = bigrams.length === 0;
-      pairs.textContent = bigrams.length ? t('lessons.practice.bigrams', { pairs: bigrams.slice(0, 3).join(' · ') }) : '';
-      $('ls-practice-go').onclick = startPractice;
-    }
+    renderTop();
+    renderLib();
+    renderFingers();
     const ba = progress.before_after;
     $('ls-real').hidden = !ba;
     if (ba) $('ls-real').textContent = t('lessons.real', { a: fmt(ba[0]), b: fmt(ba[1]) });
+    stopTick();
+    run = null;
     $('ls-map').hidden = false;
     $('ls-run').hidden = true;
     $('ls-result').hidden = true;
   }
 
   // --------------------------------------------------------------- runner
-  function start(lesson, seed = Date.now()) {
-    const text = textFor(lesson, layout, seed);
-    run = { lesson, text, pos: 0, errAt: new Set(), keys: new Map(), pairs: new Map(), started: 0, lastAt: 0, target: targetFor(lesson) };
-    $('ls-map').hidden = true;
-    $('ls-result').hidden = true;
-    $('ls-run').hidden = false;
-    $('ls-run-title').textContent = lessonName(lesson);
-    const box = $('ls-text');
-    // Letters of a word stay together on one line; lines break only at spaces (0.7.2).
+  /** Spans of `text`: letters of a word stay together on one line; lines break only at spaces (0.7.2). */
+  function spansFor(text) {
     const out = [];
     let word = null;
     for (const c of text) {
       const s = document.createElement('span');
-      s.textContent = c === ' ' ? ' ' : c;
+      s.textContent = c === ' ' ? ' ' : c;
       s.className = 'ls-ch';
       if (c === ' ') {
         word = null;
@@ -389,7 +580,28 @@ const Lessons = (() => {
         word.append(s);
       }
     }
-    box.replaceChildren(...out);
+    return out;
+  }
+
+  /** Starts (or restarts) an exercise. The same `seed` gives the same text: «Reiniciar» keeps it. */
+  function start(lesson, seed = Date.now()) {
+    stopTick();
+    const text = textFor(lesson, layout, seed);
+    const timed = lesson.kind === 'sprint';
+    run = {
+      lesson, seed, text, pos: 0, reach: 0, errAt: new Set(), keys: new Map(), pairs: new Map(), started: 0, lastAt: 0,
+      target: targetFor(lesson), mode: hasModes(lesson) ? mode : 'normal', timed, part: 0, paceAt: -1,
+    };
+    run.paceWpm = L.pacerWpm(progress.recent_wpm, run.target);
+    $('ls-map').hidden = true;
+    $('ls-result').hidden = true;
+    $('ls-run').hidden = false;
+    $('ls-run-title').textContent = lessonName(lesson);
+    setSource($('ls-run-source'), lesson.source);
+    $('ls-timer-box').hidden = !timed;
+    $('ls-timer').textContent = String(SPRINT_MS / 1000);
+    renderTools();
+    $('ls-text').replaceChildren(...spansFor(text));
     if (!kb) kb = Keyboard.render($('ls-kb'), layout, { t, legend: true, ariaLabel: t('keyboard.aria') });
     else kb.setLayout(layout);
     paint();
@@ -399,29 +611,115 @@ const Lessons = (() => {
     input.focus();
   }
 
+  /** «Reiniciar»: the same exercise and text from zero; the attempt is dropped (nothing saved, no XP). */
+  function restart() {
+    if (run && !$('ls-run').hidden) start(run.lesson, run.seed);
+  }
+
+  /** Mode buttons, hands toggle and the mode hint of the running header. */
+  function renderTools() {
+    const modes = $('ls-modes');
+    modes.hidden = !hasModes(run.lesson);
+    for (const b of modes.querySelectorAll('[data-mode]')) {
+      const on = b.dataset.mode === run.mode;
+      b.setAttribute('aria-checked', String(on));
+      b.tabIndex = on ? 0 : -1;
+    }
+    const hint = $('ls-mode-hint');
+    hint.hidden = modes.hidden || run.mode === 'normal';
+    hint.textContent = run.mode === 'pace' ? t('lessons.mode.pace_hint', { wpm: fmt(run.paceWpm) }) : run.mode === 'precision' ? t('lessons.mode.precision_tip') : '';
+    const hands = $('ls-hands');
+    const canHands = typeof Keyboard.setHands === 'function' && typeof Keyboard.handsOn === 'function';
+    hands.hidden = !canHands;
+    if (canHands) hands.setAttribute('aria-pressed', String(Keyboard.handsOn()));
+  }
+
+  function setMode(next) {
+    if (!MODES.includes(next) || !run) return;
+    mode = next;
+    store(MODE_STORE, next);
+    // A new mode is a fresh attempt at the same text.
+    if (run.mode !== next) start(run.lesson, run.seed);
+    else $('ls-input').focus();
+  }
+
+  function stopTick() {
+    if (tick) clearInterval(tick);
+    tick = 0;
+  }
+  /** The sprint clock and the «Ritmo» pacer move with time, not with keys. */
+  function startTick() {
+    if (tick || !(run.timed || run.mode === 'pace')) return;
+    tick = setInterval(() => {
+      if (!run || !run.started) return;
+      if (run.timed && performance.now() - run.started >= SPRINT_MS) {
+        finish();
+        return;
+      }
+      paintClock();
+    }, 100);
+  }
+
+  /** Characters attempted so far: those passed plus the current one if it has a mistake. */
+  const attempted = () => run.reach + (run.errAt.has(run.reach) ? 1 : 0);
+
+  function paintClock() {
+    const elapsed = run.started ? performance.now() - run.started : 0;
+    if (run.timed) {
+      $('ls-timer').textContent = String(Math.max(0, Math.ceil((SPRINT_MS - elapsed) / 1000)));
+      $('ls-bar').style.width = `${Math.min(100, (elapsed / SPRINT_MS) * 100).toFixed(1)}%`;
+    }
+    if (run.mode === 'pace') {
+      const at = run.started ? L.pacerPos(elapsed, run.paceWpm, run.text.length - 1) : -1;
+      if (at !== run.paceAt) {
+        const spans = $('ls-text').querySelectorAll('.ls-ch');
+        spans[run.paceAt]?.classList.remove('pace');
+        spans[at]?.classList.add('pace');
+        run.paceAt = at;
+      }
+    }
+  }
+
   function paint() {
     const spans = $('ls-text').querySelectorAll('.ls-ch');
     for (let i = 0; i < spans.length; i++) {
       spans[i].classList.toggle('done', i < run.pos);
       spans[i].classList.toggle('cur', i === run.pos);
       spans[i].classList.toggle('err', run.errAt.has(i) && i <= run.pos);
+      spans[i].classList.remove('pace');
     }
     spans[run.pos]?.scrollIntoView({ block: 'nearest' });
     const next = run.text[run.pos];
     if (next !== undefined) kb.highlight(next);
-    const typed = run.pos;
     const mins = run.started ? (performance.now() - run.started) / 60000 : 0;
-    $('ls-wpm').textContent = mins > 0.05 ? fmt(typed / 5 / mins) : '–';
-    const acc = typed ? 1 - [...run.errAt].filter((i) => i < typed).length / typed : 1;
-    $('ls-acc').textContent = `${fmt(acc * 100)} %`;
-    $('ls-bar').style.width = `${((typed / run.text.length) * 100).toFixed(1)}%`;
+    const typed = attempted();
+    const speed = run.timed ? L.netWpm(run.pos, run.errAt.size, mins * 60000) : run.pos / 5 / mins;
+    $('ls-wpm').textContent = mins > 0.05 ? fmt(speed) : '–';
+    const acc = typed ? 1 - run.errAt.size / typed : 1;
+    $('ls-acc').textContent = `${fmt(Math.max(0, acc) * 100)} %`;
+    if (!run.timed) $('ls-bar').style.width = `${((run.pos / run.text.length) * 100).toFixed(1)}%`;
+    run.paceAt = -1; // repaint the pacer on the fresh classes
+    paintClock();
+  }
+
+  /** The sprint never runs out of text: more sentences join before the cursor gets near the end. */
+  function extendSprint() {
+    while (run.text.length - run.pos < 200) {
+      run.part++;
+      const more = ` ${sprintMore(run.lesson, run.seed, run.part)}`;
+      run.text += more;
+      $('ls-text').append(...spansFor(more));
+    }
   }
 
   /** One character typed into the hidden input (dead keys arrive already composed). */
   function onChar(ch) {
-    if (!run || run.pos >= run.text.length) return;
+    if (!run || run.pos >= run.text.length || run.over) return;
     const now = performance.now();
-    if (!run.started) run.started = run.lastAt = now;
+    if (!run.started) {
+      run.started = run.lastAt = now;
+      startTick();
+    }
     const want = run.text[run.pos];
     const stat = run.keys.get(want) || { key: want, hits: 0, misses: 0, ms: 0 };
     // The pair "previous letter + this letter" of OUR lesson text (letters only, never across a space).
@@ -429,15 +727,14 @@ const Lessons = (() => {
     const pair = /^\p{L}\p{L}$/u.test(pairKey) ? (run.pairs.get(pairKey) || { pair: pairKey, hits: 0, misses: 0, ms: 0 }) : null;
     const code = Keyboard.charMap(layout).get(want);
     const firstCode = Array.isArray(code) ? code[0].code : code && code.code;
-    if (ch === want) {
+    const ok = ch === want;
+    if (ok) {
       // Longest run without a mistake: lessons count for the "sin borrar" record too (0.7.2).
       run.clean = (run.clean || 0) + 1;
       run.bestClean = Math.max(run.bestClean || 0, run.clean);
       stat.hits++;
       stat.ms += Math.round(now - run.lastAt);
       if (pair) { pair.hits++; pair.ms += Math.round(now - run.lastAt); }
-      run.lastAt = now;
-      run.pos++;
       kb.flash(firstCode, true);
       Mascot.keyTick($('mascot'));
     } else {
@@ -446,47 +743,90 @@ const Lessons = (() => {
       run.errAt.add(run.pos);
       kb.flash(firstCode, false);
     }
+    run.lastAt = now;
     run.keys.set(want, stat);
     if (pair) run.pairs.set(pair.pair, pair);
+    run.pos = L.advance(run.text, run.pos, ok, run.mode);
+    run.reach = Math.max(run.reach, run.pos);
+    if (run.timed) extendSprint();
     paint();
-    if (run.pos >= run.text.length) finish();
+    if (!run.timed && run.pos >= run.text.length) finish();
   }
 
   async function finish() {
-    const ms = performance.now() - run.started;
-    const wpm = run.text.length / 5 / (ms / 60000);
-    const accuracy = 1 - run.errAt.size / run.text.length;
+    if (!run || run.over) return;
+    run.over = true;
+    stopTick();
+    const done = run;
+    const ms = done.timed ? Math.min(SPRINT_MS, performance.now() - done.started) : performance.now() - done.started;
+    const typed = attempted();
     kb.clear();
+    // A sprint without a single key typed right is not a result.
+    if (done.timed && done.pos === 0) {
+      renderMap();
+      return;
+    }
+    const chars = done.timed ? done.pos : done.text.length;
+    const wpm = done.timed ? L.netWpm(done.pos, done.errAt.size, ms) : done.text.length / 5 / (ms / 60000);
+    const accuracy = Math.max(0, 1 - done.errAt.size / Math.max(1, done.timed ? typed : done.text.length));
+    const bestBefore = bestWpmOf(done.lesson.id);
     let saved = { stars: 1, best_before: 0, xp: 0 };
     try {
       saved = await invoke('save_lesson', {
         run: {
-          lesson_id: run.lesson.id, layout, duration_ms: Math.round(ms), wpm, accuracy, target_wpm: run.target, keys: [...run.keys.values()], bigrams: [...run.pairs.values()],
-          chars: run.text.length, best_run: run.bestClean || 0,
+          lesson_id: done.lesson.id, layout, duration_ms: Math.round(ms), wpm, accuracy, target_wpm: done.target, keys: [...done.keys.values()], bigrams: [...done.pairs.values()],
+          chars, best_run: done.bestClean || 0,
         },
       });
     } catch (e) { showError(e); }
     progress = await invoke('get_lessons_progress', { layout }).catch(() => progress);
-    showResult(saved, wpm, accuracy);
+    if (run !== done) return; // restarted or closed meanwhile
+    showResult(done, saved, wpm, accuracy, { record: done.timed && wpm > bestBefore, bestBefore });
   }
 
-  function showResult(saved, wpm, accuracy) {
+  /** What comes after a finished exercise: the next lesson of its unit, or the next text of the path. */
+  function nextOf(lesson) {
+    if (lesson.unit === 'lib' && !lesson.daily) {
+      const lib = library(layout);
+      if (!lib) return null;
+      const i = lesson.kind === 'pangrams' ? -1 : lib.texts.findIndex((x) => x.id === lesson.id);
+      const x = lib.texts[i + 1];
+      return x && L.pathUnlocked(lib.texts, bestOf)[i + 1] ? libLesson(x, i + 1, false) : null;
+    }
+    if (['sprint', 'fingers', 'practice'].includes(lesson.unit) || lesson.daily) return null;
+    const list = catalogue(layout);
+    const i = list.findIndex((l) => l.id === lesson.id);
+    return i < 0 ? null : list[i + 1];
+  }
+
+  function showResult(done, saved, wpm, accuracy, sprint) {
     $('ls-run').hidden = true;
     $('ls-result').hidden = false;
-    $('ls-res-stars').innerHTML = starIcons(saved.stars);
-    $('ls-res-title').textContent = t(`lessons.result.${saved.stars}`);
-    $('ls-res-line').textContent = t('lessons.result.line', { wpm: fmt(wpm), acc: fmt(accuracy * 100), xp: fmt(saved.xp) });
-    $('ls-res-tip').textContent = saved.stars < 3 ? t(saved.stars < 2 ? 'lessons.tip.acc' : 'lessons.tip.pace', { target: fmt(run.target) }) : (saved.stars > saved.best_before ? t('lessons.tip.new_best') : '');
-    const list = catalogue(layout);
-    const i = list.findIndex((l) => l.id === run.lesson.id);
-    const next = i < 0 ? null : list[i + 1];
+    const lesson = done.lesson;
+    const timed = done.timed;
+    $('ls-res-stars').innerHTML = timed ? '' : starIcons(saved.stars);
+    $('ls-res-stars').hidden = timed;
+    if (timed) {
+      $('ls-res-title').textContent = t(sprint.record ? 'lessons.sprint.record' : 'lessons.sprint.done');
+      $('ls-res-line').textContent = t('lessons.sprint.line', { wpm: fmt(wpm), acc: fmt(accuracy * 100), xp: fmt(saved.xp) });
+      $('ls-res-tip').textContent = sprint.record
+        ? (sprint.bestBefore > 0 ? t('lessons.sprint.beaten', { wpm: fmt(sprint.bestBefore) }) : t('lessons.sprint.first'))
+        : t('lessons.sprint.best', { wpm: fmt(sprint.bestBefore) });
+    } else {
+      $('ls-res-title').textContent = t(`lessons.result.${saved.stars}`);
+      $('ls-res-line').textContent = t('lessons.result.line', { wpm: fmt(wpm), acc: fmt(accuracy * 100), xp: fmt(saved.xp) });
+      $('ls-res-tip').textContent = saved.stars < 3 ? t(saved.stars < 2 ? 'lessons.tip.acc' : 'lessons.tip.pace', { target: fmt(done.target) }) : (saved.stars > saved.best_before ? t('lessons.tip.new_best') : '');
+    }
+    const next = nextOf(lesson);
     $('ls-next').hidden = !next;
     $('ls-next').onclick = () => next && start(next);
-    $('ls-again').onclick = () => start(run.lesson);
+    // «Repetir» after a sprint is a new run of sentences; any other exercise gets a fresh text as before.
+    $('ls-again').onclick = () => start(lesson);
     $('ls-back').onclick = () => renderMap();
-    Mascot.jump($('mascot'), { big: saved.stars === 3 });
-    if (saved.stars === 3) setTimeout(() => Support.happyMoment(progress.lessons.length >= 5 ? 7 : 0), 1200);
-    Mascot.setFace($('mascot'), { eyes: saved.stars === 3 ? 'sparkle' : 'round', mouth: 'big' });
+    const big = timed ? sprint.record : saved.stars === 3;
+    Mascot.jump($('mascot'), { big });
+    if (big) setTimeout(() => Support.happyMoment(progress.lessons.length >= 5 ? 7 : 0), 1200);
+    Mascot.setFace($('mascot'), { eyes: big ? 'sparkle' : 'round', mouth: 'big' });
     $('ls-again').focus();
   }
 
@@ -501,6 +841,7 @@ const Lessons = (() => {
     document.body.dataset.view = '';
     SectionNav.render();
     $('lessons-btn').setAttribute('aria-pressed', 'false');
+    stopTick();
     run = null;
     if (kb) kb.clear();
     Mascot.setFace($('mascot'), {});
@@ -522,9 +863,31 @@ const Lessons = (() => {
     });
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') { e.preventDefault(); renderMap(); }
+      // Ctrl+Enter restarts (Enter alone is typed in texts with line breaks; Esc already exits).
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); restart(); return; }
       if (e.key === 'Enter' && run && run.text[run.pos] === '\n') { e.preventDefault(); onChar('\n'); }
     });
     $('ls-text').addEventListener('click', () => input.focus());
+    $('ls-restart').addEventListener('click', restart);
+    const modes = $('ls-modes');
+    modes.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-mode]');
+      if (b) setMode(b.dataset.mode);
+    });
+    modes.addEventListener('keydown', (e) => {
+      const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+      if (!step || !run) return;
+      e.preventDefault();
+      setMode(MODES[(MODES.indexOf(run.mode) + step + MODES.length) % MODES.length]);
+      modes.querySelector(`[data-mode="${run.mode}"]`)?.focus();
+    });
+    $('ls-hands').addEventListener('click', () => {
+      if (typeof Keyboard.setHands !== 'function' || !run) return;
+      Keyboard.setHands(!Keyboard.handsOn());
+      renderTools();
+      paint();
+      input.focus();
+    });
   }
 
   return { bind, open, close, refresh, practiceNow, layout: () => layout || defaultLayout(), catalogue, textFor, UNITS };

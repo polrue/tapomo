@@ -49,16 +49,66 @@
       <div id="ls-map">
         <p class="hint" data-i18n="lessons.intro"></p>
         <p class="ls-real" id="ls-real" hidden></p>
-        <div class="ls-practice" id="ls-practice" hidden>
-          <div><strong data-i18n="lessons.practice.title"></strong><p class="hint" data-i18n="lessons.practice.text"></p></div>
-          <span class="ls-practice-keys" id="ls-practice-keys"></span>
-          <p class="hint ls-practice-pairs" id="ls-practice-pairs" hidden></p>
-          <button type="button" id="ls-practice-go" data-i18n="lessons.practice.go"></button>
+        <div class="ls-top" id="ls-top">
+          <article class="ls-card ls-daily" id="ls-daily" hidden>
+            <p class="ls-card-kicker" data-i18n="lessons.daily.kicker"></p>
+            <h3 id="ls-daily-title"></h3>
+            <p class="ls-source" id="ls-daily-source" hidden></p>
+            <p class="hint" id="ls-daily-meta"></p>
+            <button type="button" id="ls-daily-go" data-i18n="lessons.daily.go"></button>
+          </article>
+          <article class="ls-card ls-practice" id="ls-practice">
+            <p class="ls-card-kicker" data-i18n="lessons.today_practice.kicker"></p>
+            <h3 data-i18n="lessons.practice.title"></h3>
+            <div id="ls-practice-ready">
+              <p class="hint" id="ls-practice-text"></p>
+              <span class="ls-practice-keys" id="ls-practice-keys"></span>
+              <p class="hint ls-practice-pairs" id="ls-practice-pairs" hidden></p>
+              <button type="button" id="ls-practice-go" data-i18n="lessons.practice.go"></button>
+            </div>
+            <p class="hint" id="ls-practice-empty" data-i18n="lessons.today_practice.empty" hidden></p>
+          </article>
+          <article class="ls-card ls-sprint" id="ls-sprint" hidden>
+            <p class="ls-card-kicker" data-i18n="lessons.sprint.kicker"></p>
+            <h3 data-i18n="lessons.sprint.title"></h3>
+            <p class="hint" data-i18n="lessons.sprint.text"></p>
+            <p class="ls-sprint-best" id="ls-sprint-best"></p>
+            <button type="button" id="ls-sprint-go" data-i18n="lessons.sprint.go"></button>
+          </article>
         </div>
         <div class="ls-units" id="ls-units"></div>
+        <section class="ls-section ls-lib" id="ls-lib" hidden aria-labelledby="ls-lib-title">
+          <h3 id="ls-lib-title" data-i18n="lessons.lib.title"></h3>
+          <p class="hint" data-i18n="lessons.lib.intro"></p>
+          <div class="ls-lib-grid">
+            <div class="ls-unit ls-pangrams">
+              <h4 data-i18n="lessons.pangrams.title"></h4>
+              <p class="hint" data-i18n="lessons.pangrams.text"></p>
+              <button type="button" class="ls-lesson" id="ls-pangrams-go"><span class="ls-name" data-i18n="lessons.pangrams.go"></span><span class="ls-stars" id="ls-pangrams-stars"></span></button>
+            </div>
+          </div>
+          <div class="ls-path" id="ls-path"></div>
+        </section>
+        <section class="ls-section ls-fingers" id="ls-fingers" hidden aria-labelledby="ls-fingers-title">
+          <h3 id="ls-fingers-title" data-i18n="lessons.fingers.title"></h3>
+          <p class="hint" data-i18n="lessons.fingers.text"></p>
+          <div class="ls-chips" id="ls-finger-chips" role="group" data-i18n-aria="lessons.fingers.title"></div>
+        </section>
       </div>
       <div id="ls-run" hidden>
-        <div class="ls-run-head"><h3 id="ls-run-title"></h3><span class="ls-live"><span data-i18n="unit.wpm"></span> <strong id="ls-wpm">–</strong> · <span data-i18n="lessons.accuracy"></span> <strong id="ls-acc">100 %</strong></span></div>
+        <div class="ls-run-head"><h3 id="ls-run-title"></h3><span class="ls-live"><span id="ls-timer-box" hidden><strong id="ls-timer">60</strong> s · </span><span data-i18n="unit.wpm"></span> <strong id="ls-wpm">–</strong> · <span data-i18n="lessons.accuracy"></span> <strong id="ls-acc">100 %</strong></span></div>
+        <p class="ls-source" id="ls-run-source" hidden></p>
+        <div class="ls-tools">
+          <div class="ls-modes" id="ls-modes" role="radiogroup" data-i18n-aria="lessons.mode.label" hidden>
+            <button type="button" role="radio" data-mode="normal" data-i18n="lessons.mode.normal" data-i18n-title="lessons.mode.normal_tip"></button>
+            <button type="button" role="radio" data-mode="precision" data-i18n="lessons.mode.precision" data-i18n-title="lessons.mode.precision_tip"></button>
+            <button type="button" role="radio" data-mode="pace" data-i18n="lessons.mode.pace" data-i18n-title="lessons.mode.pace_tip"></button>
+          </div>
+          <span class="ls-tools-gap"></span>
+          <button type="button" class="ghost ls-tool" id="ls-hands" aria-pressed="true" data-i18n="lessons.hands" data-i18n-title="lessons.hands_tip" hidden></button>
+          <button type="button" class="ghost ls-tool" id="ls-restart" data-i18n="lessons.restart" data-i18n-title="lessons.restart_tip"></button>
+        </div>
+        <p class="hint ls-mode-hint" id="ls-mode-hint" hidden></p>
         <div class="ls-progress"><i id="ls-bar"></i></div>
         <div class="ls-text" id="ls-text" aria-live="off"></div>
         <input class="ls-input" id="ls-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-i18n-aria="lessons.input">
@@ -528,6 +578,11 @@
   <script src="keyboard.js"></script>
   <script src="lesson-words.js"></script>
   <script src="lesson-texts.js"></script>
+  <script src="library/es.js"></script>
+  <script src="library/en.js"></script>
+  <script src="library/fr.js"></script>
+  <script src="library/de.js"></script>
+  <script src="lesson-logic.js"></script>
   <script src="lessons.js"></script>
   <script src="records.js"></script>
   <script src="shortcuts.js"></script>

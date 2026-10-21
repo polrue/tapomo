@@ -129,8 +129,12 @@ pub fn save(conn: &Connection, run: &LessonRun) -> rusqlite::Result<Saved> {
 
 #[derive(Debug, Serialize)]
 pub struct Progress {
-    /// `(lesson id, best stars, times done)`.
-    pub lessons: Vec<(String, u8, u32)>,
+    /// `(lesson id, best stars, times done, best wpm)`. The best wpm is the sprint's personal best.
+    pub lessons: Vec<(String, u8, u32, f64)>,
+    /// `(lesson id, best stars)` of the lessons done today («Texto del día», «Tu práctica del día»).
+    pub today: Vec<(String, u8)>,
+    /// Average speed of the last lessons in this layout, for the «Ritmo» pacer and the daily practice size.
+    pub recent_wpm: Option<f64>,
     /// Everyday average speed over the last 30 days, to set fair lesson targets.
     pub everyday_wpm: Option<f64>,
     /// Real (everyday) speed in the 14 days before the first lesson and in the last 14 days, once
@@ -150,8 +154,11 @@ fn avg_wpm(conn: &Connection, from: i64, to: i64) -> rusqlite::Result<Option<f64
 
 pub fn progress(conn: &Connection, layout: &str) -> rusqlite::Result<Progress> {
     let layout = layout_id(layout);
-    let mut stmt = conn.prepare("SELECT lesson_id, MAX(stars), COUNT(*) FROM lesson_results WHERE layout = ?1 GROUP BY lesson_id")?;
-    let lessons = stmt.query_map([layout], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?.collect::<rusqlite::Result<Vec<_>>>()?;
+    let mut stmt = conn.prepare("SELECT lesson_id, MAX(stars), COUNT(*), MAX(wpm) FROM lesson_results WHERE layout = ?1 GROUP BY lesson_id")?;
+    let lessons = stmt.query_map([layout], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))?.collect::<rusqlite::Result<Vec<_>>>()?;
+    let mut stmt = conn.prepare("SELECT lesson_id, MAX(stars) FROM lesson_results WHERE layout = ?1 AND day = ?2 GROUP BY lesson_id")?;
+    let today = stmt.query_map(params![layout, db::today_day(conn)?], |r| Ok((r.get(0)?, r.get(1)?)))?.collect::<rusqlite::Result<Vec<_>>>()?;
+    let recent_wpm = recent_wpm(conn, layout)?;
     let now = now_ms();
     const DAY: i64 = 86_400_000;
     let everyday_wpm = avg_wpm(conn, now - 30 * DAY, now)?;
@@ -160,7 +167,20 @@ pub fn progress(conn: &Connection, layout: &str) -> rusqlite::Result<Progress> {
         Some(f) if now - f >= 7 * DAY => avg_wpm(conn, f - 14 * DAY, f)?.zip(avg_wpm(conn, now - 14 * DAY, now)?),
         _ => None,
     };
-    Ok(Progress { lessons, everyday_wpm, before_after })
+    Ok(Progress { lessons, everyday_wpm, before_after, today, recent_wpm })
+}
+
+/// How many recent lessons make the «recent lesson speed».
+const RECENT_LESSONS: i64 = 10;
+
+/// Average wpm of the last lessons in `layout` (at least 3 of them, else None).
+fn recent_wpm(conn: &Connection, layout: &str) -> rusqlite::Result<Option<f64>> {
+    let (avg, n): (Option<f64>, i64) = conn.query_row(
+        "SELECT AVG(wpm), COUNT(*) FROM (SELECT wpm FROM lesson_results WHERE layout = ?1 AND wpm > 0 ORDER BY ts DESC, id DESC LIMIT ?2)",
+        params![layout, RECENT_LESSONS],
+        |r| Ok((r.get(0)?, r.get(1)?)),
+    )?;
+    Ok(avg.filter(|_| n >= 3))
 }
 
 /// Keys of OUR lesson texts with the most misses or slowest times, hardest first.
@@ -216,8 +236,51 @@ mod tests {
         let again = save(&c, &run(0.99, 25.0, vec![])).unwrap();
         assert_eq!(again.xp, 10, "the accuracy bonus is once per lesson");
         let p = progress(&c, "es").unwrap();
-        assert_eq!(p.lessons, vec![("home-1".to_string(), 3, 3)]);
+        assert_eq!(p.lessons, vec![("home-1".to_string(), 3, 3, 25.0)]);
         assert!(p.before_after.is_none());
+    }
+
+    #[test]
+    fn progress_has_the_best_speed_today_and_the_recent_pace() {
+        let c = mem();
+        let at = |id: &str, acc: f64, wpm: f64| LessonRun { lesson_id: id.into(), ..run(acc, wpm, vec![]) };
+        save(&c, &at("sprint-1m", 0.9, 31.5)).unwrap();
+        assert_eq!(progress(&c, "es").unwrap().recent_wpm, None, "fewer than three lessons give no pace");
+        save(&c, &at("sprint-1m", 0.97, 44.0)).unwrap();
+        save(&c, &at("es-001", 0.96, 30.0)).unwrap();
+        let p = progress(&c, "es").unwrap();
+        let sprint = p.lessons.iter().find(|l| l.0 == "sprint-1m").unwrap();
+        assert_eq!((sprint.2, sprint.3), (2, 44.0), "personal best = highest wpm");
+        let mut today = p.today.clone();
+        today.sort();
+        assert_eq!(today, vec![("es-001".to_string(), 2), ("sprint-1m".to_string(), 2)]);
+        let r = p.recent_wpm.unwrap();
+        assert!((r - (31.5 + 44.0 + 30.0) / 3.0).abs() < 1e-9, "{r}");
+        // Another layout has its own progress.
+        let us = progress(&c, "us").unwrap();
+        assert!(us.lessons.is_empty() && us.today.is_empty() && us.recent_wpm.is_none());
+        // Results of other days are not «today».
+        c.execute("UPDATE lesson_results SET day = day - 1 WHERE lesson_id = 'es-001'", []).unwrap();
+        assert_eq!(progress(&c, "es").unwrap().today, vec![("sprint-1m".to_string(), 2)]);
+    }
+
+    #[test]
+    fn recent_pace_uses_only_the_last_ten() {
+        let c = mem();
+        for _ in 0..5 {
+            save(&c, &run(0.9, 10.0, vec![])).unwrap();
+        }
+        for _ in 0..10 {
+            save(&c, &run(0.9, 40.0, vec![])).unwrap();
+        }
+        assert_eq!(progress(&c, "es").unwrap().recent_wpm, Some(40.0));
+    }
+
+    #[test]
+    fn library_and_sprint_ids_are_kept() {
+        assert_eq!(clean_id("es-001"), "es-001");
+        assert_eq!(clean_id("sprint-1m"), "sprint-1m");
+        assert_eq!(clean_id("finger-9"), "finger-9");
     }
 
     #[test]
