@@ -479,6 +479,117 @@ const Keyboard = (() => {
     return k && k.finger <= 4 ? 'ShiftRight' : 'ShiftLeft';
   };
 
+
+  // ---------- Hands (drawn under the keyboard, light up the finger to use) ----------
+
+  const HANDS_KEY = 'tapomo.hands';
+  const handsOn = () => {
+    try {
+      return localStorage.getItem(HANDS_KEY) !== '0';
+    } catch {
+      return true;
+    }
+  };
+  const instances = new Set();
+  /** Show/hide the hands under every keyboard; remembered in localStorage (default on). */
+  function setHands(on) {
+    try {
+      localStorage.setItem(HANDS_KEY, on ? '1' : '0');
+    } catch {
+      /* private mode: just apply for this session */
+    }
+    for (const inst of instances) inst.refreshHands();
+  }
+
+  // Left hand geometry in keyboard viewBox px; the right hand is its mirror about HAND_MIRROR.
+  // The finger columns sit under A S D F (home row) so each finger points at its own keys.
+  const HAND_MIRROR = 276;
+  const HAND_VIEW = { x: 44, w: 464, h: 206 };
+  const FINGER_W = 34;
+  const LEFT_FINGERS = [ // [finger, centre x, tip y]
+    [0, 98, 64], [1, 138, 30], [2, 178, 12], [3, 218, 28],
+  ];
+  const FINGER_BASE = 170;
+
+  function drawHand(parent, right) {
+    const mx = (x) => (right ? 2 * HAND_MIRROR - x : x);
+    const g = el('g', { class: `hd-hand ${right ? 'hd-right' : 'hd-left'}` }, parent);
+    const part = (n) => el('g', { class: `hd-part hd-f${n}`, 'data-finger': n }, g);
+    const FNUM = (n) => (right ? 9 - n : n); // left 0..3 -> right 9..6
+    for (const [n, cx, top] of LEFT_FINGERS) {
+      const f = part(FNUM(n));
+      el('rect', { class: 'hd-shape', x: mx(cx) - FINGER_W / 2, y: top, width: FINGER_W, height: FINGER_BASE - top, rx: FINGER_W / 2 }, f);
+      el('ellipse', { class: 'hd-nail', cx: mx(cx), cy: top + 12, rx: 8, ry: 5.5 }, f);
+    }
+    // Thumb: a tilted chubby capsule leaning towards the middle of the keyboard.
+    const t = part(right ? 5 : 4);
+    const tx = mx(232);
+    const tilt = right ? -13 : 13;
+    el('rect', {
+      class: 'hd-shape', x: tx - 19, y: 100, width: 38, height: 90, rx: 19,
+      transform: `rotate(${tilt} ${tx} 190)`,
+    }, t);
+    el('ellipse', {
+      class: 'hd-nail', cx: tx + (right ? -1 : 1) * 0, cy: 116, rx: 8, ry: 5.5,
+      transform: `rotate(${tilt} ${tx} 190)`,
+    }, t);
+    // Palm drawn last so the fingers grow out from under it.
+    const px = right ? mx(240) : 78;
+    el('rect', { class: 'hd-palm', x: px, y: 118, width: 162, height: 82, rx: 38 }, g);
+    // A tiny mochi face on the palm.
+    const fx = px + 81;
+    el('ellipse', { class: 'hd-cheek', cx: fx - 30, cy: 164, rx: 9, ry: 5.5 }, g);
+    el('ellipse', { class: 'hd-cheek', cx: fx + 30, cy: 164, rx: 9, ry: 5.5 }, g);
+    el('circle', { class: 'hd-eye', cx: fx - 17, cy: 155, r: 3.6 }, g);
+    el('circle', { class: 'hd-eye', cx: fx + 17, cy: 155, r: 3.6 }, g);
+    el('path', { class: 'hd-smile', d: `M${fx - 8} 163 Q${fx} 172 ${fx + 8} 163` }, g);
+  }
+
+  function buildHands() {
+    const svg = el('svg', {
+      class: 'kb-hands',
+      viewBox: `${HAND_VIEW.x} 0 ${HAND_VIEW.w} ${HAND_VIEW.h}`,
+      'aria-hidden': 'true',
+      focusable: 'false',
+    });
+    drawHand(svg, false);
+    drawHand(svg, true);
+    return svg;
+  }
+
+  /** Fingers (0-9) for a list of strokes: key finger, plus the Shift/AltGr helper, space = both thumbs. */
+  function fingersFor(L, stroke) {
+    const out = new Set();
+    const add = (code) => {
+      const k = L.byCode.get(code);
+      if (!k) return;
+      out.add(k.finger);
+      if (code === 'Space') {
+        out.add(4);
+        out.add(5);
+      }
+    };
+    add(stroke.code);
+    if (stroke.shift) add(shiftFor(L, stroke.code));
+    if (stroke.altgr) add('AltRight');
+    return out;
+  }
+
+  /** Characters typed by `finger` on this layout without modifiers (letters, digits, punctuation).
+   * Dead keys are skipped; thumbs type the space. */
+  function keysForFinger(layout, finger) {
+    const L = resolve(layout);
+    if (finger === 4 || finger === 5) return [' '];
+    const out = [];
+    for (const row of L.rows) {
+      for (const k of row) {
+        if (k.mod || k.finger !== finger) continue;
+        if (k.label && [...k.label].length === 1 && !(k.dead && k.dead.label) && !out.includes(k.label)) out.push(k.label);
+      }
+    }
+    return out;
+  }
+
   /**
    * Draws the keyboard into `container`. opts: { ariaLabel, legend (bool), t (translator) }.
    * Returns { highlight(strokes|char), flash(code, ok), clear(), setLayout(layout), svg, layout }.
@@ -496,15 +607,40 @@ const Keyboard = (() => {
 
     let L = resolve(layout);
     let svg;
+    let handsSvg = null;
+    let lastInput = null;
     const api = { layout: L, svg: null };
 
     function mount() {
       root.textContent = '';
       svg = buildSvg(L, `${label()} (${L.name})`);
       root.appendChild(svg);
+      handsSvg = null;
+      if (handsOn()) {
+        handsSvg = buildHands();
+        root.appendChild(handsSvg);
+      }
       if (opts.legend) root.appendChild(buildLegend(tr));
       api.layout = L;
       api.svg = svg;
+      api.handsSvg = handsSvg;
+    }
+
+    /** Light the fingers for these strokes: [0] is the finger to use now, [1] the one after. */
+    function lightHands(strokes) {
+      if (!handsSvg) return;
+      handsSvg.querySelectorAll('.is-active, .is-after').forEach((n) => n.classList.remove('is-active', 'is-after'));
+      handsSvg.classList.remove('has-next');
+      if (!strokes || !strokes.length) return;
+      handsSvg.classList.add('has-next');
+      void handsSvg.getBoundingClientRect(); // restart the press animation on repeated keys
+      strokes.slice(0, 2).forEach((s, i) => {
+        for (const f of fingersFor(L, s)) {
+          const n = handsSvg.querySelector(`.hd-f${f}`);
+          if (n) n.classList.add(i === 0 ? 'is-active' : 'is-after');
+        }
+      });
+      handsSvg.querySelectorAll('.is-active.is-after').forEach((n) => n.classList.remove('is-after'));
     }
 
     const keyEl = (code) => svg.querySelector(`.kb-key[data-code="${code}"]`);
@@ -516,6 +652,8 @@ const Keyboard = (() => {
         delete n.dataset.level;
       });
       svg.querySelector('.kb-badges').textContent = '';
+      lightHands(null);
+      lastInput = null;
     }
 
     function badge(code, n) {
@@ -545,11 +683,14 @@ const Keyboard = (() => {
     /** Light up the next key(s). Takes a character, one stroke, or an array of strokes. */
     function highlight(input) {
       clear();
+      lastInput = null;
       let strokes = input;
       if (typeof input === 'string') strokes = input ? strokesFor(L, [...input][0]) : [];
       else if (input && !Array.isArray(input)) strokes = [input];
+      lastInput = strokes && strokes.length ? strokes : null;
       if (!strokes || !strokes.length) return;
       svg.classList.add('has-next');
+      lightHands(strokes);
       mark(strokes[0], 'is-next');
       if (strokes[1]) {
         mark(strokes[1], 'is-then');
@@ -578,11 +719,22 @@ const Keyboard = (() => {
     }
 
     function destroy() {
+      instances.delete(inst);
       root.remove();
     }
 
+    /** Re-reads the hands setting (called by Keyboard.setHands). */
+    function refreshHands() {
+      if (!!handsSvg === handsOn()) return;
+      const keep = lastInput;
+      mount();
+      if (keep) highlight(keep);
+    }
+
     mount();
-    return Object.assign(api, { highlight, flash, clear, setLayout, destroy, root });
+    const inst = Object.assign(api, { highlight, flash, clear, setLayout, destroy, root, refreshHands });
+    instances.add(inst);
+    return inst;
   }
 
   /** Optional legend: one swatch per finger (thumbs share the neutral one). */
@@ -601,7 +753,7 @@ const Keyboard = (() => {
     return ul;
   }
 
-  return { LAYOUTS, charMap, charForVk, strokesFor, render, fingerName };
+  return { LAYOUTS, charMap, charForVk, strokesFor, render, fingerName, setHands, handsOn, keysForFinger };
 })();
 
 if (typeof window !== 'undefined') window.Keyboard = Keyboard;
