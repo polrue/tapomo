@@ -42,9 +42,60 @@ body[data-view="lessons"] #range-tabs { visibility: hidden; }
 .ls-res-stars { font-size: 2.6rem; letter-spacing: .1em; }
 .ls-result h3 { margin: 4px 0; font-size: 1.3rem; }
 .ls-res-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }
-.ls-practice { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 8px 0 4px; padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, var(--accent) 16%, var(--card)); border: 1px solid var(--accent); }
-.ls-practice > div { flex: 1; min-width: 200px; }
-.ls-practice .hint { margin: 2px 0 0; }
-.ls-practice-keys { font-family: ui-monospace, Consolas, monospace; font-size: 1.3rem; font-weight: 800; letter-spacing: .1em; }
+/* 0.9: top cards (Texto del día, Tu práctica del día, Sprint), the text library, the finger trainer. */
+.ls-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 10px 0 14px; }
+.ls-card { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, var(--accent) 12%, var(--card)); border: 1px solid var(--accent); min-width: 0; }
+.ls-card h3 { margin: 0; font-size: 1.05rem; overflow-wrap: anywhere; }
+.ls-card p { margin: 0; }
+.ls-card > button, .ls-card #ls-practice-ready > button { align-self: flex-start; margin-top: auto; }
+.ls-card #ls-practice-ready { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.ls-card-kicker { font-size: .75rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-strong); }
+.ls-card.done .ls-card-kicker::after { content: " ✓"; }
+.ls-card .hint .ls-stars { white-space: nowrap; }
+.ls-sprint-best { font-weight: 800; }
+.ls-source { color: var(--muted); font-size: .85rem; font-style: italic; margin: 0; }
+.ls-practice-keys { font-family: ui-monospace, Consolas, monospace; font-size: 1.3rem; font-weight: 800; letter-spacing: .1em; overflow-wrap: anywhere; }
+.ls-practice-pairs { margin: 0; }
 
-.ls-practice-pairs { flex-basis: 100%; margin: 0; }
+.ls-section { margin-top: 18px; }
+.ls-section > h3 { margin: 0; font-size: 1.1rem; }
+.ls-section > .hint { margin: 2px 0 8px; }
+.ls-lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.ls-unit h4 { margin: 0; font-size: 1rem; }
+.ls-pangrams .hint { margin: 2px 0 8px; }
+.ls-path { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 12px; align-items: start; }
+.ls-level summary { display: flex; justify-content: space-between; gap: 8px; font-weight: 800; cursor: pointer; list-style-position: inside; }
+.ls-level[open] summary { margin-bottom: 8px; }
+.ls-level-count { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+.ls-text-item .ls-name { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+.ls-text-item .ls-source { font-size: .78rem; font-weight: 600; }
+.ls-text-item .ls-stars { flex: none; }
+.ls-lesson.gold { border-color: #ffb81c; background: color-mix(in srgb, #ffb81c 14%, var(--card)); }
+.ls-lock { font-size: .9rem; }
+.ls-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.ls-chip { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 12px; border-radius: 12px; background: var(--card); color: var(--ink); border: 1px solid var(--line); font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
+.ls-chip:hover { border-color: var(--accent); background: var(--card); color: var(--ink); }
+.ls-chip[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.ls-chip-keys { color: var(--muted); font-family: ui-monospace, Consolas, monospace; letter-spacing: .05em; font-size: .9rem; }
+.ls-chip .ls-star { font-size: .85rem; }
+
+/* Running header tools: modes, hands, restart. */
+.ls-run-head + .ls-source { margin-top: 2px; }
+.ls-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.ls-tools-gap { flex: 1; }
+.ls-modes { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: var(--bg); }
+.ls-modes button { border-radius: 999px; padding: 4px 12px; background: transparent; color: var(--ink); border: 0; font-weight: 700; }
+.ls-modes button:hover { background: var(--cell-empty); color: var(--ink); }
+.ls-modes button[aria-checked="true"] { background: var(--ink); color: var(--bg); }
+.ls-tool { padding: 4px 12px; border-radius: 999px; font-weight: 700; background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+.ls-tool:hover { border-color: var(--accent); background: var(--card); color: var(--ink); }
+.ls-tool[aria-pressed="false"] { opacity: .7; }
+.ls-mode-hint { margin: 6px 0 0; }
+.ls-ch.pace { box-shadow: inset 0 -3px 0 #6c8cff; background: color-mix(in srgb, #6c8cff 24%, transparent); }
+.ls-ch.cur.pace { box-shadow: 0 2px 0 var(--accent-strong), inset 0 -3px 0 #6c8cff; }
+@media (prefers-reduced-motion: no-preference) { .ls-ch.pace { transition: box-shadow .1s; } }
+@media (max-width: 520px) {
+  .ls-text { font-size: 1.2rem; padding: 10px 12px; }
+  .ls-tools-gap { display: none; }
+  .ls-modes button { padding: 4px 9px; }
+}
