@@ -19,10 +19,27 @@
 
 /* ------------------------------------------------------------ challenges */
 .ch-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.ch {
-  position: relative; display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 4px 10px;
-  padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg);
+.ch { position: relative; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); }
+/* The whole row is a button (Enter/Space open the explanation); reset the global button look. */
+.ch-head {
+  display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 4px 10px; width: 100%;
+  padding: 10px 12px; border-radius: 12px; background: none; color: var(--ink); text-align: left; font-weight: inherit; cursor: pointer;
 }
+.ch-head:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.ch-head:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 2px; }
+.ch-head::after { content: none; }
+.ch-how { padding: 2px 14px 12px 50px; color: var(--muted); font-size: 0.9rem; }
+.ch-how[hidden] { display: none; }
+.ch-how p { margin: 0 0 8px; }
+.ch-go { font-size: 0.85rem; padding: 4px 12px; }
+/* Out of time: no second chance, so it fades and drops the XP chip. */
+.ch[data-expired] { opacity: .65; }
+.ch[data-expired] .ch-text { text-decoration: line-through; text-decoration-color: var(--muted-fill); }
+.ch[data-expired] .ch-meta { color: var(--muted); font-weight: 700; }
+.ch[data-expired] .ch-stamp { border-style: solid; opacity: .6; }
+/* The setting a challenge links to flashes once so you see where you landed. */
+.flash { animation: ch-flash 2.4s ease-out; border-radius: 10px; }
+@keyframes ch-flash { 0%, 30% { background: color-mix(in srgb, var(--accent) 45%, transparent); } 100% { background: transparent; } }
 .ch-stamp { width: 24px; height: 24px; border-radius: 999px; border: 2px dashed var(--muted-fill); }
 .ch[data-done] .ch-stamp {
   border: none; background: var(--accent) no-repeat center / 16px

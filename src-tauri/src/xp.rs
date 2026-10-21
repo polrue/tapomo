@@ -76,12 +76,13 @@ fn goal_on(days: &[(i64, u64)], day: i64, settings: &db::Settings, protectors_si
 
 /// Challenges of `day` with their progress.
 pub fn challenges(conn: &Connection, day: i64, settings: &db::Settings) -> rusqlite::Result<[Challenge; 3]> {
-    let bursts = day_bursts(conn, day - xp::CALIBRATION_DAYS, day)?;
+    let from = day - xp::CALIBRATION_DAYS - xp::REPEAT_LOOKBACK; // the "no repeats" replay needs older history
+    let bursts = day_bursts(conn, from, day)?;
     let goal_ms = u64::from(settings.daily_goal_min) * 60_000;
     let shortcuts = if settings.count_shortcuts { crate::shortcuts::daily(conn)? } else { Vec::new() };
     let mut stmt = conn.prepare("SELECT day, COUNT(*) FROM lesson_results WHERE day >= ?1 AND day <= ?2 GROUP BY day")?;
     let lessons = stmt
-        .query_map(params![day - xp::CALIBRATION_DAYS, day], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?.max(0) as u64)))?
+        .query_map(params![from, day], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?.max(0) as u64)))?
         .collect::<rusqlite::Result<Vec<_>>>()?;
     // An album shortcut first used the day before; "used again" = seen on a later day (last_day ≥ day).
     let (learnt_yesterday, learnt_used_today): (bool, bool) = if settings.count_shortcuts {
@@ -93,8 +94,17 @@ pub fn challenges(conn: &Connection, day: i64, settings: &db::Settings) -> rusql
     } else {
         (false, false)
     };
-    let extras = xp::Extras { lessons: &lessons, learnt_yesterday, learnt_used_today };
-    Ok(xp::daily_challenges(&bursts, day, history_days(conn, day)?, goal_ms, &shortcuts, extras))
+    // What was really shown yesterday (stored the first time a day is computed); without it the
+    // choice is replayed from the bursts.
+    let stored = db::get_raw(conn, &format!("ch_shown_{}", day - 1))?;
+    let shown: Option<Vec<&str>> = stored.as_deref().map(|v| v.split(',').filter(|s| !s.is_empty()).collect());
+    let extras = xp::Extras { lessons: &lessons, learnt_yesterday, learnt_used_today, shown_yesterday: shown.as_deref() };
+    let list = xp::daily_challenges(&bursts, day, history_days(conn, day)?, goal_ms, &shortcuts, extras);
+    let key = format!("ch_shown_{day}");
+    if db::get_raw(conn, &key)?.is_none() {
+        db::set_raw(conn, &key, &list.map(|c| c.id).join(","))?;
+    }
+    Ok(list)
 }
 
 /// What a settle changed.
@@ -175,6 +185,9 @@ pub struct ChallengeOut {
     pub target: u32,
     pub progress: u32,
     pub done: bool,
+    /// `early_goal`: personal deadline, minutes since local midnight (absent for the others).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deadline_min: Option<u32>,
 }
 
 /// Everything the Today view and the wardrobe need.
@@ -200,7 +213,7 @@ pub fn state(conn: &Connection) -> rusqlite::Result<XpState> {
     let settings = db::get_settings(conn)?;
     let challenges = challenges(conn, today, &settings)?
         .into_iter()
-        .map(|c| ChallengeOut { id: c.id, target: c.target, progress: c.progress, done: c.done })
+        .map(|c| ChallengeOut { id: c.id, target: c.target, progress: c.progress, done: c.done, deadline_min: c.deadline_min })
         .collect();
     let seen_level = db::get_raw(conn, "xp_seen_level")?.and_then(|v| v.parse().ok()).unwrap_or(1);
     let retro: Option<i64> = conn.query_row("SELECT amount FROM xp_events WHERE kind = 'retro'", [], |r| r.get(0)).optional()?;
