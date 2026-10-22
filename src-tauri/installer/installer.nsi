@@ -199,6 +199,7 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 ; 4. Custom page to ask user if he wants to reinstall/uninstall
 ;    only if a previous installation was detected
 Var ReinstallPageCheck
+Var ReinstallQuitRadio ; Tapomo: third choice, "do nothing and exit"
 Page custom PageReinstall PageLeaveReinstall
 Function PageReinstall
   ; Uninstall previous WiX installation if exists.
@@ -249,16 +250,17 @@ Function PageReinstall
   Pop $R0
   ; Reinstalling the same version
   ${If} $R0 = 0
-    StrCpy $R1 "$(alreadyInstalledLong)"
-    StrCpy $R2 "$(addOrReinstall)"
+    StrCpy $R1 "$(tapomoSameText)"
+    StrCpy $R2 "$(tapomoReinstall)"
     StrCpy $R3 "$(uninstallApp)"
-    !insertmacro MUI_HEADER_TEXT "$(alreadyInstalled)" "$(chooseMaintenanceOption)"
+    !insertmacro MUI_HEADER_TEXT "$(alreadyInstalled)" "$(tapomoChoose)"
   ; Upgrading
   ${ElseIf} $R0 = 1
-    StrCpy $R1 "$(olderOrUnknownVersionInstalled)"
-    StrCpy $R2 "$(uninstallBeforeInstalling)"
-    StrCpy $R3 "$(dontUninstall)"
-    !insertmacro MUI_HEADER_TEXT "$(alreadyInstalled)" "$(choowHowToInstall)"
+    ; Tapomo: "Update" (keep the install, like the updater does) comes first and is the default
+    StrCpy $R1 "$(tapomoUpgradeText)"
+    StrCpy $R2 "$(tapomoUpdate)"
+    StrCpy $R3 "$(tapomoCleanReinstall)"
+    !insertmacro MUI_HEADER_TEXT "$(alreadyInstalled)" "$(tapomoChoose)"
   ; Downgrading
   ${ElseIf} $R0 = -1
     StrCpy $R1 "$(newerVersionInstalled)"
@@ -301,13 +303,19 @@ Function PageReinstall
     !endif
     ${NSD_OnClick} $R3 PageReinstallUpdateSelection
 
+    ${NSD_CreateRadioButton} 30u 90u -30u 8u "$(tapomoDoNothing)"
+    Pop $ReinstallQuitRadio
+    ${NSD_OnClick} $ReinstallQuitRadio PageReinstallUpdateSelection
+
     ; Check the first radio button if this the first time
     ; we enter this page or if the second button wasn't
     ; selected the last time we were on this page
-    ${If} $ReinstallPageCheck <> 2
-      SendMessage $R2 ${BM_SETCHECK} ${BST_CHECKED} 0
-    ${Else}
+    ${If} $ReinstallPageCheck = 2
       SendMessage $R3 ${BM_SETCHECK} ${BST_CHECKED} 0
+    ${ElseIf} $ReinstallPageCheck = 3
+      SendMessage $ReinstallQuitRadio ${BM_SETCHECK} ${BST_CHECKED} 0
+    ${Else}
+      SendMessage $R2 ${BM_SETCHECK} ${BST_CHECKED} 0
     ${EndIf}
 
     ${NSD_SetFocus} $R2
@@ -316,8 +324,11 @@ Function PageReinstall
 FunctionEnd
 Function PageReinstallUpdateSelection
   ${NSD_GetState} $R2 $R1
+  ${NSD_GetState} $ReinstallQuitRadio $R5
   ${If} $R1 == ${BST_CHECKED}
     StrCpy $ReinstallPageCheck 1
+  ${ElseIf} $R5 == ${BST_CHECKED}
+    StrCpy $ReinstallPageCheck 3
   ${Else}
     StrCpy $ReinstallPageCheck 2
   ${EndIf}
@@ -335,6 +346,12 @@ Function PageLeaveReinstall
     Goto reinst_done
   ${EndIf}
 
+  ; Tapomo: "do nothing" closes the installer without touching anything
+  ${If} $PassiveMode <> 1
+    ${NSD_GetState} $ReinstallQuitRadio $R5
+    ${IfThen} $R5 == ${BST_CHECKED} ${|} Quit ${|}
+  ${EndIf}
+
   ; $R0 holds whether same(0)/upgrading(1)/downgrading(-1) version
   ; $R1 holds the radio buttons state:
   ;   1 => first choice was selected
@@ -346,10 +363,12 @@ Function PageLeaveReinstall
       Goto reinst_uninstall
     ${EndIf}
   ${ElseIf} $R0 = 1 ; Upgrading
-    ${If} $R1 = 1              ; User chose to uninstall
+    ; Tapomo: the first choice is "Update" (no uninstall); passive mode never uninstalls, as before
+    ${If} $R1 = 1              ; User chose to update in place
+    ${OrIf} $PassiveMode = 1
+      Goto reinst_done
+    ${Else}                    ; User chose a clean reinstall
       Goto reinst_uninstall
-    ${Else}
-      Goto reinst_done         ; User chose NOT to uninstall
     ${EndIf}
   ${ElseIf} $R0 = -1 ; Downgrading
     ${If} $R1 = 1              ; User chose to uninstall
@@ -515,6 +534,20 @@ LangString tapomoWelcomeText ${LANG_SPANISH} "Este asistente instalará Tapomo, 
 LangString tapomoWelcomeText ${LANG_ENGLISH} "This wizard will install Tapomo, which measures how fast you type.$\r$\n$\r$\nTapomo never stores what you type: it only counts keystrokes and timings, ignores password fields and everything stays on your computer. Its only connection is checking GitHub for new versions, and you can turn that off.$\r$\n$\r$\nIt will start with Windows; you can change this in Settings.$\r$\n$\r$\nPrivacy policy: github.com/polrue/tapomo/blob/main/PRIVACY.md"
 LangString tapomoPrivacyLink ${LANG_SPANISH} "Política de privacidad"
 LangString tapomoPrivacyLink ${LANG_ENGLISH} "Privacy policy"
+LangString tapomoChoose ${LANG_SPANISH} "Elige qué quieres hacer."
+LangString tapomoChoose ${LANG_ENGLISH} "Choose what you want to do."
+LangString tapomoUpgradeText ${LANG_SPANISH} "Ya tienes una versión anterior de Tapomo. Elige qué quieres hacer y pulsa Siguiente. Tus datos y ajustes se conservan."
+LangString tapomoUpgradeText ${LANG_ENGLISH} "You already have an earlier version of Tapomo. Choose what you want to do and click Next. Your data and settings are kept."
+LangString tapomoUpdate ${LANG_SPANISH} "Actualizar (recomendado)"
+LangString tapomoUpdate ${LANG_ENGLISH} "Update (recommended)"
+LangString tapomoCleanReinstall ${LANG_SPANISH} "Desinstalar la versión anterior e instalar de nuevo"
+LangString tapomoCleanReinstall ${LANG_ENGLISH} "Uninstall the earlier version and install again"
+LangString tapomoDoNothing ${LANG_SPANISH} "No hacer nada y salir"
+LangString tapomoDoNothing ${LANG_ENGLISH} "Do nothing and exit"
+LangString tapomoSameText ${LANG_SPANISH} "Esta versión de Tapomo ya está instalada. Elige qué quieres hacer y pulsa Siguiente. Al reinstalar, tus datos y ajustes se conservan."
+LangString tapomoSameText ${LANG_ENGLISH} "This version of Tapomo is already installed. Choose what you want to do and click Next. Reinstalling keeps your data and settings."
+LangString tapomoReinstall ${LANG_SPANISH} "Reinstalar (recomendado)"
+LangString tapomoReinstall ${LANG_ENGLISH} "Reinstall (recommended)"
 
 Function .onInit
   ; TAPOMO: unpack the extra step bitmaps (paths are absolute at build time, see TAPOMO_* defines above)
