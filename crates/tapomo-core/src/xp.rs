@@ -223,6 +223,7 @@ struct Picks {
 
 /// Chooses the three challenges of `day`. Ids in `avoid` (yesterday's) go last, so they only come
 /// back when the pool has fewer than three other ids.
+#[allow(clippy::too_many_arguments)] // a private helper fed straight from `daily_challenges`
 fn choose(bursts: &[DayBurst], day: i64, history_days: usize, goal_ms: u64, shortcuts: &[(i64, u64)], lessons: &[(i64, u64)], learnt_yesterday: bool, avoid: &[&str]) -> Picks {
     let h = history(bursts, day, goal_ms);
     if history_days < WELCOME_DAYS || h.active_days == 0 {
