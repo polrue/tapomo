@@ -200,6 +200,8 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 ;    only if a previous installation was detected
 Var ReinstallPageCheck
 Var ReinstallQuitRadio ; Tapomo: third choice, "do nothing and exit"
+Var TapomoWasInstalled ; Tapomo: 1 when an earlier install was found (update or reinstall)
+Var TapomoHadDesktop   ; Tapomo: 1 when that install had a desktop shortcut
 Page custom PageReinstall PageLeaveReinstall
 Function PageReinstall
   ; Uninstall previous WiX installation if exists.
@@ -238,6 +240,10 @@ Function PageReinstall
   ; Compare this installar version with the existing installation
   ; and modify the messages presented to the user accordingly
   compare_version:
+  ; Tapomo: remember the earlier desktop-shortcut choice so the finish page doesn't ask again
+  StrCpy $TapomoWasInstalled 1
+  StrCpy $TapomoHadDesktop 0
+  ${IfThen} ${FileExists} "$DESKTOP\${PRODUCTNAME}.lnk" ${|} StrCpy $TapomoHadDesktop 1 ${|}
   StrCpy $R4 "$(older)"
   ${If} $WixMode = 1
     ReadRegStr $R0 HKLM "$R6" "DisplayVersion"
@@ -458,19 +464,27 @@ Var AppStartMenuFolder
 !define MUI_FINISHPAGE_LINK "$(tapomoPrivacyLink)"
 !define MUI_FINISHPAGE_LINK_LOCATION "https://github.com/polrue/tapomo/blob/main/PRIVACY.md"
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
-; TAPOMO: celebrating pose on the finish page (the welcome page keeps sidebar.bmp)
-!ifdef TAPOMO_FINISHIMAGE
-  !define MUI_PAGE_CUSTOMFUNCTION_SHOW TapomoFinishShow
-!endif
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW TapomoFinishShow
 !insertmacro MUI_PAGE_FINISH
-; TAPOMO: defined after the page macro because $mui.FinishPage.Image* are declared by it
-!ifdef TAPOMO_FINISHIMAGE
-  Function TapomoFinishShow
+; TAPOMO: defined after the page macro because $mui.FinishPage.* are declared by it
+Function TapomoFinishShow
+  ; TAPOMO: celebrating pose on the finish page (the welcome page keeps sidebar.bmp)
+  !ifdef TAPOMO_FINISHIMAGE
     !insertmacro MUI_INTERNAL_FULLWINDOW_LOADWIZARDIMAGE "" $mui.FinishPage.Image "$PLUGINSDIR\finish.bmp" $R0
     ${NSD_FreeImage} $mui.FinishPage.Image.Bitmap
     StrCpy $mui.FinishPage.Image.Bitmap $R0
-  FunctionEnd
-!endif
+  !endif
+  ; TAPOMO: on an update or reinstall, keep the earlier desktop-shortcut choice instead of asking.
+  ; Recreate it only if it existed and a clean reinstall removed it; never touch one that is still there.
+  ${If} $TapomoWasInstalled = 1
+    ShowWindow $mui.FinishPage.ShowReadme ${SW_HIDE}
+    SendMessage $mui.FinishPage.ShowReadme ${BM_SETCHECK} ${BST_UNCHECKED} 0
+    ${If} $TapomoHadDesktop = 1
+    ${AndIfNot} ${FileExists} "$DESKTOP\${PRODUCTNAME}.lnk"
+      SendMessage $mui.FinishPage.ShowReadme ${BM_SETCHECK} ${BST_CHECKED} 0
+    ${EndIf}
+  ${EndIf}
+FunctionEnd
 
 Function RunMainBinary
   nsis_tauri_utils::RunAsUser "$INSTDIR\${MAINBINARYNAME}.exe" ""
