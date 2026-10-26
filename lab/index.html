@@ -1,9 +1,16 @@
+<meta charset="utf-8">
 <title>Tapomo animation lab</title>
 <!-- Animation lab: a developer page, not linked from the app. It runs the real mascot.js, mascot.css,
      pet.css and pet.js against a mocked window.__TAURI__ (see lab.js), so what you see here is what
      the floating Tapomo does. rewards.js (lab only) adds the "Premios" accessories and skins on top. -->
   <link rel="stylesheet" href="mascot.css">
   <link rel="stylesheet" href="pet.css">
+  <link rel="stylesheet" href="shy.css">
+  <link rel="stylesheet" href="keyboard.css">
+  <link rel="stylesheet" href="hands.css">
+  <link rel="stylesheet" href="hands2.css">
+<link rel="stylesheet" href="hands3.css">
+  <link rel="stylesheet" href="levelup.css">
   <style>
     /* Layout: stage on the left, control panel on the right; stacks on phones. */
     :root {
@@ -178,6 +185,7 @@
           <div id="livebar" class="livebar" hidden><i id="livefill"></i></div>
         </div>
       </div>
+      <div class="shy-tray" id="shy-tray" hidden><span>bandeja del sistema</span><button type="button" class="tray-ic" id="shy-tray-btn" title="Tapomo (horario tranquilo)">🙈</button></div>
     </div>
 
     <div class="panel" id="panel">
@@ -225,6 +233,76 @@
             <p class="note">Los más graciosos (vikingo, musculitos, dinosaurio, astronauta) quedan para los niveles medios y altos. La cicatriz ocupa el hueco del nivel 43; el 50 queda libre para una idea más.</p>
           </div>
           <details class="rules-d"><summary>Reglas de ropa</summary><div id="rules"></div></details>
+        </div>
+      </fieldset>
+      <fieldset class="prop"><legend>Modo vergonzoso <span class="pend">Propuesta, pendiente de Pol</span></legend>
+        <div class="shy">
+          <p class="note">Un horario tranquilo (clase, trabajo) en el que Tapomo se esconde solo para no distraer. La medición sigue igual: solo se esconde la mascota. Mueve la hora simulada o usa los botones para ver todo el recorrido.</p>
+
+          <div><p class="rw-sub">1 · Horario</p>
+            <div class="seg" id="shy-tpl" role="group" aria-label="Plantilla">
+              <span class="seg-l">Plantilla</span>
+              <button type="button" class="seg-z" data-tpl="cole">Cole</button><button type="button" class="seg-z" data-tpl="trabajo">Trabajo</button><button type="button" class="seg-z" data-tpl="custom">Personalizado</button>
+            </div>
+          </div>
+          <div class="shy-days" id="shy-days" role="group" aria-label="Días"></div>
+          <div class="shy-slots" id="shy-slots"></div>
+          <div class="btns"><button type="button" class="ghost" id="shy-add">+ Añadir franja</button></div>
+          <label>Vacaciones: sin horario hasta el <input type="date" id="shy-vac"> <button type="button" class="ghost" id="shy-vac-clear">Quitar</button></label>
+
+          <div><p class="rw-sub">2 · Mientras está escondido</p>
+            <div class="seg" id="shy-mode" role="group" aria-label="Cómo se esconde">
+              <button type="button" class="seg-z" data-mode="under">Bajo tierra (nueva)</button><button type="button" class="seg-z" data-mode="peek">A · Asomadito</button><button type="button" class="seg-z" data-mode="still">C · Quieto</button>
+              <span class="note" id="shy-mode-note"></span>
+            </div>
+            <div class="seg" id="shy-fx" role="group" aria-label="Efecto al desaparecer" style="margin-top:6px">
+              <span class="seg-l">Al desaparecer</span>
+              <button type="button" class="seg-z" data-fx="ripple">Onda</button><button type="button" class="seg-z" data-fx="dust">Polvito</button><button type="button" class="seg-z" data-fx="glint">Destello</button><button type="button" class="seg-z" data-fx="stars">3 estrellitas</button><button type="button" class="seg-z" data-fx="none">Nada</button>
+            </div>
+            <div class="btns" style="margin-top:6px"><button type="button" class="ghost" id="shy-replay">Repetir la animación</button></div>
+          </div>
+
+          <div><p class="rw-sub">3 · Sacarlo un momento</p>
+            <div class="seg" id="shy-out" role="group" aria-label="Tiempo fuera">
+              <span class="seg-l">«Sal un ratito» dura</span><button type="button" class="seg-z" data-out="1">1 min</button><button type="button" class="seg-z" data-out="2">2 min</button><button type="button" class="seg-z" data-out="5">5 min</button>
+            </div>
+            <label style="margin-top:6px"><input type="checkbox" id="shy-strict"> No dejarme salir en horario tranquilo</label>
+            <p class="note">Sin contraseña: es un compromiso, no un candado. Si está marcado, al llamarlo dice que ahora no puede y se queda escondido.</p>
+          </div>
+
+          <div><p class="rw-sub">Sobre ti (ajustes que ya existen)</p>
+            <div class="seg" id="shy-gender" role="group" aria-label="Chico o chica">
+              <span class="seg-l">Soy</span><button type="button" class="seg-z" data-g="chica">chica</button><button type="button" class="seg-z" data-g="chico">chico</button>
+            </div>
+            <div class="seg" id="shy-talk" role="group" aria-label="Cómo habla" style="margin-top:6px">
+              <span class="seg-l">Habla</span><button type="button" class="seg-z" data-t="silencioso">silencioso</button><button type="button" class="seg-z" data-t="normal">normal</button><button type="button" class="seg-z" data-t="parlanchin">parlanchín</button>
+            </div>
+          </div>
+
+          <div><p class="rw-sub">4 · Simulación</p>
+            <div class="shy-now">
+              <select id="shy-day" aria-label="Día simulado"></select>
+              <span class="shy-clock" id="shy-clock">08:30</span>
+              <span class="shy-state" id="shy-state">Libre</span>
+            </div>
+            <input id="shy-time" type="range" min="420" max="1260" step="5" value="510" aria-label="Hora simulada">
+            <div class="btns">
+              <button type="button" id="shy-go-start">▶ Empieza la franja</button>
+              <button type="button" id="shy-click">Clic en Tapomo</button>
+              <button type="button" id="shy-skip">Se acaba el ratito</button>
+              <button type="button" id="shy-go-end">⏹ Acaba la franja</button>
+            </div>
+            <p class="note">En el lab, cada minuto fuera dura 4 segundos. Escribe con «Start typing» mientras está escondido: no reacciona.</p>
+          </div>
+
+          <div><p class="rw-sub">Ventana principal</p>
+            <div class="hdr">
+              <div class="mascot-wrap"><svg id="mascot-s" viewBox="0 0 160 160" role="img" aria-label="Tapomo"></svg></div>
+              <div><b>Tapomo</b><p class="hide-note" id="shy-hdr-note" hidden><span id="shy-hdr-text"></span><button type="button" class="pill" id="shy-hdr-btn">Sal un ratito</button></p></div>
+            </div>
+          </div>
+
+          <div><p class="rw-sub">Lo que ha pasado</p><ol class="shy-log" id="shy-log" reversed></ol></div>
         </div>
       </fieldset>
       <fieldset><legend>Playback</legend>
@@ -294,3 +372,9 @@
   <script src="lab.js"></script>
   <script src="zones.js"></script>
   <script src="pet.js"></script>
+  <script src="shy.js"></script>
+  <script src="keyboard.js"></script>
+  <script src="hands2.js"></script>
+<script src="hands3.js"></script>
+  <script src="hands.js"></script>
+  <script src="levelup.js"></script>
