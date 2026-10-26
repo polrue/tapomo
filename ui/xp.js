@@ -298,6 +298,11 @@ const Progress = (() => {
   }
 
   // ----------------------------------------------------------------- reveal
+  // 0.9: a level that brings rewards opens the dialog (Tapomo on a stage, already wearing the reward as a
+  // preview, confetti once, golden rays on levels 10, 25 and 50). A level without rewards, or any level
+  // reached while the window is visible but not focused (you're typing elsewhere), gets a corner card that
+  // never takes the focus. While the window is hidden nothing shows: showing it fires visibilitychange ->
+  // refreshAll -> refresh() -> maybeReveal(), so the reveal simply waits for the window.
 
   /** Rewards unlocked in levels (from, to]. */
   function rewardsBetween(from, to) {
@@ -305,10 +310,49 @@ const Progress = (() => {
   }
 
   const MAX_SHOWN = 4;
+  const ROUND_LEVELS = new Set([10, 25, 50]);
+  const CONFETTI = ['#ff9e7a', '#ffc93c', '#74d6bf', '#8ccbf0', '#c4a8f0', '#f0764a'];
+  const fullDialogOpen = () => !$('level-dialog').hidden;
+  const toastOpen = () => !!$('level-toast').firstChild;
+  let onToastKey = null;
 
-  function closeReveal(level) {
-    $('level-dialog').hidden = true;
-    document.querySelectorAll('.top, main').forEach((n) => (n.inert = false));
+  /** The current look with `id` on (the same rules as wearing it from the wardrobe). */
+  function lookWith(id) {
+    const look = Wardrobe.get();
+    return kindOf(id) === 'skin' ? { ...look, skin: id } : { ...look, acc: Wardrobe.wear(look.acc, id).acc };
+  }
+  function putOn(id) {
+    const now = Wardrobe.get();
+    if (kindOf(id) === 'skin') now.skin = id;
+    else now.acc = Wardrobe.wear(now.acc, id).acc;
+    saveLook(now).catch(showError);
+  }
+  /** "1.197 XP to level 11" and how full the bar of the new level is. */
+  function xpInfo() {
+    const span = Math.max(1, st.next_level_at - st.level_start);
+    const into = Math.max(0, st.xp - st.level_start);
+    return { pct: Math.min(100, (into / span) * 100), text: t('lvup.next_xp', { n: fmt(Math.max(0, span - into)), lv: fmt(st.level + 1) }) };
+  }
+  const worn = () => {
+    const tick = document.createElement('span');
+    tick.setAttribute('aria-hidden', 'true');
+    tick.textContent = '✓ ';
+    return [tick, t('lvup.worn')];
+  };
+  function wearButton(id) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = t('lvup.wear');
+    b.addEventListener('click', () => {
+      putOn(id);
+      b.replaceChildren(...worn());
+      b.disabled = true;
+    });
+    return b;
+  }
+
+  /** Marks the level as seen, then lets the next reveals (badges, the support note) have their turn. */
+  function acknowledge(level) {
     revealing = false;
     invoke('ack_xp', { level }).then(() => {
       st.seen_level = Math.max(st.seen_level, level);
@@ -317,53 +361,182 @@ const Progress = (() => {
     }).catch(showError);
   }
 
+  function closeReveal(level) {
+    $('level-dialog').hidden = true;
+    $('lvb-confetti').replaceChildren();
+    document.querySelectorAll('.top, main').forEach((n) => (n.inert = false));
+    acknowledge(level);
+  }
+
+  function confetti() {
+    const box = $('lvb-confetti');
+    box.replaceChildren();
+    if (Mascot.reduced()) return;
+    for (let i = 0; i < 22; i++) {
+      const c = document.createElement('i');
+      if (i % 4 === 3) c.className = 'dot';
+      c.style.cssText = `--x:${(4 + Math.random() * 92).toFixed(1)}%;--s:${6 + Math.round(Math.random() * 5)}px;--c:${CONFETTI[i % CONFETTI.length]};`
+        + `--d:${(1500 + Math.random() * 1100) | 0}ms;--w:${(150 + Math.random() * 500) | 0}ms;--dx:${((Math.random() - 0.5) * 60) | 0}px;--r:${((Math.random() - 0.5) * 720) | 0}deg`;
+      box.append(c);
+    }
+  }
+
+  /** The big reveal: one reward previewed on Tapomo, or (several at once / history) a row per reward. */
+  function showDialog(ids, retro) {
+    const level = st.level;
+    const one = !retro && ids.length === 1 ? ids[0] : null;
+    const card = $('level-dialog').querySelector('.lvb');
+    card.classList.toggle('lvb-many', !one);
+    $('lvb-stage').classList.toggle('lvb-round', !retro && ROUND_LEVELS.has(level));
+    $('lvb-pill').textContent = `${t('level.title')} ${fmt(level)}`;
+    const hero = $('lvb-hero');
+    if (!hero.classList.contains('mascot')) Mascot.mount(hero);
+    Wardrobe.preview(hero, one ? lookWith(one) : Wardrobe.get());
+    Mascot.setFace(hero, { eyes: 'sparkle', mouth: 'big', cheeks: true });
+    $('lvb-tag').hidden = !one;
+    $('lvup-title').textContent = retro ? t('lvup.retro.title', { lv: fmt(level) }) : t('lvup.title', { lv: fmt(level) });
+    const text = $('lvup-text');
+    if (retro) text.textContent = t('lvup.retro.text');
+    else if (one) {
+      const [before, after = ''] = t('lvup.new', { item: '\u0000' }).split('\u0000');
+      const name = document.createElement('strong');
+      name.textContent = itemName(one);
+      text.replaceChildren(before, name, after);
+    } else text.textContent = t('lvup.rewards');
+    const box = $('lvup-items');
+    box.replaceChildren();
+    box.hidden = !!one;
+    if (!one) {
+      for (const id of ids.slice(-MAX_SHOWN)) {
+        const fig = document.createElement('figure');
+        fig.className = 'lvup-item';
+        const pic = document.createElement('div');
+        pic.className = 'lvb-thumb';
+        pic.append(thumb(lookWith(id), true));
+        const cap = document.createElement('figcaption');
+        cap.textContent = itemName(id);
+        fig.append(pic, cap, wearButton(id));
+        box.append(fig);
+      }
+    }
+    $('lvup-more').hidden = !!one || ids.length <= MAX_SHOWN;
+    $('lvup-more').textContent = t('lvup.more', { n: fmt(ids.length - MAX_SHOWN) });
+    const xp = xpInfo();
+    $('lvb-fill').style.width = '0';
+    $('lvb-xp').textContent = xp.text;
+
+    const ok = $('lvup-ok');
+    const later = $('lvup-later');
+    ok.disabled = false;
+    later.hidden = !one;
+    if (one) {
+      ok.textContent = t('lvup.wear');
+      later.textContent = t('lvup.later');
+      ok.onclick = () => {
+        putOn(one);
+        ok.replaceChildren(...worn());
+        ok.disabled = true;
+        later.textContent = t('lvup.close');
+        later.focus();
+        Mascot.jump(hero, { big: false });
+      };
+      later.onclick = () => closeReveal(level);
+    } else {
+      ok.textContent = t('lvup.ok');
+      ok.onclick = () => closeReveal(level);
+    }
+    $('lvup-x').onclick = () => closeReveal(level);
+    confetti();
+    $('level-dialog').hidden = false;
+    document.querySelectorAll('.top, main').forEach((n) => (n.inert = true));
+    $('level-dialog').onkeydown = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); closeReveal(level); return; }
+      if (e.key !== 'Tab') return; // keep Tab inside: a few controls live outside .top/main
+      const f = [...card.querySelectorAll('button:not([disabled])')].filter((n) => !n.hidden);
+      const i = f.indexOf(document.activeElement);
+      if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+    };
+    ok.focus();
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      $('lvb-fill').style.width = `${xp.pct.toFixed(1)}%`;
+      setTimeout(() => { if (fullDialogOpen()) Mascot.jump(hero, { big: true }); }, 250);
+    }));
+  }
+
+  function closeToast(level) {
+    $('level-toast').replaceChildren(); // a focused button inside leaves the focus on <body>
+    document.removeEventListener('keydown', onToastKey, true);
+    onToastKey = null;
+    acknowledge(level);
+  }
+
+  /** The corner card: no veil, no focus taken, read out by screen readers (role="status"). */
+  function showToast(ids, retro) {
+    const level = st.level;
+    const one = ids.length === 1 ? ids[0] : null;
+    const make = (tag, cls, txt) => {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (txt !== undefined) n.textContent = txt;
+      return n;
+    };
+    const card = make('div', 'lvt');
+    const pic = make('div', 'lvt-pic');
+    pic.append(thumb(one ? lookWith(one) : Wardrobe.get(), true));
+    const body = make('div', 'lvt-body');
+    const title = retro ? t('lvup.retro.title', { lv: fmt(level) }) : t('lvup.title', { lv: fmt(level) });
+    if (ids.length) {
+      body.append(make('p', 'lvt-eyebrow', title), make('h2', '', one ? t('lvup.toast.new', { item: itemName(one) }) : t('lvup.toast.many', { n: fmt(ids.length) })));
+    } else {
+      const next = Wardrobe.nextReward(level);
+      body.append(make('h2', '', title), make('p', 'lvt-text', retro ? t('lvup.retro.text') : next ? t('level.next', { lv: fmt(next.level), items: joinNames(next.ids) }) : t('level.next_none')));
+    }
+    const xp = xpInfo();
+    const bar = make('div', 'lvt-bar');
+    bar.setAttribute('aria-hidden', 'true');
+    const fill = make('i');
+    bar.append(fill);
+    body.append(bar, make('p', 'lvt-xp', xp.text));
+    const x = make('button', 'lvt-x');
+    x.type = 'button';
+    x.setAttribute('aria-label', t('lvup.close'));
+    x.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+    x.addEventListener('click', () => closeToast(level));
+    const nav = make('div', 'lvt-nav');
+    const look = make('button', 'ghost', t('lvup.wardrobe'));
+    look.type = 'button';
+    look.addEventListener('click', () => {
+      closeToast(level);
+      if (document.body.dataset.view === 'lessons') Lessons.close();
+      SectionNav.jump('wardrobe');
+    });
+    nav.append(look);
+    if (one) nav.append(wearButton(one));
+    card.append(x, pic, body, nav);
+    $('level-toast').replaceChildren(card); // new content in the live region: announced, focus untouched
+    onToastKey = (e) => {
+      if (e.key !== 'Escape' || fullDialogOpen()) return;
+      const a = document.activeElement;
+      if (a && a !== document.body && !card.contains(a)) return; // Esc belongs to whatever has the focus
+      e.preventDefault();
+      closeToast(level);
+    };
+    document.addEventListener('keydown', onToastKey, true);
+    requestAnimationFrame(() => requestAnimationFrame(() => (fill.style.width = `${xp.pct.toFixed(1)}%`)));
+    Mascot.jump($('mascot'), { big: true });
+  }
+
   /** Shows the level reached (or the history message) once, with its rewards and "put it on" buttons. */
   function maybeReveal() {
-    if (!st || revealing || document.hidden || !$('welcome').hidden) return;
+    if (!st || revealing || toastOpen() || document.hidden || !$('welcome').hidden) return;
     const retro = st.retro_level;
     if (st.level <= st.seen_level && !retro) return;
     revealing = true;
     const from = Math.min(st.seen_level, retro ? 1 : st.seen_level);
     const ids = rewardsBetween(from, st.level);
-    $('lvup-title').textContent = retro ? t('lvup.retro.title', { lv: fmt(st.level) }) : t('lvup.title', { lv: fmt(st.level) });
-    $('lvup-text').textContent = retro ? t('lvup.retro.text') : ids.length ? t('lvup.rewards') : t('lvup.text');
-    const box = $('lvup-items');
-    box.replaceChildren();
-    const look = Wardrobe.get();
-    for (const id of ids.slice(-MAX_SHOWN)) {
-      const fig = document.createElement('figure');
-      fig.className = 'lvup-item';
-      const skin = kindOf(id) === 'skin';
-      fig.append(thumb({ skin: skin ? id : look.skin, acc: skin ? look.acc : Wardrobe.wear(look.acc, id).acc, style: look.style }));
-      const cap = document.createElement('figcaption');
-      cap.textContent = itemName(id);
-      const wear = document.createElement('button');
-      wear.type = 'button';
-      wear.className = 'ghost';
-      wear.textContent = t('lvup.wear');
-      wear.addEventListener('click', () => {
-        const now = Wardrobe.get();
-        if (skin) now.skin = id;
-        else now.acc = Wardrobe.wear(now.acc, id).acc;
-        saveLook(now).catch(showError);
-        wear.textContent = t('lvup.worn');
-        wear.disabled = true;
-      });
-      fig.append(cap, wear);
-      box.append(fig);
-    }
-    $('lvup-more').hidden = ids.length <= MAX_SHOWN;
-    $('lvup-more').textContent = t('lvup.more', { n: fmt(ids.length - MAX_SHOWN) });
-    const next = Wardrobe.nextReward(st.level);
-    $('lvup-next').hidden = ids.length > 0 || !next;
-    if (next) $('lvup-next').textContent = t('level.next', { lv: fmt(next.level), items: joinNames(next.ids) });
-    $('level-dialog').hidden = false;
-    document.querySelectorAll('.top, main').forEach((n) => (n.inert = true));
-    const level = st.level;
-    $('lvup-ok').onclick = () => closeReveal(level);
-    $('level-dialog').onkeydown = (e) => { if (e.key === 'Escape') { e.preventDefault(); closeReveal(level); } };
-    $('lvup-ok').focus();
-    Mascot.jump($('mascot'), { big: true });
+    if (ids.length && document.hasFocus()) showDialog(ids, retro);
+    else showToast(ids, retro);
   }
 
   // ------------------------------------------------------------------- api
