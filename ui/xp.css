@@ -91,9 +91,131 @@
 .lvup-item button { padding: 4px 14px; border-radius: 999px; margin-top: auto; }
 .lvup-nav { justify-content: center; margin-top: 12px; }
 
+/* Level-up dialog (0.9): a stage with Tapomo wearing the reward, the XP bar and two buttons. */
+.lvb, .lvt { --lv-accent-text: #b04a26; --lv-glow: color-mix(in srgb, var(--accent) 30%, var(--bg)); }
+@media (prefers-color-scheme: dark) {
+  .lvb, .lvt { --lv-accent-text: #ffb497; --lv-glow: color-mix(in srgb, var(--accent) 22%, var(--card)); }
+}
+.lvb { width: min(400px, 100%); padding: 0 0 20px; }
+.lvb-stage {
+  position: relative; height: 230px; overflow: hidden; border-radius: 23px 23px 0 0;
+  background:
+    radial-gradient(ellipse 46% 9% at 50% 86%, color-mix(in srgb, var(--ink) 10%, transparent), transparent 70%),
+    radial-gradient(circle at 50% 62%, var(--lv-glow) 0, transparent 62%),
+    linear-gradient(var(--bg), var(--card));
+}
+.lvb-hero { position: absolute; left: 50%; bottom: 8px; width: 186px; height: 186px; margin-left: -93px; overflow: visible; }
+/* Levels 10, 25 and 50: golden rays behind Tapomo, turning once. */
+.lvb-rays { display: none; }
+.lvb-round .lvb-rays {
+  display: block; position: absolute; left: 50%; top: 52%; width: 300px; height: 300px; margin: -150px 0 0 -150px; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, #ffc93c 60%, transparent) 0 7deg, transparent 7deg 30deg);
+  -webkit-mask: radial-gradient(circle, #000 20%, transparent 68%); mask: radial-gradient(circle, #000 20%, transparent 68%);
+  opacity: .6; animation: lvb-rays 7s cubic-bezier(.2, .7, .3, 1) both;
+}
+@keyframes lvb-rays { from { transform: rotate(-40deg) scale(.6); opacity: 0; } 25% { opacity: .6; } to { transform: rotate(20deg) scale(1); } }
+.lvb-pill {
+  position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 1; padding: 4px 14px; border-radius: 999px;
+  background: #23202b; color: #fff8f3; font-size: .78rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
+  animation: lvb-drop 520ms cubic-bezier(.34, 1.56, .64, 1) 200ms both;
+}
+@keyframes lvb-drop { from { opacity: 0; transform: translate(-50%, -14px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.lvb-tag {
+  position: absolute; right: 14px; bottom: 12px; z-index: 1; padding: 2px 10px; border-radius: 999px; font-size: .75rem; font-weight: 800;
+  background: var(--card); color: var(--muted); box-shadow: 0 0 0 1.5px var(--line);
+}
+.lvb-x {
+  position: absolute; top: 10px; right: 10px; z-index: 2; width: 40px; height: 40px; padding: 0; border-radius: 999px;
+  display: grid; place-items: center; background: color-mix(in srgb, var(--card) 70%, transparent); color: var(--muted);
+}
+.lvb-x:hover { background: var(--cell-empty); color: var(--ink); }
+.lvb-x svg { width: 18px; height: 18px; }
+.lvb-x:focus-visible, .lvt-x:focus-visible, .lvb button:focus-visible, .lvt button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.lvb-body { padding: 16px 24px 0; }
+.lvb-body h2 { margin: 0; font-size: 1.55rem; line-height: 1.2; letter-spacing: -0.01em; }
+.lvb-body > p { margin: 4px 0 0; color: var(--muted); font-size: 1.02rem; }
+.lvb-body > p strong { color: var(--lv-accent-text); }
+.lvb-xp { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: .84rem; color: var(--muted); font-variant-numeric: tabular-nums; text-align: left; }
+.lvb-bar { flex: 1; height: 8px; border-radius: 999px; background: var(--cell-empty); overflow: hidden; }
+.lvb-bar i, .lvt-bar i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--accent), #ffc93c); transition: width 900ms cubic-bezier(.34, 1.2, .64, 1) 350ms; }
+.lvb .lvup-nav { gap: 10px; margin-top: 18px; padding: 0 24px; }
+.lvb .lvup-nav button { flex: 1; max-width: 12rem; min-height: 44px; font-weight: 800; }
+.lvb .lvup-nav .ghost { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ink) 22%, transparent); color: var(--ink); }
+.lvb .lvup-nav .ghost[hidden] { display: none !important; }
+.lvb .lvup-nav button:disabled { cursor: default; background: var(--cell-empty); color: var(--ink); }
+/* Several rewards at once (or the history reveal): a smaller stage and one row per reward. */
+.lvb-many .lvb-stage { height: 170px; }
+.lvb-many .lvb-hero { width: 140px; height: 140px; margin-left: -70px; }
+.lvb .lvup-items { display: grid; gap: 8px; margin: 14px 0 0; }
+.lvb .lvup-items[hidden] { display: none; }
+.lvb .lvup-item {
+  width: auto; flex-direction: row; gap: 12px; padding: 8px 12px 8px 8px; border-radius: 16px; background: var(--cell-empty); text-align: left;
+}
+.lvb-thumb { flex: none; width: 56px; height: 56px; border-radius: 12px; background: var(--card); display: grid; place-items: center; overflow: hidden; }
+.lvb .lvb-thumb svg { width: 52px; height: 52px; }
+.lvb .lvup-item figcaption { flex: 1; min-width: 0; }
+.lvb .lvup-item button { margin: 0; min-height: 40px; padding: 6px 14px; }
+.lvb .lvup-item button:disabled { cursor: default; background: var(--card); color: var(--ink); }
+.lvb #lvup-more { margin: 8px 0 0; font-size: .9rem; }
+/* Keycap confetti: falls once; coral, gold, mint, sky and lilac. */
+.lvb-confetti { position: absolute; inset: 0; pointer-events: none; }
+.lvb-confetti i {
+  position: absolute; top: -14px; left: var(--x); width: var(--s); height: var(--s); border-radius: 3px; background: var(--c);
+  box-shadow: inset 0 -2px 0 rgba(35, 32, 43, .28); opacity: 0; animation: lvb-fall var(--d) cubic-bezier(.3, .6, .5, 1) var(--w) both;
+}
+.lvb-confetti i.dot { border-radius: 50%; box-shadow: none; }
+@keyframes lvb-fall {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0); }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), 250px) rotate(var(--r)); }
+}
+@media (prefers-color-scheme: dark) { .lvb-pill { background: #ffc93c; color: #23202b; } }
+@media (max-width: 440px) {
+  .lvb-stage { height: 204px; }
+  .lvb-hero { width: 164px; height: 164px; margin-left: -82px; }
+  .lvb-body { padding: 14px 16px 0; }
+  .lvb .lvup-nav { padding: 0 16px; }
+  .lvb .lvup-nav button { max-width: none; min-width: 0; }
+}
+
+/* Level-up corner card: no veil, never takes the focus. */
+.lvt-live { position: fixed; right: 20px; bottom: 20px; z-index: 90; width: min(380px, calc(100vw - 24px)); }
+.lvt-live:empty { display: none; }
+.lvt {
+  position: relative; display: grid; grid-template-columns: 72px 1fr; gap: 0 12px; align-items: center; padding: 14px 14px 14px 12px;
+  background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 20px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .3), 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);
+  animation: lvt-in 460ms cubic-bezier(.34, 1.35, .64, 1);
+}
+@keyframes lvt-in { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+.lvt-pic { width: 72px; height: 72px; border-radius: 16px; background: var(--lv-glow); display: grid; place-items: center; overflow: hidden; }
+.lvt-pic svg { width: 68px; height: 68px; }
+.lvt-body { min-width: 0; padding-right: 34px; }
+.lvt-body h2 { margin: 0; font-size: 1.05rem; line-height: 1.25; }
+.lvt-body p { margin: 0; }
+.lvt-eyebrow { font-size: .72rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--lv-accent-text); }
+.lvt-text { margin-top: 2px !important; font-size: .88rem; color: var(--muted); }
+.lvt-bar { height: 6px; margin-top: 8px; border-radius: 999px; background: var(--cell-empty); overflow: hidden; }
+.lvt-xp { margin-top: 3px !important; font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lvt-x {
+  position: absolute; top: 6px; right: 6px; width: 40px; height: 40px; padding: 0; border-radius: 999px;
+  display: grid; place-items: center; background: transparent; color: var(--muted);
+}
+.lvt-x:hover { background: var(--cell-empty); color: var(--ink); }
+.lvt-x svg { width: 18px; height: 18px; }
+.lvt-nav { grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 12px; }
+.lvt-nav button { flex: 1; min-height: 40px; border-radius: 999px; font-weight: 800; }
+.lvt-nav .ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ink) 22%, transparent); }
+.lvt-nav .ghost:hover { background: var(--cell-empty); }
+.lvt-nav button:disabled { cursor: default; background: var(--cell-empty); color: var(--ink); }
+@media (max-width: 520px) { .lvt-live { left: 12px; right: 12px; bottom: 12px; width: auto; } }
+
 @media (prefers-reduced-motion: reduce) {
   .lv-bar i { transition: none; }
   .ch-new .ch-stamp { animation: none; }
+  .lvb-rays, .lvb-pill, .lvt { animation: none !important; }
+  .lvb-confetti { display: none; }
+  .lvb-bar i, .lvt-bar i { transition: none; }
 }
 
 /* ------------------------------------------------------------ shortcuts (0.3.6) */
