@@ -924,6 +924,8 @@ async function init() {
     showError(e);
   }
   renderVersion();
+  // The Microsoft Store build is updated by the Store: no update settings.
+  invoke('is_store_build').then((store) => document.body.classList.toggle('store-build', store)).catch(() => {});
   checkForUpdate();
   // A window that stays open for days asks again once the cache is a day old.
   setInterval(checkForUpdate, 60 * 60 * 1000);

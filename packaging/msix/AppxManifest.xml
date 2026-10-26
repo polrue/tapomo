@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Microsoft Store package (MSIX). Built by .github/workflows/store.yml: @VERSION@ is the app
+     version plus ".0" (the Store wants the last number at 0). Identity values come from Partner Center. -->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap desktop rescap">
+
+  <Identity
+    Name="PolRu.Tapomo"
+    Publisher="CN=3AFFE8FD-4FF0-4FC9-B8E3-4D34A937CB74"
+    Version="@VERSION@"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>Tapomo</DisplayName>
+    <PublisherDisplayName>Pol Rué</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <Description>Typing speed tracker and typing lessons. Never records what you type.</Description>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="es-ES" />
+    <Resource Language="en-US" />
+    <Resource Language="ca-ES" />
+    <Resource Language="fr-FR" />
+    <Resource Language="de-DE" />
+  </Resources>
+
+  <Applications>
+    <Application Id="Tapomo" Executable="Tapomo.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Tapomo"
+        Description="Typing speed tracker and typing lessons"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png" />
+      <Extensions>
+        <!-- Start with Windows: off until the user turns it on in Settings (src-tauri/src/packaged.rs). -->
+        <desktop:Extension Category="windows.startupTask" Executable="Tapomo.exe" EntryPoint="Windows.FullTrustApplication">
+          <desktop:StartupTask TaskId="TapomoStartup" Enabled="false" DisplayName="Tapomo" />
+        </desktop:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <Capability Name="internetClient" />
+    <!-- A Win32 desktop app (Tauri + WebView2) that times keystrokes system-wide. -->
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

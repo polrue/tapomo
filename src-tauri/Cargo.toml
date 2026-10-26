@@ -1,6 +1,6 @@
 [package]
 name = "tapomo"
-version = "0.8.0"
+version = "1.0.0"
 description = "Passive typing speed tracker. Never records what you type."
 edition.workspace = true
 license.workspace = true
@@ -34,11 +34,15 @@ sys-locale = "0.3"
 windows-core = "0.58"
 windows = { version = "0.58", features = [
     "implement",
+    "ApplicationModel",
+    "ApplicationModel_Activation",
+    "Foundation",
     "Win32_Foundation",
     "Win32_Graphics_Dwm",
     "Win32_Graphics_Gdi",
     "Win32_Security",
     "Win32_Security_Cryptography",
+    "Win32_Storage_Packaging_Appx",
     "Win32_System_Com",
     "Win32_System_LibraryLoader",
     "Win32_System_Threading",

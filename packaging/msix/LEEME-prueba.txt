@@ -1,0 +1,27 @@
+Probar la versión de la Microsoft Store antes de enviarla
+==========================================================
+
+Este paquete es igual que el de la Store, pero firmado con un certificado de prueba
+que solo vale para tu PC. No lo subas a la Store: allí va el .msix sin firmar.
+
+1. Cierra el Tapomo normal: icono de la bandeja > Salir.
+
+2. Confía en el certificado de prueba (una sola vez, como administrador):
+   - Doble clic en Tapomo-test.cer > Instalar certificado.
+   - Elige «Equipo local» y acepta el aviso de administrador.
+   - «Colocar todos los certificados en el siguiente almacén» > Examinar >
+     «Personas de confianza» (Trusted People) > Aceptar > Siguiente > Finalizar.
+
+3. Doble clic en Tapomo_..._x64_test.msix > Instalar.
+
+4. Qué comprobar:
+   - Que se abre desde el menú Inicio y mide al escribir en el Bloc de notas.
+   - Ajustes: no aparecen «Buscar actualizaciones» ni «Instalar solas».
+   - «Iniciar con Windows» empieza desactivado. Actívalo, reinicia sesión y
+     comprueba que Tapomo arranca solo, en la bandeja, sin abrir la ventana.
+   - Lecciones, armario y el resto funcionan como siempre.
+
+5. Para quitarlo: Configuración > Aplicaciones > Tapomo > Desinstalar.
+   Después puedes volver a abrir tu Tapomo normal.
+
+Nota: el Tapomo de la Store guarda sus datos aparte de los del Tapomo normal.
