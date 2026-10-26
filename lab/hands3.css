@@ -1,0 +1,30 @@
+/* Lab proposal: «Ilustradas» hands over the lesson keyboard (hands3.js). Pending Pol's OK. */
+.kb {
+  --hd3-ink: #5b4a63;      /* drawing colour (light theme) */
+  --hd3-k: 1;              /* per-theme multiplier on the opacity slider */
+  --hd3-ghost: var(--kb-next-ring, #f0764a);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .kb { --hd3-ink: #f3e9ff; --hd3-k: 0.8; --hd3-ghost: #ffb597; }
+}
+:root[data-theme="dark"] .kb { --hd3-ink: #f3e9ff; --hd3-k: 0.8; --hd3-ghost: #ffb597; }
+:root[data-theme="light"] .kb { --hd3-ink: #5b4a63; --hd3-k: 1; --hd3-ghost: var(--kb-next-ring, #f0764a); }
+
+.kb.hd3-on { position: relative; }
+.kb.hd3-on > .kb-svg { margin-bottom: var(--hd3-extra, 10%); }
+.kb.hd3-on > .kb-hands { display: none; }
+
+.hd3 { position: absolute; inset: 0 0 auto 0; width: 100%; height: auto; overflow: visible; pointer-events: none; user-select: none; }
+.hd3-body { opacity: calc(var(--hd3-op, 0.3) * var(--hd3-k)); }
+.hd3-ink { fill: var(--hd3-ink); }
+
+/* Ghost finger: translucent accent finger from the knuckle to the key, ring on the fingertip. */
+.hd3-ghost { opacity: 0; transition: opacity 0.14s ease; }
+.hd3-ghost.is-active { opacity: 1; }
+.hd3-ghost.is-after { opacity: 1; }
+.hd3-shaft { stroke: var(--hd3-ghost); opacity: 0.38; }
+.hd3-tip { fill: var(--hd3-ghost); opacity: 0.38; }
+.hd3-ring { fill: none; stroke: var(--hd3-ghost); stroke-width: 2.2; opacity: 0.9; }
+.hd3-ghost.is-after .hd3-shaft, .hd3-ghost.is-after .hd3-tip { opacity: 0; }
+.hd3-ghost.is-after .hd3-ring { opacity: 0.55; stroke-width: 1.8; stroke-dasharray: 3.5 3; }
+@media (prefers-reduced-motion: reduce) { .hd3-ghost { transition: none; } }

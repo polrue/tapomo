@@ -1,0 +1,103 @@
+/* Lab only: «Modo vergonzoso» (quiet hours) proposal. */
+
+/* A · Asomadito: Tapomo ducks behind the bottom edge of its window; only the top of the head and
+   the eyes show, over a little ledge. Same look as the main-window header when it hides. */
+.pet .stage { transition: none; }
+.pet .stage .mascot { transition: transform 520ms cubic-bezier(.34, 1.56, .64, 1); }
+.pet .stage.hiding { clip-path: inset(-80px -80px 0 -80px); }
+.pet .stage.hiding .mascot { transform: translateY(50px); transition-duration: 480ms; transition-timing-function: ease-in-out; }
+.pet .stage::after {
+  content: ""; position: absolute; left: 14px; right: 14px; bottom: 0; height: 3px; border-radius: 3px;
+  background: #e3d6cc; opacity: 0; transition: opacity 300ms ease;
+}
+.pet .stage.hiding::after { opacity: 1; }
+.pet.shy-peek .m-breath { animation: none; }
+
+/* While shy, Tapomo ignores the keyboard: no bar, no bubbles other than its own. */
+.pet.shy-mute .livebar { visibility: hidden; }
+.pet.shy-mute .bubble:not(.shy-say) { visibility: hidden; }
+
+/* C · Quieto: stays visible, still and a little faded. */
+.pet.shy-still .stage { opacity: .8; transition: opacity 400ms ease; }
+.pet.shy-still .m-breath, .pet.shy-still .m-extras { animation: none; }
+
+/* B · Invisible: only the tray icon is left. */
+.shy-tray {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 34px; z-index: 2;
+  display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 0 10px;
+  background: rgba(35, 32, 43, .82); color: #fff; font-size: 12px; font-weight: 700;
+}
+.shy-tray[hidden] { display: none; }
+.shy-tray .tray-ic { background: #ff9e7a; color: #23202b; border-radius: 7px; padding: 2px 8px; font-size: 13px; }
+.shy-tray .tray-ic:hover { background: #f0764a; }
+.stage-box.dark .shy-tray { background: rgba(0, 0, 0, .55); }
+
+/* Panel */
+.shy { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+.shy-days { display: flex; flex-wrap: wrap; gap: 4px; }
+.shy-days button { width: 34px; padding: 5px 0; background: var(--chip); color: var(--fg); box-shadow: 0 0 0 1.5px var(--border) inset; }
+.shy-days button.on { background: var(--accent); color: #23202b; outline: 0; box-shadow: none; }
+.shy-slots { display: grid; gap: 6px; }
+.shy-slot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.shy-slot input[type=time] { font: inherit; padding: 3px 6px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--card); color: var(--fg); }
+.shy input[type=date] { font: inherit; padding: 3px 6px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--card); color: var(--fg); }
+.shy button.ghost { background: transparent; color: var(--fg); box-shadow: 0 0 0 1.5px var(--border) inset; }
+.shy button.ghost:hover { background: var(--chip-on); }
+.shy-now { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.shy-clock { font-size: 1.3rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.shy-state { font-weight: 800; padding: 2px 10px; border-radius: 999px; background: var(--chip); border: 1.5px solid var(--border); }
+.shy-state.on { background: var(--pend-bg); color: var(--pend-fg); border-color: var(--pend-line); }
+.shy-state.out { background: var(--ok-bg); color: var(--ok-fg); border-color: transparent; }
+.shy input[type=range] { width: 100%; accent-color: var(--accent-strong); }
+.shy-log { margin: 0; padding-left: 18px; font-size: 12.5px; display: grid; gap: 2px; max-height: 9.5em; overflow-y: auto; }
+.shy-log li:first-child { font-weight: 800; }
+.shy .hdr { padding: 4px; }
+.shy .hdr b { font-size: 1.1rem; }
+
+/* Belt and braces: other lab scripts also drive the face, so the typing motion, speed lines,
+   glow and stars are switched off in CSS too while shy (important rules beat animations). */
+.pet.shy-mute .m-bob, .pet.shy-mute .m-hop { transform: none !important; }
+.pet.shy-mute .m-lines, .pet.shy-mute .m-glow, .pet.shy-mute .m-fx { opacity: 0 !important; }
+
+/* Bajo tierra: Tapomo sinks below the ground line, the line shrinks to its centre, a soft effect. */
+.pet .stage.shy-under { clip-path: inset(-80px -80px 0 -80px); }
+.pet .stage.shy-under .mascot { transform: translateY(124px); transition: transform 600ms cubic-bezier(.55, 0, .75, .3); }
+.pet .stage.shy-under .m-breath { animation: none; }
+.shy-ground {
+  position: absolute; left: 18px; right: 18px; bottom: 0; height: 3px; border-radius: 3px; z-index: 1;
+  background: #d9c9bd; opacity: 0; transform: scaleX(1); transform-origin: 50% 50%;
+  transition: opacity 250ms ease, transform 420ms cubic-bezier(.6, 0, .4, 1);
+}
+.stage-box.dark .shy-ground { background: #4a4256; }
+.shy-ground.show { opacity: 1; }
+.shy-ground.shrink { transform: scaleX(0); opacity: 0; transition: transform 420ms cubic-bezier(.6, 0, .4, 1), opacity 160ms ease 300ms; }
+/* Sits on the ground line's centre (the stage is 120 px wide at left 45, top 64). */
+.shy-fxl { position: absolute; left: 105px; top: 184px; width: 0; height: 0; z-index: 2; pointer-events: none; }
+.shy-fxl i { position: absolute; left: 0; top: 0; display: block; }
+
+/* Onda: two soft rings widening from the spot. */
+.shy-fxl .fx-ripple { width: 40px; height: 10px; margin: -5px 0 0 -20px; border-radius: 50%; border: 2.5px solid #b49c8e;
+  opacity: 0; animation: shy-ripple 1100ms ease-out forwards; animation-delay: calc(var(--i) * 260ms); }
+@keyframes shy-ripple { 0% { transform: scale(.15); opacity: .9; } 100% { transform: scale(1.6); opacity: 0; } }
+
+/* Polvito: a few small grey specks rising and fading. */
+.shy-fxl .fx-dust { width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: #a8968f; opacity: 0;
+  --dx: calc((var(--i) - 2) * 7px); animation: shy-dust 1000ms ease-out forwards; animation-delay: calc(var(--i) * 40ms); }
+@keyframes shy-dust { 0% { transform: translate(0, 0) scale(.6); opacity: .9; } 100% { transform: translate(var(--dx), -18px) scale(1.2); opacity: 0; } }
+
+/* Destello: one small neutral glint. */
+.shy-fxl .fx-glint { width: 18px; height: 18px; margin: -9px 0 0 -9px; opacity: 0;
+  background: #ff9e7a; clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); animation: shy-glint 700ms ease-out forwards; }
+@keyframes shy-glint { 0% { transform: scale(0) rotate(0); opacity: 1; } 45% { transform: scale(1.1) rotate(45deg); opacity: 1; } 100% { transform: scale(0) rotate(90deg); opacity: 0; } }
+
+/* 3 estrellitas: small gold stars drifting up in a fan. */
+.shy-fxl .fx-stars { width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; opacity: 0; background: #f5b62a;
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  --dx: calc((var(--i) - 1) * 14px); animation: shy-star 1000ms ease-out forwards; animation-delay: calc(var(--i) * 70ms); }
+@keyframes shy-star { 0% { transform: translate(0, 0) scale(.4); opacity: 1; } 100% { transform: translate(var(--dx), -22px) scale(1); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pet .stage.shy-under .mascot, .shy-ground, .shy-ground.shrink { transition: none; }
+}
+.stage-box.dark .shy-fxl .fx-ripple { border-color: #8a7f99; }
+.stage-box.dark .shy-fxl .fx-dust { background: #9a90a8; }

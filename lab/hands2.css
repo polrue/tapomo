@@ -1,0 +1,50 @@
+/* Lab proposal: «Silueta» hands over the lesson keyboard (hands2.js). Pending Pol's OK. */
+.kb {
+  --hd2-ink: #2f2640;      /* silhouette colour (light theme): deep plum, reads as a soft shadow */
+  --hd2-k: 1;              /* per-theme multiplier on the opacity slider */
+  --hd2-tint: var(--kb-next-ring, #f0764a);
+  --hd2-move: 210ms;       /* reach / return */
+  --hd2-ease: cubic-bezier(0.25, 0.8, 0.3, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .kb { --hd2-ink: #fbf6ff; --hd2-k: 0.9; --hd2-tint: #ffb597; }
+}
+:root[data-theme="dark"] .kb { --hd2-ink: #fbf6ff; --hd2-k: 0.9; --hd2-tint: #ffb597; }
+:root[data-theme="light"] .kb { --hd2-ink: #2f2640; --hd2-k: 1; --hd2-tint: var(--kb-next-ring, #f0764a); }
+
+/* The overlay sits on the keyboard; the wrists need a little room under it (they fade out there). */
+.kb.hd2-on { position: relative; }
+.kb.hd2-on > .kb-svg { margin-bottom: var(--hd2-extra, 10%); }
+.kb.hd2-on > .kb-hands { display: none; } /* the current cartoon hands, replaced in this mode */
+
+.hd2 {
+  position: absolute;
+  inset: 0 0 auto 0;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  pointer-events: none;
+  user-select: none;
+}
+.hd2 g, .hd2 path { transform-box: view-box; transform-origin: 0 0; }
+
+.hd2-body { opacity: calc(var(--hd2-op, 0.24) * var(--hd2-k)); }
+.hd2-skin { fill: var(--hd2-ink); }
+.hd2-knuckle { fill: var(--hd2-ink); }
+
+.hd2-shift, .hd2-fin, .hd2-fin > path, .hd2-tipg {
+  transition: transform var(--hd2-move) var(--hd2-ease);
+}
+
+/* Active finger: a faint warm tint over the finger and a soft ring on the fingertip. */
+.hd2-tint { fill: var(--hd2-tint); opacity: 0; transition: opacity 0.16s ease; }
+.hd2-ring { fill: none; stroke: var(--hd2-tint); stroke-width: 2.2; opacity: 0; transition: opacity 0.16s ease; }
+.hd2-mfin.is-active .hd2-tint { opacity: 0.2; }
+.hd2-mfin.is-active .hd2-ring { opacity: 0.9; }
+.hd2-mfin.is-after .hd2-ring { opacity: 0.55; stroke-width: 1.8; stroke-dasharray: 3.5 3; }
+
+.hd2.hd2-still *, .hd2.hd2-still { transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .hd2 * { transition: none !important; }
+}
+.hd2-none { fill: none; }
