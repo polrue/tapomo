@@ -76,10 +76,10 @@
             <button type="button" id="ls-sprint-go" data-i18n="lessons.sprint.go"></button>
           </article>
         </div>
-        <div class="ls-units" id="ls-units"></div>
+        <div class="ls-blocks" id="ls-units"></div>
         <section class="ls-section ls-lib" id="ls-lib" hidden aria-labelledby="ls-lib-title">
-          <h3 id="ls-lib-title" data-i18n="lessons.lib.title"></h3>
-          <p class="hint" data-i18n="lessons.lib.intro"></p>
+          <h3 id="ls-lib-title">4 · <span data-i18n="lessons.lib.title"></span></h3>
+          <p class="hint"><span data-i18n="lessons.lib.intro"></span> <span data-i18n="lessons.lib.start"></span></p>
           <div class="ls-lib-grid">
             <div class="ls-unit ls-pangrams">
               <h4 data-i18n="lessons.pangrams.title"></h4>
@@ -90,7 +90,7 @@
           <div class="ls-path" id="ls-path"></div>
         </section>
         <section class="ls-section ls-fingers" id="ls-fingers" hidden aria-labelledby="ls-fingers-title">
-          <h3 id="ls-fingers-title" data-i18n="lessons.fingers.title"></h3>
+          <h3 id="ls-fingers-title">5 · <span data-i18n="lessons.fingers.title"></span></h3>
           <p class="hint" data-i18n="lessons.fingers.text"></p>
           <div class="ls-chips" id="ls-finger-chips" role="group" data-i18n-aria="lessons.fingers.title"></div>
         </section>
@@ -463,6 +463,7 @@
       <p class="links">
         <a href="https://github.com/polrue/tapomo" target="_blank" rel="noopener" data-i18n="about.source"></a>
         <a href="https://github.com/polrue/tapomo/blob/main/PRIVACY.md" target="_blank" rel="noopener" data-i18n="about.privacy_policy"></a>
+        <a href="https://github.com/polrue/tapomo/issues/new/choose" target="_blank" rel="noopener" data-i18n="about.feedback"></a>
       </p>
     </section>
   </main>
@@ -500,20 +501,32 @@
     </div>
   </div>
 
+  <!-- Level-up with a reward (0.9): Tapomo on a little stage wearing it as a preview. Built by xp.js. -->
   <div id="level-dialog" class="welcome" hidden>
-    <div class="welcome-card lvup-card" role="dialog" aria-modal="true" aria-labelledby="lvup-title" aria-describedby="lvup-text" tabindex="-1">
-      <div class="welcome-body">
+    <div class="welcome-card lvup-card lvb" role="dialog" aria-modal="true" aria-labelledby="lvup-title" aria-describedby="lvup-text" tabindex="-1">
+      <div class="lvb-stage" id="lvb-stage">
+        <div class="lvb-rays" aria-hidden="true"></div>
+        <div class="lvb-confetti" id="lvb-confetti" aria-hidden="true"></div>
+        <span class="lvb-pill" id="lvb-pill" aria-hidden="true"></span>
+        <svg id="lvb-hero" class="lvb-hero" viewBox="0 0 160 160" aria-hidden="true"></svg>
+        <span class="lvb-tag" id="lvb-tag" data-i18n="lvup.preview" hidden></span>
+      </div>
+      <button type="button" class="lvb-x" id="lvup-x" data-i18n-aria="lvup.close"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+      <div class="lvb-body">
         <h2 id="lvup-title"></h2>
         <p id="lvup-text"></p>
         <div class="lvup-items" id="lvup-items"></div>
         <p class="muted" id="lvup-more" hidden></p>
-        <p class="muted" id="lvup-next" hidden></p>
+        <div class="lvb-xp"><div class="lvb-bar" aria-hidden="true"><i id="lvb-fill"></i></div><span id="lvb-xp"></span></div>
       </div>
       <div class="welcome-nav lvup-nav">
-        <button type="button" id="lvup-ok" data-i18n="lvup.ok"></button>
+        <button type="button" class="ghost" id="lvup-later" hidden></button>
+        <button type="button" id="lvup-ok"></button>
       </div>
     </div>
   </div>
+  <!-- Level-up without a reward, or while the window isn't focused: a corner card that never takes the focus. -->
+  <div id="level-toast" class="lvt-live" role="status"></div>
 
   <div id="badge-dialog" class="welcome" hidden>
     <div class="welcome-card lvup-card" role="dialog" aria-modal="true" aria-labelledby="bdup-title" tabindex="-1">
