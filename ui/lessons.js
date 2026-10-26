@@ -35,8 +35,13 @@ const Lessons = (() => {
       only: ['es', 'fr', 'de'], lessons: ['accent-vowels', 'accent-words'] },
     { id: 'common', base: 22, keys: { es: 'a–z', us: 'a–z', fr: 'a–z', de: 'a–z' }, lessons: ['common-1', 'common-2'] },
     { id: 'sentences', base: 22, keys: { es: 'Aa.', us: 'Aa.', fr: 'Aa.', de: 'Aa.' }, lessons: ['sentences-1', 'sentences-2', 'sentences-3'] },
-    // 0.8: six longer practice texts, the last unit. Every key is known by now.
-    { id: 'texts', base: 22, keys: { es: 'Aa.', us: 'Aa.', fr: 'Aa.', de: 'Aa.' }, lessons: ['text-1', 'text-2', 'text-3', 'text-4', 'text-5', 'text-6'] },
+  ];
+  // The path is shown in blocks, each with a heading and a short intro (lessons.block.<id>.title/.intro).
+  // Unlocking stays sequential across blocks; the library and the finger trainer follow as blocks 4 and 5.
+  const BLOCKS = [
+    { id: 'letters', units: ['home', 'top', 'bottom'] },
+    { id: 'beyond', units: ['caps', 'numbers', 'punct', 'accents'] },
+    { id: 'fluency', units: ['common', 'sentences'] },
   ];
   // US layout swaps the ES-only home key (fr/de have their own drills in `perLayout`).
   const swap = (layout, s) => (layout === 'us' ? s.replace(/ñ/g, ';') : s);
@@ -225,8 +230,6 @@ const Lessons = (() => {
         const k = WORD_KINDS[lesson.kind];
         return wordsText(lesson, layout, seed, k.len, k.max);
       }
-      case 'text-1': case 'text-2': case 'text-3': case 'text-4': case 'text-5': case 'text-6':
-        return T.texts[Number(lesson.kind.split('-')[1]) - 1];
       // Shift with the other hand: capitals of left-hand letters use the right Shift and vice versa.
       case 'caps-left': return fill(r, capWords(words).filter((w) => left.includes(w[0])).map(cap), 150);
       case 'caps-right': return fill(r, capWords(words).filter((w) => !left.includes(w[0])).map(cap), 150);
@@ -300,7 +303,6 @@ const Lessons = (() => {
     if (l.kind === 'words-short') return t('lessons.words_short');
     if (l.kind === 'review') return t('lessons.review');
     if (l.kind === 'words-long') return t('lessons.words_long');
-    if (l.kind.startsWith('text-')) return t('lessons.kind.text', { n: l.index + 1 });
     if (l.kind === 'practice') return t(l.len ? 'lessons.today_practice.kicker' : 'lessons.practice.title');
     if (l.kind === 'library') return l.title;
     if (l.kind === 'pangrams') return t('lessons.pangrams.title');
@@ -375,7 +377,7 @@ const Lessons = (() => {
     keys: L.drillableKeys(Keyboard.keysForFinger(layout, f)),
   });
   /** Text exercises where the «Normal / Precisión / Ritmo» modes make sense. */
-  const hasModes = (l) => ['library', 'pangrams', 'practice'].includes(l.kind) || /^text-\d$/.test(l.kind);
+  const hasModes = (l) => ['library', 'pangrams', 'practice'].includes(l.kind);
 
   function setSource(node, source) {
     node.hidden = !source;
@@ -516,7 +518,7 @@ const Lessons = (() => {
     const doneFrom = list.map((l) => bestOf(l.id) > 0);
     for (let i = doneFrom.length - 2; i >= 0; i--) doneFrom[i] = doneFrom[i] || doneFrom[i + 1];
     let open = true;
-    for (const u of unitsFor(layout)) {
+    const unitSec = (u) => {
       const sec = document.createElement('section');
       sec.className = 'ls-unit';
       const h = document.createElement('h3');
@@ -544,8 +546,25 @@ const Lessons = (() => {
         open = doneFrom[list.indexOf(l)];
       }
       sec.append(h, keys, ol);
+      return sec;
+    };
+    const present = unitsFor(layout);
+    BLOCKS.forEach((blk, n) => {
+      const us = present.filter((u) => blk.units.includes(u.id));
+      if (!us.length) return;
+      const sec = document.createElement('section');
+      sec.className = 'ls-section ls-block';
+      const h = document.createElement('h3');
+      h.textContent = `${n + 1} · ${t(`lessons.block.${blk.id}.title`)}`;
+      const p = document.createElement('p');
+      p.className = 'hint';
+      p.textContent = t(`lessons.block.${blk.id}.intro`);
+      const grid = document.createElement('div');
+      grid.className = 'ls-units';
+      grid.append(...us.map(unitSec));
+      sec.append(h, p, grid);
       box.append(sec);
-    }
+    });
     renderTop();
     renderLib();
     renderFingers();

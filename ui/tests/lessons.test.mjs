@@ -148,7 +148,7 @@ test('lessons.js loads without a library and keeps the old catalogue ids', () =>
   const ctx = lessonsPage(null);
   const { catalogue } = vm.runInContext('Lessons', ctx);
   const ids = [...catalogue('es').map((l) => l.id)];
-  assert.ok(ids.includes('home-1a') && ids.includes('texts-6'));
+  assert.ok(ids.includes('home-1a') && ids.includes('sentences-3'));
   assert.equal(new Set(ids).size, ids.length);
 });
 
