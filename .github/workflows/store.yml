@@ -1,0 +1,68 @@
+name: Microsoft Store package
+
+# Builds the MSIX for the Microsoft Store from the same exe as the GitHub release.
+# - Tapomo_<version>_x64.msix: unsigned, the one to upload to Partner Center (the Store signs it).
+# - test/: the same package signed with a throwaway self-signed certificate, to try it on a PC
+#   before submitting (see test/LEEME.txt). Never upload that one.
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+    branches: ['store/**']
+
+permissions:
+  contents: read
+
+jobs:
+  msix:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm ci
+      - run: npx tauri build --no-bundle
+      - name: Package the MSIX
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path src-tauri/Cargo.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
+          $kit = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\makeappx.exe" | Sort-Object FullName -Descending | Select-Object -First 1
+          $bin = $kit.DirectoryName
+          "MSIX_BIN=$bin" >> $env:GITHUB_ENV
+          "MSIX_VERSION=$version" >> $env:GITHUB_ENV
+
+          New-Item -ItemType Directory -Force pkg/Assets, out/test | Out-Null
+          Copy-Item target/release/tapomo.exe pkg/Tapomo.exe
+          foreach ($a in 'StoreLogo', 'Square44x44Logo', 'Square150x150Logo') {
+            Copy-Item "src-tauri/icons/$a.png" "pkg/Assets/$a.png"
+          }
+          (Get-Content packaging/msix/AppxManifest.xml -Raw).Replace('@VERSION@', "$version.0") |
+            Set-Content pkg/AppxManifest.xml -Encoding utf8
+
+          & "$bin\makeappx.exe" pack /d pkg /p "out/Tapomo_${version}_x64.msix" /o
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Sign a copy for testing
+        shell: pwsh
+        run: |
+          $publisher = ([xml](Get-Content pkg/AppxManifest.xml)).Package.Identity.Publisher
+          $cert = New-SelfSignedCertificate -Type Custom -Subject $publisher -KeyUsage DigitalSignature `
+            -FriendlyName 'Tapomo test package' -CertStoreLocation 'Cert:\CurrentUser\My' `
+            -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3', '2.5.29.19={text}')
+          $pwd = ConvertTo-SecureString -String ([guid]::NewGuid().ToString()) -Force -AsPlainText
+          Export-PfxCertificate -Cert $cert -FilePath test.pfx -Password $pwd | Out-Null
+          Export-Certificate -Cert $cert -FilePath out/test/Tapomo-test.cer | Out-Null
+          $msix = "out/test/Tapomo_${env:MSIX_VERSION}_x64_test.msix"
+          Copy-Item "out/Tapomo_${env:MSIX_VERSION}_x64.msix" $msix
+          & "$env:MSIX_BIN\signtool.exe" sign /fd SHA256 /f test.pfx /p ([System.Net.NetworkCredential]::new('', $pwd).Password) $msix
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          Copy-Item packaging/msix/LEEME-prueba.txt out/test/LEEME.txt
+          Remove-Item test.pfx
+      - uses: actions/upload-artifact@v7
+        with:
+          name: tapomo-msix
+          path: out/
+          if-no-files-found: error

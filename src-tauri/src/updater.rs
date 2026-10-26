@@ -58,7 +58,8 @@ async fn find_update(app: &AppHandle) -> Option<Update> {
 
 #[tauri::command]
 pub async fn check_update(app: AppHandle) -> Option<UpdateInfo> {
-    if !settings(&app)?.check_updates {
+    // The Store build is updated by the Store.
+    if crate::packaged::is_packaged() || !settings(&app)?.check_updates {
         return None;
     }
     let update = find_update(&app).await?;
@@ -70,6 +71,9 @@ pub async fn check_update(app: AppHandle) -> Option<UpdateInfo> {
 /// passive mode and the app exits by itself, so on success this normally never returns.
 #[tauri::command]
 pub async fn install_update(app: AppHandle) -> CmdResult<()> {
+    if crate::packaged::is_packaged() {
+        return Err("the Microsoft Store updates this build".into());
+    }
     let update = find_update(&app).await.ok_or_else(|| "no update available".to_string())?;
     log::info!("downloading update {}", update.version);
     let mut downloaded = 0u64;
@@ -107,6 +111,9 @@ fn auto_update_on(app: &AppHandle) -> bool {
 /// Background auto-update: first run about a minute after start, then every 24 h.
 /// Downloads right away, installs when the user has been idle for a while.
 pub fn spawn(app: AppHandle) {
+    if crate::packaged::is_packaged() {
+        return;
+    }
     tauri::async_runtime::spawn(async move {
         tokio::time::sleep(FIRST_CHECK).await;
         loop {
