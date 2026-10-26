@@ -7,13 +7,17 @@
   min-width: 40px; height: 34px; padding: 0 10px; border-radius: 999px; border: 1.5px solid var(--line);
   background: transparent; color: var(--ink); font: inherit; font-weight: 800; font-size: .82rem; cursor: pointer;
 }
+.lang-short { display: none; }
 .lang-opt:hover { background: var(--bg-soft); }
 .lang-opt[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #23202b; }
 .header-actions { margin-left: auto; gap: 14px; }
 @media (max-width: 720px) {
   .back-link { display: none; }
   .brand span { display: none; }
-  .lang-opt { min-width: 0; padding: 0 8px; font-size: .78rem; }
+  .lang-switch { flex-wrap: nowrap; gap: 3px; }
+  .lang-opt { min-width: 0; height: 32px; padding: 0 9px; font-size: .8rem; }
+  .lang-long { display: none; }
+  .lang-short { display: inline; }
 }
 
 .policy { padding-top: clamp(32px, 6vw, 72px); padding-bottom: clamp(48px, 8vw, 96px); }
