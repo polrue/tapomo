@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Política de privacidad · Tapomo</title>
+  <meta name="description" content="Qué mide Tapomo, qué guarda en tu equipo, qué envía por internet (solo si lo activas) y cómo borrar tus datos.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1b1822" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="canonical" href="https://tapomo.app/privacy.html">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tapomo.app/privacy.html">
+  <meta property="og:title" content="Política de privacidad · Tapomo">
+  <meta property="og:description" content="Qué mide Tapomo, qué guarda en tu equipo, qué envía por internet (solo si lo activas) y cómo borrar tus datos.">
+  <link rel="stylesheet" href="css/site.css">
+  <link rel="stylesheet" href="css/privacy.css">
+</head>
+<body class="privacy-page">
+  <a class="skip-link" href="#main" data-c="skip">Saltar al contenido</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="./" aria-label="Tapomo, inicio" data-c-attr="aria-label:home">
+        <svg viewBox="26 37 108 104" width="28" height="28" aria-hidden="true" focusable="false">
+          <rect x="30" y="40" width="100" height="98" rx="30" fill="#ff9e7a"/>
+          <rect x="40" y="46" width="80" height="72" rx="22" fill="#fff" opacity=".28"/>
+          <circle cx="61" cy="84" r="9" fill="#23202b"/><circle cx="99" cy="84" r="9" fill="#23202b"/>
+          <circle cx="64" cy="81" r="3" fill="#fff"/><circle cx="102" cy="81" r="3" fill="#fff"/>
+          <path d="M70 101 Q80 112 90 101" stroke="#23202b" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <span>Tapomo</span>
+      </a>
+      <div class="header-actions">
+        <a class="back-link" href="./" data-c="back">Volver a la web</a>
+        <div class="lang-switch" role="group" aria-label="Language / Idioma">
+          <button type="button" class="lang-opt" data-set-lang="es" lang="es" aria-pressed="true">Español</button>
+          <button type="button" class="lang-opt" data-set-lang="en" lang="en" aria-pressed="false">English</button>
+          <button type="button" class="lang-opt" data-set-lang="ca" lang="ca" aria-pressed="false">Català</button>
+          <button type="button" class="lang-opt" data-set-lang="fr" lang="fr" aria-pressed="false">Français</button>
+          <button type="button" class="lang-opt" data-set-lang="de" lang="de" aria-pressed="false">Deutsch</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap narrow policy">
+<section class="policy-lang" lang="es" data-lang="es">
+<h1>Política de privacidad de Tapomo</h1>
+<p class="updated">Última actualización: 26 de octubre de 2026.</p>
+<p class="lead">Tapomo es una aplicación gratuita y de código abierto que mide a qué velocidad escribes. Está hecha para que <strong>nada de lo que escribes salga nunca de tu equipo</strong>, y casi nada se guarde siquiera en él.</p>
+<section class="ps" aria-labelledby="es-p1"><h2 id="es-p1">Quién es el responsable</h2>
+<p>Tapomo lo desarrolla y mantiene Pol Rué. Para cualquier duda sobre esta política o sobre tus datos, abre una incidencia en <a href="https://github.com/polrue/tapomo/issues">github.com/polrue/tapomo/issues</a>.</p>
+</section>
+<section class="ps" aria-labelledby="es-p2"><h2 id="es-p2">Qué hace Tapomo con el teclado</h2>
+<p>Para medir la velocidad, Tapomo escucha el teclado de todo el sistema mientras está en marcha. Cada pulsación se traduce al momento a una <strong>categoría</strong> (letra, espacio, intro, borrar…) y <strong>la tecla concreta se descarta</strong>. Tapomo no puede reconstruir el texto que escribiste, porque nunca lo tiene.</p>
+<p>Además:</p>
+<ul>
+<li>Los <strong>campos de contraseña</strong> se ignoran por completo: ni se cuentan ni se cronometran.</li>
+<li>Las <strong>aplicaciones excluidas</strong> se ignoran. Por defecto lo están los gestores de contraseñas (KeePass, KeePassXC, 1Password y Bitwarden), y puedes añadir más.</li>
+<li>Las pulsaciones inyectadas por macros o autotypers se ignoran.</li>
+<li>Para no contar como escritura el aporreo del teclado («asdasdasd», «aaaaaa»), el gancho compara cada tecla con las dos anteriores en su memoria y solo pasa un «igual que antes: sí/no». Las teclas no salen del gancho ni se guardan.</li>
+<li>Hay una única excepción a «la tecla se descarta»: cuando pulsas Retroceso justo después de una tecla de carácter, el gancho envía el código de <strong>esa</strong> tecla y se convierte al instante en un contador diario (ver abajo). Las pausas, las aplicaciones excluidas y los campos de contraseña también valen para él, y se puede desactivar.</li>
+<li>Puedes <strong>pausar</strong> la medición en cualquier momento desde la bandeja del sistema.</li>
+</ul>
+</section>
+<section class="ps" aria-labelledby="es-p3"><h2 id="es-p3">Qué se guarda (solo en tu equipo)</h2>
+<p>En una base de datos SQLite local, en tu carpeta de usuario:</p>
+<ul>
+<li>Para cada ráfaga de escritura: hora de inicio y fin, número de pulsaciones, número de borrados y la mejor velocidad de 10 segundos.</li>
+<li>El <strong>nombre del ejecutable</strong> de la aplicación en primer plano (por ejemplo <code>WINWORD.EXE</code>) y el nombre propio que le pongas.</li>
+<li>Tus ajustes y tu progreso: objetivo diario, días seguidos, XP, insignias, etc.</li>
+<li>De las <strong>lecciones</strong> (el texto es de Tapomo, no tuyo): resultados y qué teclas del texto de la lección fallas más, para prepararte práctica a medida.</li>
+<li>Cuántos <strong>atajos de teclado</strong> usas cada día de cada tipo (copiar y pegar, deshacer, guardar, ventanas, otros). El atajo se convierte en su tipo dentro del propio gancho de teclado. Solo los atajos del <strong>álbum</strong> (un catálogo cerrado y público de unos 50, en <a href="https://github.com/polrue/tapomo/blob/main/data/shortcuts.json"><code>data/shortcuts.json</code></a>, sin ninguno sensible como abrir una ventana de incógnito) se reconocen por su nombre, y de cada uno solo se guarda en cuántos días distintos lo has usado. Cualquier otra combinación cuenta como «otros» sin saber cuál fue. Se desactiva en Ajustes → «Contar atajos de teclado».</li>
+<li><strong>Contador de teclas que corriges:</strong> cuántas veces, cada día, la tecla que pulsaste <strong>justo antes de borrar</strong> con Retroceso fue cada una (por ejemplo «la R: 12 veces»), para mostrarte «Teclas que más corriges». Es un contador por día y por tecla: nunca el texto, ni qué teclas iban antes o después, ni en qué aplicación. Con varias borradas seguidas solo cuenta la primera. Se desactiva en Ajustes → «Contar las teclas que corriges».</li>
+</ul>
+<p><strong>Nunca</strong> se guarda: el texto, secuencias de teclas (solo ese contador diario por tecla corregida), los títulos de ventana, las direcciones web, capturas de pantalla ni nada parecido.</p>
+</section>
+<section class="ps" aria-labelledby="es-p4"><h2 id="es-p4">Base de datos cifrada (opcional)</h2>
+<p>Si quieres, puedes <strong>cifrar</strong> la base de datos (Ajustes → «Cifrar la base de datos»): se cifra con SQLCipher y la clave queda protegida por Windows para tu usuario.</p>
+</section>
+<section class="ps" aria-labelledby="es-p5"><h2 id="es-p5">Conexiones a internet</h2>
+<p>Tapomo <strong>no tiene telemetría, ni analítica, ni publicidad, ni cuentas de usuario</strong>, y no incluye rastreadores de ningún tipo. Las únicas conexiones son:</p>
+<div class="conn">
+<div class="conn-item"><h3>Comprobar si hay una versión nueva</h3>
+<p><strong>Con quién:</strong> GitHub (<code>github.com</code>, el archivo <code>latest.json</code> de la última versión), como mucho una vez al día.</p>
+<p><strong>Qué se envía:</strong> una petición normal de la web, sin ningún dato tuyo ni de tu uso.</p>
+<p><strong>Cómo desactivarla:</strong> Ajustes → «Comprobar si hay versiones nuevas».</p></div>
+<div class="conn-item"><h3>Descargar una versión nueva</h3>
+<p><strong>Con quién:</strong> GitHub (<code>github.com</code>), solo si aceptas instalarla o si activas la actualización automática.</p>
+<p><strong>Qué se envía:</strong> una descarga normal.</p>
+<p><strong>Cómo desactivarla:</strong> no aceptando la actualización, o desactivando la comprobación; la actualización automática está desactivada por defecto (Ajustes → «Actualizar automáticamente»).</p></div>
+</div>
+<p>Estas comprobaciones y descargas valen solo para la versión descargada de GitHub. La versión de la Microsoft Store la actualiza la propia Store.</p>
+<p>Como en cualquier conexión, GitHub ve tu dirección IP. Consulta la <a href="https://docs.github.com/es/site-policy/privacy-policies/github-general-privacy-statement">declaración de privacidad de GitHub</a>.</p>
+<h3>Funciones en línea opcionales (desactivadas por defecto)</h3>
+<p>Solo funcionan si tú las activas, y hablan únicamente con <code>api.tapomo.app</code> (Cloudflare Workers; el código está en <a href="https://github.com/polrue/tapomo/tree/main/server"><code>server/</code></a>):</p>
+<ul>
+<li><strong>Estadísticas anónimas</strong> (Ajustes → «Compartir estadísticas anónimas»): una vez por semana se envía la semana anterior: velocidad media, pico, precisión, minutos activos e idioma de la app, con un número de instalación al azar. Sin cuenta, sin email, sin nada de lo que escribes. Se guarda 26 semanas y lo puedes borrar con «Borrar mis datos del servidor».</li>
+<li><strong>Ligas con amigos</strong> (solo si creas una liga o te unes a una): tu apodo y tu XP semanal. Se guarda 12 semanas y se borra al salir de la liga.</li>
+</ul>
+<p>El servidor no guarda direcciones IP (solo un resumen cifrado, que cambia cada 10 minutos, para limitar abusos), pero Cloudflare, como cualquier proveedor, ve la IP de la conexión. Consulta la <a href="https://www.cloudflare.com/privacypolicy/">política de privacidad de Cloudflare</a>.</p>
+</section>
+<section class="ps" aria-labelledby="es-p6"><h2 id="es-p6">Sin anuncios, rastreadores ni analítica</h2>
+<p>Tapomo no muestra anuncios, no usa rastreadores y no incluye analítica ni telemetría. Esta página web tampoco carga scripts de terceros.</p>
+</section>
+<section class="ps" aria-labelledby="es-p7"><h2 id="es-p7">Cambios en el sistema</h2>
+<ul>
+<li>El instalador instala Tapomo <strong>solo para tu usuario</strong>, sin permisos de administrador, y crea los accesos directos del menú Inicio y, si lo eliges, del escritorio.</li>
+<li>Tapomo <strong>se inicia con Windows por defecto</strong>, para medir sin que tengas que abrirlo cada día. Lo puedes desactivar en Ajustes en cualquier momento. En la versión de la Microsoft Store empieza desactivado y lo activas tú en Ajustes.</li>
+<li>Tapomo se desinstala desde <strong>Configuración → Aplicaciones</strong> como cualquier otro programa.</li>
+</ul>
+</section>
+<section class="ps" aria-labelledby="es-p8"><h2 id="es-p8">Cómo borrar tus datos</h2>
+<ul>
+<li><strong>En tu equipo:</strong> al desinstalar Tapomo puedes borrar también sus datos. Si prefieres hacerlo a mano, borra la carpeta de datos de Tapomo en tu carpeta de usuario.</li>
+<li><strong>Versión de la Microsoft Store:</strong> al desinstalarla desde Windows se eliminan también sus datos.</li>
+<li><strong>En el servidor</strong> (si activaste las funciones en línea): usa «Borrar mis datos del servidor» en Ajustes. Los datos de una liga se borran al salir de ella.</li>
+</ul>
+</section>
+<section class="ps" aria-labelledby="es-p9"><h2 id="es-p9">Menores</h2>
+<p>Tapomo no tiene cuentas y no recoge datos personales: ni nombre ni email. Las funciones en línea están desactivadas por defecto y solo envían lo descrito arriba.</p>
+</section>
+<section class="ps" aria-labelledby="es-p10"><h2 id="es-p10">Cambios en esta política</h2>
+<p>Si esta política cambia, se actualizará esta página y la fecha de «última actualización». El historial de cambios queda en el repositorio público.</p>
+</section>
+<section class="ps" aria-labelledby="es-p11"><h2 id="es-p11">Contacto</h2>
+<p>Para cualquier duda, abre una incidencia en <a href="https://github.com/polrue/tapomo/issues">github.com/polrue/tapomo/issues</a>. El código fuente es público y puedes comprobar todo lo que dice esta política.</p>
+</section>
+</section>
+<section class="policy-lang" lang="en" data-lang="en" hidden>
+<h1>Tapomo privacy policy</h1>
+<p class="updated">Last updated: 26 October 2026.</p>
+<p class="lead">Tapomo is a free, open-source app that measures how fast you type. It is built so that <strong>nothing you type ever leaves your computer</strong>, and almost nothing is even stored on it.</p>
+<section class="ps" aria-labelledby="en-p1"><h2 id="en-p1">Who is responsible</h2>
+<p>Tapomo is developed and maintained by Pol Rué. For any question about this policy or your data, open an issue at <a href="https://github.com/polrue/tapomo/issues">github.com/polrue/tapomo/issues</a>.</p>
+</section>
+<section class="ps" aria-labelledby="en-p2"><h2 id="en-p2">What Tapomo does with the keyboard</h2>
+<p>To measure speed, Tapomo listens to the system-wide keyboard while it is running. Each keystroke is immediately translated into a <strong>category</strong> (letter, space, enter, delete…) and <strong>the actual key is thrown away</strong>. Tapomo cannot rebuild the text you typed, because it never has it.</p>
+<p>Also:</p>
+<ul>
+<li><strong>Password fields</strong> are ignored entirely: not counted, not timed.</li>
+<li><strong>Excluded applications</strong> are ignored. Password managers (KeePass, KeePassXC, 1Password and Bitwarden) are excluded by default, and you can add more.</li>
+<li>Keystrokes injected by macros or auto-typers are ignored.</li>
+<li>So that keyboard mashing ("asdasdasd", "aaaaaa") doesn't count as typing, the hook compares each key with the previous two in its own memory and only passes on a "same as before: yes/no". The keys never leave the hook and are never stored.</li>
+<li>There is a single exception to "the key is thrown away": when you press Backspace right after a character key, the hook sends the code of <strong>that</strong> key, which is turned into a daily counter at once (see below). Pause, excluded applications and password fields apply to it too, and it can be turned off.</li>
+<li>You can <strong>pause</strong> measuring at any time from the system tray.</li>
+</ul>
+</section>
+<section class="ps" aria-labelledby="en-p3"><h2 id="en-p3">What is stored (only on your computer)</h2>
+<p>In a local SQLite database in your user folder:</p>
+<ul>
+<li>For each typing burst: start and end time, keystroke count, delete count and the best 10-second speed.</li>
+<li>The foreground application's <strong>executable name</strong> (e.g. <code>WINWORD.EXE</code>) and any friendly name you give it.</li>
+<li>Your settings and progress: daily goal, days in a row, XP, badges, etc.</li>
+<li>From <strong>lessons</strong> (the text is Tapomo's, not yours): results and which keys of the lesson text you miss most, to build tailored practice.</li>
+<li>How many <strong>keyboard shortcuts</strong> you use each day of each kind (copy &amp; paste, undo, save, windows, other). The shortcut becomes its kind inside the keyboard hook itself. Only <strong>album</strong> shortcuts (a closed, public catalogue of about 50, in <a href="https://github.com/polrue/tapomo/blob/main/data/shortcuts.json"><code>data/shortcuts.json</code></a>, with nothing sensitive such as opening an incognito window) are recognised by name, and for each one only the number of different days you used it is stored. Any other combination counts as "other" without knowing which. Turn it off in Settings → "Count keyboard shortcuts".</li>
+<li><strong>Counter of the keys you correct:</strong> how many times, each day, the key you pressed <strong>right before deleting</strong> with Backspace was each one (for example "R: 12 times"), to show you "Keys you correct most". It is one counter per day and per key: never the text, never which keys came before or after, never which application. With several Backspaces in a row only the first counts. Turn it off in Settings → "Count the keys you correct".</li>
+</ul>
+<p><strong>Never</strong> stored: text, key sequences (only that daily counter per corrected key), window titles, web addresses, screenshots or anything similar.</p>
+</section>
+<section class="ps" aria-labelledby="en-p4"><h2 id="en-p4">Encrypted database (optional)</h2>
+<p>If you like, you can <strong>encrypt</strong> the database (Settings → "Encrypt the database"): it is encrypted with SQLCipher and the key is protected by Windows for your user.</p>
+</section>
+<section class="ps" aria-labelledby="en-p5"><h2 id="en-p5">Internet connections</h2>
+<p>Tapomo has <strong>no telemetry, analytics, ads or user accounts</strong>, and includes no trackers of any kind. The only connections are:</p>
+<div class="conn">
+<div class="conn-item"><h3>Checking for a new version</h3>
+<p><strong>With whom:</strong> GitHub (<code>github.com</code>, the <code>latest.json</code> file of the latest release), at most once a day.</p>
+<p><strong>What is sent:</strong> a plain web request, with no data about you or your usage.</p>
+<p><strong>How to turn it off:</strong> Settings → "Check for new versions".</p></div>
+<div class="conn-item"><h3>Downloading a new version</h3>
+<p><strong>With whom:</strong> GitHub (<code>github.com</code>), only if you accept it or if you turn on automatic updates.</p>
+<p><strong>What is sent:</strong> a plain download.</p>
+<p><strong>How to turn it off:</strong> don't accept the update, or turn off the check; automatic updates are off by default (Settings → "Update automatically").</p></div>
+</div>
+<p>These checks and downloads apply only to the build downloaded from GitHub. The Microsoft Store version is updated by the Store itself.</p>
+<p>As with any connection, GitHub sees your IP address. See <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>.</p>
+<h3>Optional online features (off by default)</h3>
+<p>They only work if you turn them on, and they only talk to <code>api.tapomo.app</code> (Cloudflare Workers; the code is in <a href="https://github.com/polrue/tapomo/tree/main/server"><code>server/</code></a>):</p>
+<ul>
+<li><strong>Anonymous stats</strong> (Settings → "Share anonymous stats"): once a week the previous week is sent: average speed, peak, accuracy, active minutes and the app language, with a random install number. No account, no email, nothing you type. Kept for 26 weeks, and you can delete it with "Delete my data from the server".</li>
+<li><strong>Leagues with friends</strong> (only if you create or join a league): your nickname and weekly XP. Kept for 12 weeks and deleted when you leave the league.</li>
+</ul>
+<p>The server stores no IP addresses (only a salted hash that changes every 10 minutes, to limit abuse), but Cloudflare, like any provider, sees the connection's IP. See <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare's privacy policy</a>.</p>
+</section>
+<section class="ps" aria-labelledby="en-p6"><h2 id="en-p6">No ads, trackers or analytics</h2>
+<p>Tapomo shows no ads, uses no trackers and includes no analytics or telemetry. This website does not load third-party scripts either.</p>
+</section>
+<section class="ps" aria-labelledby="en-p7"><h2 id="en-p7">Changes to your system</h2>
+<ul>
+<li>The installer installs Tapomo <strong>for your user only</strong>, without administrator rights, and creates Start menu shortcuts and, if you choose, a desktop shortcut.</li>
+<li>Tapomo <strong>starts with Windows by default</strong>, so it can measure without you opening it every day. You can turn this off in Settings at any time. In the Microsoft Store version it starts off, and you turn it on in Settings.</li>
+<li>Tapomo is uninstalled from <strong>Settings → Apps</strong> like any other program.</li>
+</ul>
+</section>
+<section class="ps" aria-labelledby="en-p8"><h2 id="en-p8">How to delete your data</h2>
+<ul>
+<li><strong>On your computer:</strong> when you uninstall Tapomo you can also delete its data. If you prefer to do it by hand, delete Tapomo's data folder in your user folder.</li>
+<li><strong>Microsoft Store version:</strong> uninstalling it from Windows also removes its data.</li>
+<li><strong>On the server</strong> (if you turned on the online features): use "Delete my data from the server" in Settings. League data is deleted when you leave the league.</li>
+</ul>
+</section>
+<section class="ps" aria-labelledby="en-p9"><h2 id="en-p9">Children</h2>
+<p>Tapomo has no accounts and collects no personal data: no name, no email. The online features are off by default and only send what is described above.</p>
+</section>
+<section class="ps" aria-labelledby="en-p10"><h2 id="en-p10">Changes to this policy</h2>
+<p>If this policy changes, this page and its "last updated" date will be updated. The change history is kept in the public repository.</p>
+</section>
+<section class="ps" aria-labelledby="en-p11"><h2 id="en-p11">Contact</h2>
+<p>For any question, open an issue at <a href="https://github.com/polrue/tapomo/issues">github.com/polrue/tapomo/issues</a>. The source code is public, so you can check everything this policy says.</p>
+</section>
+</section>
+<section class="policy-lang" lang="ca" data-lang="ca" hidden>
+<h1>Política de privadesa de Tapomo</h1>
+<p class="updated">Darrera actualització: 26 d’octubre de 2026.</p>
+<p class="lead">Tapomo és una aplicació gratuïta i de codi obert que mesura a quina velocitat escrius. Està feta perquè <strong>res del que escrius no surti mai del teu equip</strong>, i gairebé res s’hi desi ni tan sols.</p>
+<section class="ps" aria-labelledby="ca-p1"><h2 id="ca-p1">Qui n’és el responsable</h2>
+<p>Tapomo el desenvolupa i el manté Pol Rué. Per a qualsevol dubte sobre aquesta política o sobre les teves dades, obre una incidència a <a href="https://github.com/polrue/tapomo/issues">github.com/polrue/tapomo/issues</a>.</p>
+</section>
+<section class="ps" aria-labelledby="ca-p2"><h2 id="ca-p2">Què fa Tapomo amb el teclat</h2>
+<p>Per mesurar la velocitat, Tapomo escolta el teclat de tot el sistema mentre està en marxa. Cada pulsació es tradueix a l’instant a una <strong>categoria</strong> (lletra, espai, intro, esborrar…) i <strong>la tecla concreta es descarta</strong>. Tapomo no pot reconstruir el text que has escrit, perquè mai no el té.</p>
+<p>A més:</p>
+<ul>
+<li>Els <strong>camps de contrasenya</strong> s’ignoren del tot: ni es compten ni es cronometren.</li>
+<li>Les <strong>aplicacions excloses</strong> s’ignoren. Per defecte ho són els gestors de contrasenyes (KeePass, KeePassXC, 1Password i Bitwarden), i en pots afegir més.</li>
+<li>Les pulsacions injectades per macros o autotypers s’ignoren.</li>
+<li>Perquè picar el teclat a l’atzar («asdasdasd», «aaaaaa») no compti com a escriptura, el ganxo compara cada tecla amb les dues anteriors a la seva memòria i només passa un «igual que abans: sí/no». Les tecles no surten del ganxo ni es desen.</li>
+<li>Hi ha una única excepció a «la tecla es descarta»: quan prems Retrocés just després d’una tecla de caràcter, el ganxo envia el codi d’<strong>aquesta</strong> tecla i es converteix a l’instant en un comptador diari (vegeu més avall). Les pauses, les aplicacions excloses i els camps de contrasenya també s’hi apliquen, i es pot desactivar.</li>
+<li>Pots <strong>posar en pausa</strong> la mesura en qualsevol moment des de la safata del sistema.</li>
+</ul>
+</section>
+<section class="ps" aria-labelledby="ca-p3"><h2 id="ca-p3">Què es desa (només al teu equip)</h2>
+<p>En una base de dades SQLite local, a la teva carpeta d’usuari:</p>
+<ul>
+<li>Per a cada ràfega d’escriptura: hora d’inici i de final, nombre de pulsacions, nombre d’esborrats i la millor velocitat de 10 segons.</li>
+<li>El <strong>nom de l’executable</strong> de l’aplicació en primer pla (per exemple <code>WINWORD.EXE</code>) i el nom propi que li posis.</li>
+<li>Els teus ajustos i el teu progrés: objectiu diari, dies seguits, XP, insígnies, etc.</li>
+<li>De les <strong>lliçons</strong> (el text és de Tapomo, no teu): resultats i quines tecles del text de la lliçó falles més, per preparar-te una pràctica a mida.</li>
+<li>Quantes <strong>dreceres de teclat</strong> fas servir cada dia de cada tipus (copiar i enganxar, desfer, desar, finestres, altres). La drecera es converteix en el seu tipus dins del mateix ganxo de teclat. Només les dreceres de l’<strong>àlbum</strong> (un catàleg tancat i públic d’unes 50, a <a href="https://github.com/polrue/tapomo/blob/main/data/shortcuts.json"><code>data/shortcuts.json</code></a>, sense cap de sensible com obrir una finestra d’incògnit) es reconeixen pel nom, i de cadascuna només es desa en quants dies diferents l’has feta servir. Qualsevol altra combinació compta com a «altres» sense saber quina va ser. Es desactiva a Ajustos → «Compta les dreceres de teclat».</li>
+<li><strong>Comptador de tecles que corregeixes:</strong> quantes vegades, cada dia, la tecla que vas prémer <strong>just abans d’esborrar</strong> amb Retrocés va ser cadascuna (per exemple «la R: 12 vegades»), per mostrar-te «Tecles que més corregeixes». És un comptador per dia i per tecla: mai el text, ni quines tecles anaven abans o després, ni en quina aplicació. Amb diversos esborrats seguits només compta el primer. Es desactiva a Ajustos → «Compta les tecles que corregeixes».</li>
+</ul>
+<p><strong>Mai</strong> es desa: el text, seqüències de tecles (només aquest comptador diari per tecla corregida), els títols de finestra, les adreces web, captures de pantalla ni res de semblant.</p>
+</section>
+<section class="ps" aria-labelledby="ca-p4"><h2 id="ca-p4">Base de dades xifrada (opcional)</h2>
+<p>Si vols, pots <strong>xifrar</strong> la base de dades (Ajustos → «Xifrar la base de dades»): es xifra amb SQLCipher i la clau queda protegida per Windows per al teu usuari.</p>
+</section>
+<section class="ps" aria-labelledby="ca-p5"><h2 id="ca-p5">Connexions a internet</h2>
+<p>Tapomo <strong>no té telemetria, ni analítica, ni publicitat, ni comptes d’usuari</strong>, i no inclou cap mena de rastrejador. Les úniques connexions són:</p>
+<div class="conn">
+<div class="conn-item"><h3>Comprovar si hi ha una versió nova</h3>
+<p><strong>Amb qui:</strong> GitHub (<code>github.com</code>, el fitxer <code>latest.json</code> de l’última versió), com a màxim un cop al dia.</p>
+<p><strong>Què s’envia:</strong> una petició normal del web, sense cap dada teva ni del teu ús.</p>
+<p><strong>Com desactivar-la:</strong> Ajustos → «Comprova si hi ha versions noves».</p></div>
+<div class="conn-item"><h3>Descarregar una versió nova</h3>
+<p><strong>Amb qui:</strong> GitHub (<code>github.com</code>), només si acceptes instal·lar-la o si actives l’actualització automàtica.</p>
+<p><strong>Què s’envia:</strong> una descàrrega normal.</p>
+<p><strong>Com desactivar-la:</strong> no acceptant l’actualització, o desactivant la comprovació; l’actualització automàtica està desactivada per defecte (Ajustos → «Actualitza automàticament»).</p></div>
+</div>
+<p>Aquestes comprovacions i descàrregues només valen per a la versió descarregada de GitHub. La versió de la Microsoft Store l’actualitza la mateixa Store.</p>
+<p>Com en qualsevol connexió, GitHub veu la teva adreça IP. Consulta la <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">declaració de privadesa de GitHub (en anglès)</a>.</p>
+<h3>Funcions en línia opcionals (desactivades per defecte)</h3>
+<p>Només funcionen si les actives tu, i parlen únicament amb <code>api.tapomo.app</code> (Cloudflare Workers; el codi és a <a href="https://github.com/polrue/tapomo/tree/main/server"><code>server/</code></a>):</p>
+<ul>
+<li><strong>Estadístiques anònimes</strong> (Ajustos → «Comparteix estadístiques anònimes»): un cop per setmana s’envia la setmana anterior: velocitat mitjana, pic, precisió, minuts actius i idioma de l’app, amb un número d’instal·lació a l’atzar. Sense compte, sense correu, sense res del que escrius. Es desa 26 setmanes i ho pots esborrar amb «Esborra les meves dades del servidor».</li>
+<li><strong>Lligues amb amics</strong> (només si crees una lliga o t’hi uneixes): el teu sobrenom i el teu XP setmanal. Es desa 12 setmanes i s’esborra en sortir de la lliga.</li>
+</ul>
+<p>El servidor no desa adreces IP (només un resum xifrat, que canvia cada 10 minuts, per limitar abusos), però Cloudflare, com qualsevol proveïdor, veu la IP de la connexió. Consulta la <a href="https://www.cloudflare.com/privacypolicy/">política de privadesa de Cloudflare (en anglès)</a>.</p>
+</section>
+<section class="ps" aria-labelledby="ca-p6"><h2 id="ca-p6">Sense anuncis, rastrejadors ni analítica</h2>
+<p>Tapomo no mostra anuncis, no fa servir rastrejadors i no inclou analítica ni telemetria. Aquest web tampoc no carrega scripts de tercers.</p>
+</section>
+<section class="ps" aria-labelledby="ca-p7"><h2 id="ca-p7">Canvis al sistema</h2>
+<ul>
+<li>L’instal·lador instal·la Tapomo <strong>només per al teu usuari</strong>, sense permisos d’administrador, i crea les dreceres del menú Inici i, si ho tries, de l’escriptori.</li>
+<li>Tapomo <strong>s’inicia amb Windows per defecte</strong>, per mesurar sense que l’hagis d’obrir cada dia. Ho pots desactivar a Ajustos en qualsevol moment. A la versió de la Microsoft Store comença desactivat i l’actives tu a Ajustos.</li>
+<li>Tapomo es desinstal·la des de <strong>Configuració → Aplicacions</strong> com qualsevol altre programa.</li>
+</ul>
+</section>
+<section class="ps" aria-labelledby="ca-p8"><h2 id="ca-p8">Com esborrar les teves dades</h2>
+<ul>
+<li><strong>Al teu equip:</strong> en desinstal·lar Tapomo també en pots esborrar les dades. Si ho prefereixes fer a mà, esborra la carpeta de dades de Tapomo a la teva carpeta d’usuari.</li>
+<li><strong>Versió de la Microsoft Store:</strong> en desinstal·lar-la des de Windows també se n’eliminen les dades.</li>
+<li><strong>Al servidor</strong> (si has activat les funcions en línia): fes servir «Esborra les meves dades del servidor» a Ajustos. Les dades d’una lliga s’esborren en sortir-ne.</li>
+</ul>
+</section>
+<section class="ps" aria-labelledby="ca-p9"><h2 id="ca-p9">Menors</h2>
+<p>Tapomo no té comptes i no recull dades personals: ni nom ni correu. Les funcions en línia estan desactivades per defecte i només envien el que s’ha descrit més amunt.</p>
+</section>
+<section class="ps" aria-labelledby="ca-p10"><h2 id="ca-p10">Canvis en aquesta política</h2>
+<p>Si aquesta política canvia, s’actualitzarà aquesta pàgina i la data de «darrera actualització». L’historial de canvis queda al repositori públic.</p>
+</section>
+<section class="ps" aria-labelledby="ca-p11"><h2 id="ca-p11">Contacte</h2>
+<p>Per a qualsevol dubte, obre una incidència a <a href="https://github.com/polrue/tapomo/issues">github.com/polrue/tapomo/issues</a>. El codi font és públic i pots comprovar tot el que diu aquesta política.</p>
+</section>
+</section>
+<section class="policy-lang" lang="fr" data-lang="fr" hidden>
+<h1>Politique de confidentialité de Tapomo</h1>
+<p class="updated">Dernière mise à jour : 26 octobre 2026.</p>
+<p class="lead">Tapomo est une application gratuite et open source qui mesure la vitesse à laquelle tu tapes. Elle est conçue pour que <strong>rien de ce que tu tapes ne quitte jamais ton ordinateur</strong>, et que presque rien n’y soit même enregistré.</p>
+<section class="ps" aria-labelledby="fr-p1"><h2 id="fr-p1">Qui est responsable</h2>
+<p>Tapomo est développé et maintenu par Pol Rué. Pour toute question sur cette politique ou sur tes données, ouvre un ticket (issue) sur <a href="https://github.com/polrue/tapomo/issues">github.com/polrue/tapomo/issues</a>.</p>
+</section>
+<section class="ps" aria-labelledby="fr-p2"><h2 id="fr-p2">Ce que Tapomo fait avec le clavier</h2>
+<p>Pour mesurer la vitesse, Tapomo écoute le clavier de tout le système tant qu’il fonctionne. Chaque frappe est aussitôt traduite en une <strong>catégorie</strong> (lettre, espace, entrée, effacer…) et <strong>la touche exacte est jetée</strong>. Tapomo ne peut pas reconstituer le texte que tu as tapé, parce qu’il ne l’a jamais.</p>
+<p>En outre :</p>
+<ul>
+<li>Les <strong>champs de mot de passe</strong> sont totalement ignorés : ni comptés, ni chronométrés.</li>
+<li>Les <strong>applications exclues</strong> sont ignorées. Les gestionnaires de mots de passe (KeePass, KeePassXC, 1Password et Bitwarden) le sont par défaut, et tu peux en ajouter d’autres.</li>
+<li>Les frappes injectées par des macros ou des autotypers sont ignorées.</li>
+<li>Pour que le martèlement du clavier (« asdasdasd », « aaaaaa ») ne compte pas comme de la saisie, le hook compare chaque touche aux deux précédentes dans sa propre mémoire et ne transmet qu’un « identique à avant : oui/non ». Les touches ne sortent pas du hook et ne sont jamais enregistrées.</li>
+<li>Il n’y a qu’une seule exception à « la touche est jetée » : quand tu appuies sur Retour arrière juste après une touche de caractère, le hook envoie le code de <strong>cette</strong> touche, qui devient aussitôt un compteur quotidien (voir plus bas). Les pauses, les applications exclues et les champs de mot de passe s’appliquent aussi à ce compteur, et il peut être désactivé.</li>
+<li>Tu peux <strong>mettre en pause</strong> la mesure à tout moment depuis la zone de notification.</li>
+</ul>
+</section>
+<section class="ps" aria-labelledby="fr-p3"><h2 id="fr-p3">Ce qui est enregistré (uniquement sur ton ordinateur)</h2>
+<p>Dans une base de données SQLite locale, dans ton dossier utilisateur :</p>
+<ul>
+<li>Pour chaque salve de saisie : heure de début et de fin, nombre de frappes, nombre d’effacements et meilleure vitesse sur 10 secondes.</li>
+<li>Le <strong>nom de l’exécutable</strong> de l’application au premier plan (par exemple <code>WINWORD.EXE</code>) et le nom convivial que tu lui donnes.</li>
+<li>Tes réglages et ta progression : objectif quotidien, jours d’affilée, XP, badges, etc.</li>
+<li>Des <strong>leçons</strong> (le texte est celui de Tapomo, pas le tien) : les résultats et les touches du texte de la leçon que tu rates le plus, pour préparer un entraînement sur mesure.</li>
+<li>Combien de <strong>raccourcis clavier</strong> tu utilises chaque jour, par type (copier-coller, annuler, enregistrer, fenêtres, autres). Le raccourci devient son type à l’intérieur même du hook clavier. Seuls les raccourcis de l’<strong>album</strong> (un catalogue fermé et public d’environ 50, dans <a href="https://github.com/polrue/tapomo/blob/main/data/shortcuts.json"><code>data/shortcuts.json</code></a>, sans rien de sensible comme ouvrir une fenêtre de navigation privée) sont reconnus par leur nom, et pour chacun on n’enregistre que le nombre de jours différents où tu l’as utilisé. Toute autre combinaison compte comme « autres », sans savoir laquelle. Désactivable dans Réglages → « Compter les raccourcis clavier ».</li>
+<li><strong>Compteur des touches que tu corriges :</strong> combien de fois, chaque jour, la touche sur laquelle tu as appuyé <strong>juste avant d’effacer</strong> avec Retour arrière était chacune d’elles (par exemple « R : 12 fois »), pour t’afficher « Touches que tu corriges le plus ». C’est un compteur par jour et par touche : jamais le texte, ni les touches d’avant ou d’après, ni l’application. Si tu effaces plusieurs fois de suite, seule la première compte. Désactivable dans Réglages → « Compter les touches que tu corriges ».</li>
+</ul>
+<p>Ne sont <strong>jamais</strong> enregistrés : le texte, les séquences de touches (seulement ce compteur quotidien par touche corrigée), les titres de fenêtre, les adresses web, les captures d’écran ou rien de semblable.</p>
+</section>
+<section class="ps" aria-labelledby="fr-p4"><h2 id="fr-p4">Base de données chiffrée (facultatif)</h2>
+<p>Si tu le souhaites, tu peux <strong>chiffrer</strong> la base de données (Réglages → « Chiffrer la base de données ») : elle est chiffrée avec SQLCipher et la clé est protégée par Windows pour ton utilisateur.</p>
+</section>
+<section class="ps" aria-labelledby="fr-p5"><h2 id="fr-p5">Connexions à internet</h2>
+<p>Tapomo n’a <strong>ni télémétrie, ni analyse d’audience, ni publicité, ni compte utilisateur</strong>, et n’inclut aucun traceur. Les seules connexions sont :</p>
+<div class="conn">
+<div class="conn-item"><h3>Vérifier s’il existe une nouvelle version</h3>
+<p><strong>Avec qui :</strong> GitHub (<code>github.com</code>, le fichier <code>latest.json</code> de la dernière version), au plus une fois par jour.</p>
+<p><strong>Ce qui est envoyé :</strong> une requête web ordinaire, sans aucune donnée sur toi ni sur ton usage.</p>
+<p><strong>Comment la désactiver :</strong> Réglages → « Vérifier les nouvelles versions ».</p></div>
+<div class="conn-item"><h3>Télécharger une nouvelle version</h3>
+<p><strong>Avec qui :</strong> GitHub (<code>github.com</code>), seulement si tu acceptes de l’installer ou si tu actives la mise à jour automatique.</p>
+<p><strong>Ce qui est envoyé :</strong> un téléchargement ordinaire.</p>
+<p><strong>Comment la désactiver :</strong> en n’acceptant pas la mise à jour, ou en désactivant la vérification ; la mise à jour automatique est désactivée par défaut (Réglages → « Mettre à jour automatiquement »).</p></div>
+</div>
+<p>Ces vérifications et téléchargements ne concernent que la version téléchargée depuis GitHub. La version du Microsoft Store est mise à jour par le Store lui-même.</p>
+<p>Comme pour toute connexion, GitHub voit ton adresse IP. Consulte la <a href="https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement">déclaration de confidentialité de GitHub</a>.</p>
+<h3>Fonctions en ligne facultatives (désactivées par défaut)</h3>
+<p>Elles ne fonctionnent que si tu les actives, et ne communiquent qu’avec <code>api.tapomo.app</code> (Cloudflare Workers ; le code est dans <a href="https://github.com/polrue/tapomo/tree/main/server"><code>server/</code></a>) :</p>
+<ul>
+<li><strong>Statistiques anonymes</strong> (Réglages → « Partager des statistiques anonymes ») : une fois par semaine, la semaine précédente est envoyée : vitesse moyenne, pic, précision, minutes actives et langue de l’app, avec un numéro d’installation aléatoire. Sans compte, sans e-mail, sans rien de ce que tu tapes. Conservées 26 semaines ; tu peux les supprimer avec « Supprimer mes données du serveur ».</li>
+<li><strong>Ligues entre amis</strong> (seulement si tu crées une ligue ou en rejoins une) : ton pseudo et ton XP hebdomadaire. Conservés 12 semaines et supprimés quand tu quittes la ligue.</li>
+</ul>
+<p>Le serveur n’enregistre aucune adresse IP (seulement une empreinte salée, qui change toutes les 10 minutes, pour limiter les abus), mais Cloudflare, comme tout prestataire, voit l’IP de la connexion. Consulte la <a href="https://www.cloudflare.com/privacypolicy/">politique de confidentialité de Cloudflare</a>.</p>
+</section>
+<section class="ps" aria-labelledby="fr-p6"><h2 id="fr-p6">Ni publicité, ni traceurs, ni analyse d’audience</h2>
+<p>Tapomo n’affiche aucune publicité, n’utilise aucun traceur et n’inclut ni analyse d’audience ni télémétrie. Ce site web ne charge pas non plus de scripts tiers.</p>
+</section>
+<section class="ps" aria-labelledby="fr-p7"><h2 id="fr-p7">Modifications de ton système</h2>
+<ul>
+<li>L’installateur installe Tapomo <strong>uniquement pour ton utilisateur</strong>, sans droits d’administrateur, et crée les raccourcis du menu Démarrer et, si tu le choisis, du bureau.</li>
+<li>Tapomo <strong>démarre avec Windows par défaut</strong>, pour mesurer sans que tu aies à l’ouvrir chaque jour. Tu peux le désactiver dans les Réglages à tout moment. Dans la version du Microsoft Store, c’est désactivé au départ et tu l’actives dans les Réglages.</li>
+<li>Tapomo se désinstalle depuis <strong>Paramètres → Applications</strong>, comme n’importe quel autre programme.</li>
+</ul>
+</section>
+<section class="ps" aria-labelledby="fr-p8"><h2 id="fr-p8">Comment effacer tes données</h2>
+<ul>
+<li><strong>Sur ton ordinateur :</strong> en désinstallant Tapomo, tu peux aussi supprimer ses données. Si tu préfères le faire à la main, supprime le dossier de données de Tapomo dans ton dossier utilisateur.</li>
+<li><strong>Version du Microsoft Store :</strong> la désinstaller depuis Windows supprime aussi ses données.</li>
+<li><strong>Sur le serveur</strong> (si tu as activé les fonctions en ligne) : utilise « Supprimer mes données du serveur » dans les Réglages. Les données d’une ligue sont supprimées quand tu la quittes.</li>
+</ul>
+</section>
+<section class="ps" aria-labelledby="fr-p9"><h2 id="fr-p9">Enfants</h2>
+<p>Tapomo n’a pas de comptes et ne collecte aucune donnée personnelle : ni nom, ni e-mail. Les fonctions en ligne sont désactivées par défaut et n’envoient que ce qui est décrit plus haut.</p>
+</section>
+<section class="ps" aria-labelledby="fr-p10"><h2 id="fr-p10">Modifications de cette politique</h2>
+<p>Si cette politique change, cette page et sa date de « dernière mise à jour » seront mises à jour. L’historique des modifications est conservé dans le dépôt public.</p>
+</section>
+<section class="ps" aria-labelledby="fr-p11"><h2 id="fr-p11">Contact</h2>
+<p>Pour toute question, ouvre un ticket (issue) sur <a href="https://github.com/polrue/tapomo/issues">github.com/polrue/tapomo/issues</a>. Le code source est public : tu peux vérifier tout ce que dit cette politique.</p>
+</section>
+</section>
+<section class="policy-lang" lang="de" data-lang="de" hidden>
+<h1>Datenschutzerklärung von Tapomo</h1>
+<p class="updated">Zuletzt aktualisiert: 26. Oktober 2026.</p>
+<p class="lead">Tapomo ist eine kostenlose Open-Source-App, die misst, wie schnell du tippst. Sie ist so gebaut, dass <strong>nichts von dem, was du tippst, jemals deinen Rechner verlässt</strong> und auch auf ihm fast nichts gespeichert wird.</p>
+<section class="ps" aria-labelledby="de-p1"><h2 id="de-p1">Wer verantwortlich ist</h2>
+<p>Tapomo wird von Pol Rué entwickelt und gepflegt. Bei Fragen zu dieser Erklärung oder zu deinen Daten eröffne ein Issue unter <a href="https://github.com/polrue/tapomo/issues">github.com/polrue/tapomo/issues</a>.</p>
+</section>
+<section class="ps" aria-labelledby="de-p2"><h2 id="de-p2">Was Tapomo mit der Tastatur macht</h2>
+<p>Um die Geschwindigkeit zu messen, hört Tapomo die systemweite Tastatur ab, solange es läuft. Jeder Tastenanschlag wird sofort in eine <strong>Kategorie</strong> übersetzt (Buchstabe, Leerzeichen, Eingabe, Löschen …) und <strong>die konkrete Taste wird verworfen</strong>. Tapomo kann den getippten Text nicht rekonstruieren, weil es ihn nie hat.</p>
+<p>Außerdem:</p>
+<ul>
+<li><strong>Passwortfelder</strong> werden vollständig ignoriert: weder gezählt noch gestoppt.</li>
+<li><strong>Ausgeschlossene Anwendungen</strong> werden ignoriert. Passwortmanager (KeePass, KeePassXC, 1Password und Bitwarden) sind standardmäßig ausgeschlossen, und du kannst weitere hinzufügen.</li>
+<li>Tastenanschläge, die von Makros oder Auto-Typern eingespeist werden, werden ignoriert.</li>
+<li>Damit wildes Draufhämmern auf der Tastatur („asdasdasd“, „aaaaaa“) nicht als Tippen zählt, vergleicht der Hook jede Taste in seinem eigenen Speicher mit den beiden vorherigen und gibt nur ein „wie zuvor: ja/nein“ weiter. Die Tasten verlassen den Hook nicht und werden nie gespeichert.</li>
+<li>Es gibt genau eine Ausnahme von „die Taste wird verworfen“: Wenn du direkt nach einer Zeichentaste die Rücktaste drückst, sendet der Hook den Code <strong>dieser</strong> Taste, der sofort in einen Tageszähler umgewandelt wird (siehe unten). Pause, ausgeschlossene Anwendungen und Passwortfelder gelten auch dafür, und er lässt sich abschalten.</li>
+<li>Du kannst die Messung jederzeit über das Infobereich-Symbol <strong>pausieren</strong>.</li>
+</ul>
+</section>
+<section class="ps" aria-labelledby="de-p3"><h2 id="de-p3">Was gespeichert wird (nur auf deinem Rechner)</h2>
+<p>In einer lokalen SQLite-Datenbank in deinem Benutzerordner:</p>
+<ul>
+<li>Für jeden Tipp-Schub: Start- und Endzeit, Anzahl der Tastenanschläge, Anzahl der Löschungen und die beste 10-Sekunden-Geschwindigkeit.</li>
+<li>Der <strong>Name der ausführbaren Datei</strong> der Anwendung im Vordergrund (z. B. <code>WINWORD.EXE</code>) und der Anzeigename, den du ihr gibst.</li>
+<li>Deine Einstellungen und dein Fortschritt: Tagesziel, Tage in Folge, XP, Abzeichen usw.</li>
+<li>Aus den <strong>Lektionen</strong> (der Text stammt von Tapomo, nicht von dir): Ergebnisse und welche Tasten des Lektionstextes du am häufigsten verfehlst, um ein maßgeschneidertes Training zu erstellen.</li>
+<li>Wie viele <strong>Tastenkürzel</strong> du pro Tag je Art verwendest (Kopieren &amp; Einfügen, Rückgängig, Speichern, Fenster, Sonstige). Das Kürzel wird schon im Tastatur-Hook selbst in seine Art umgewandelt. Nur Kürzel aus dem <strong>Album</strong> (ein geschlossener, öffentlicher Katalog mit etwa 50 Einträgen, in <a href="https://github.com/polrue/tapomo/blob/main/data/shortcuts.json"><code>data/shortcuts.json</code></a>, ohne etwas Heikles wie das Öffnen eines Inkognito-Fensters) werden beim Namen erkannt, und für jedes wird nur gespeichert, an wie vielen verschiedenen Tagen du es benutzt hast. Jede andere Kombination zählt als „Sonstige“, ohne dass bekannt ist, welche es war. Abschaltbar unter Einstellungen → „Tastenkürzel zählen“.</li>
+<li><strong>Zähler der Tasten, die du korrigierst:</strong> Wie oft pro Tag die Taste, die du <strong>direkt vor dem Löschen</strong> mit der Rücktaste gedrückt hast, jeweils welche war (zum Beispiel „R: 12-mal“), um dir „Am häufigsten korrigierte Tasten“ zu zeigen. Es ist ein Zähler pro Tag und pro Taste: nie der Text, nie, welche Tasten davor oder danach kamen, nie, in welcher Anwendung. Bei mehreren Rücktasten hintereinander zählt nur die erste. Abschaltbar unter Einstellungen → „Korrigierte Tasten zählen“.</li>
+</ul>
+<p><strong>Nie</strong> gespeichert werden: Text, Tastenfolgen (nur dieser Tageszähler pro korrigierter Taste), Fenstertitel, Webadressen, Bildschirmfotos oder Ähnliches.</p>
+</section>
+<section class="ps" aria-labelledby="de-p4"><h2 id="de-p4">Verschlüsselte Datenbank (optional)</h2>
+<p>Wenn du möchtest, kannst du die Datenbank <strong>verschlüsseln</strong> (Einstellungen → „Datenbank verschlüsseln“): Sie wird mit SQLCipher verschlüsselt, und der Schlüssel wird von Windows für deinen Benutzer geschützt.</p>
+</section>
+<section class="ps" aria-labelledby="de-p5"><h2 id="de-p5">Internetverbindungen</h2>
+<p>Tapomo hat <strong>keine Telemetrie, keine Analyse, keine Werbung und keine Benutzerkonten</strong> und enthält keinerlei Tracker. Die einzigen Verbindungen sind:</p>
+<div class="conn">
+<div class="conn-item"><h3>Nach einer neuen Version suchen</h3>
+<p><strong>Mit wem:</strong> GitHub (<code>github.com</code>, die Datei <code>latest.json</code> der neuesten Version), höchstens einmal am Tag.</p>
+<p><strong>Was gesendet wird:</strong> eine gewöhnliche Webanfrage, ohne Daten über dich oder deine Nutzung.</p>
+<p><strong>Wie du es abschaltest:</strong> Einstellungen → „Nach neuen Versionen suchen“.</p></div>
+<div class="conn-item"><h3>Eine neue Version herunterladen</h3>
+<p><strong>Mit wem:</strong> GitHub (<code>github.com</code>), nur wenn du die Installation annimmst oder die automatische Aktualisierung einschaltest.</p>
+<p><strong>Was gesendet wird:</strong> ein gewöhnlicher Download.</p>
+<p><strong>Wie du es abschaltest:</strong> die Aktualisierung nicht annehmen oder die Suche abschalten; die automatische Aktualisierung ist standardmäßig aus (Einstellungen → „Automatisch aktualisieren“).</p></div>
+</div>
+<p>Diese Suche und diese Downloads gelten nur für die von GitHub heruntergeladene Version. Die Version aus dem Microsoft Store wird vom Store selbst aktualisiert.</p>
+<p>Wie bei jeder Verbindung sieht GitHub deine IP-Adresse. Siehe <a href="https://docs.github.com/de/site-policy/privacy-policies/github-general-privacy-statement">Datenschutzerklärung von GitHub</a>.</p>
+<h3>Optionale Online-Funktionen (standardmäßig aus)</h3>
+<p>Sie funktionieren nur, wenn du sie einschaltest, und sie sprechen ausschließlich mit <code>api.tapomo.app</code> (Cloudflare Workers; der Code liegt in <a href="https://github.com/polrue/tapomo/tree/main/server"><code>server/</code></a>):</p>
+<ul>
+<li><strong>Anonyme Statistiken</strong> (Einstellungen → „Anonyme Statistiken teilen“): Einmal pro Woche wird die vorige Woche gesendet: durchschnittliche Geschwindigkeit, Spitzenwert, Genauigkeit, aktive Minuten und die Sprache der App, mit einer zufälligen Installationsnummer. Ohne Konto, ohne E-Mail, ohne irgendetwas von dem, was du tippst. Sie werden 26 Wochen aufbewahrt, und du kannst sie mit „Meine Daten vom Server löschen“ entfernen.</li>
+<li><strong>Ligen mit Freunden</strong> (nur wenn du eine Liga erstellst oder einer beitrittst): dein Spitzname und deine wöchentlichen XP. Sie werden 12 Wochen aufbewahrt und beim Verlassen der Liga gelöscht.</li>
+</ul>
+<p>Der Server speichert keine IP-Adressen (nur einen gesalzenen Hash, der sich alle 10 Minuten ändert, um Missbrauch zu begrenzen), aber Cloudflare sieht, wie jeder Anbieter, die IP der Verbindung. Siehe <a href="https://www.cloudflare.com/privacypolicy/">Datenschutzrichtlinie von Cloudflare (englisch)</a>.</p>
+</section>
+<section class="ps" aria-labelledby="de-p6"><h2 id="de-p6">Keine Werbung, Tracker oder Analyse</h2>
+<p>Tapomo zeigt keine Werbung, verwendet keine Tracker und enthält weder Analyse noch Telemetrie. Diese Website lädt auch keine Skripte von Dritten.</p>
+</section>
+<section class="ps" aria-labelledby="de-p7"><h2 id="de-p7">Änderungen an deinem System</h2>
+<ul>
+<li>Das Installationsprogramm installiert Tapomo <strong>nur für deinen Benutzer</strong>, ohne Administratorrechte, und legt Startmenü-Verknüpfungen und, wenn du es wählst, eine Desktop-Verknüpfung an.</li>
+<li>Tapomo <strong>startet standardmäßig mit Windows</strong>, damit es messen kann, ohne dass du es jeden Tag öffnen musst. Du kannst das jederzeit in den Einstellungen abschalten. In der Version aus dem Microsoft Store ist es anfangs aus, und du schaltest es in den Einstellungen ein.</li>
+<li>Tapomo wird wie jedes andere Programm über <strong>Einstellungen → Apps</strong> deinstalliert.</li>
+</ul>
+</section>
+<section class="ps" aria-labelledby="de-p8"><h2 id="de-p8">So löschst du deine Daten</h2>
+<ul>
+<li><strong>Auf deinem Rechner:</strong> Beim Deinstallieren von Tapomo kannst du auch seine Daten löschen. Wenn du es lieber von Hand machst, lösche den Datenordner von Tapomo in deinem Benutzerordner.</li>
+<li><strong>Microsoft-Store-Version:</strong> Beim Deinstallieren über Windows werden auch ihre Daten entfernt.</li>
+<li><strong>Auf dem Server</strong> (wenn du die Online-Funktionen eingeschaltet hast): Nutze „Meine Daten vom Server löschen“ in den Einstellungen. Die Daten einer Liga werden beim Verlassen gelöscht.</li>
+</ul>
+</section>
+<section class="ps" aria-labelledby="de-p9"><h2 id="de-p9">Kinder</h2>
+<p>Tapomo hat keine Konten und erhebt keine personenbezogenen Daten: weder Namen noch E-Mail. Die Online-Funktionen sind standardmäßig aus und senden nur das oben Beschriebene.</p>
+</section>
+<section class="ps" aria-labelledby="de-p10"><h2 id="de-p10">Änderungen dieser Erklärung</h2>
+<p>Wenn sich diese Erklärung ändert, werden diese Seite und das Datum „zuletzt aktualisiert“ angepasst. Der Änderungsverlauf liegt im öffentlichen Repository.</p>
+</section>
+<section class="ps" aria-labelledby="de-p11"><h2 id="de-p11">Kontakt</h2>
+<p>Bei Fragen eröffne ein Issue unter <a href="https://github.com/polrue/tapomo/issues">github.com/polrue/tapomo/issues</a>. Der Quellcode ist öffentlich, sodass du alles, was diese Erklärung sagt, selbst prüfen kannst.</p>
+</section>
+</section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div class="footer-brand">
+        <svg viewBox="26 37 108 104" width="40" height="40" aria-hidden="true" focusable="false">
+          <rect x="30" y="40" width="100" height="98" rx="30" fill="#ff9e7a"/>
+          <rect x="40" y="46" width="80" height="72" rx="22" fill="#fff" opacity=".28"/>
+          <circle cx="61" cy="84" r="9" fill="#23202b"/><circle cx="99" cy="84" r="9" fill="#23202b"/>
+          <circle cx="64" cy="81" r="3" fill="#fff"/><circle cx="102" cy="81" r="3" fill="#fff"/>
+          <path d="M70 101 Q80 112 90 101" stroke="#23202b" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div><strong>Tapomo</strong><br><span data-c="tag">Cada tecla cuenta.</span></div>
+      </div>
+      <ul class="footer-links">
+        <li><a href="./" data-c="nav">Volver a la página principal</a></li>
+        <li><a href="privacy.html" data-c="ft_priv">Política de privacidad</a></li>
+        <li><a href="https://github.com/polrue/tapomo" data-c="ft_gh">GitHub</a></li>
+      </ul>
+      <p class="footer-fine"><span data-c="ft_lic">Software libre bajo licencia GPL-3.0.</span> <span data-c="ft_by">Hecho con cariño por Pol Rué.</span></p>
+    </div>
+  </footer>
+
+  <script>
+    window.PRIVACY_CHROME = {"es": {"title": "Política de privacidad · Tapomo", "desc": "Qué mide Tapomo, qué guarda en tu equipo, qué envía por internet (solo si lo activas) y cómo borrar tus datos.", "skip": "Saltar al contenido", "home": "Tapomo, inicio", "nav": "Volver a la página principal", "back": "Volver a la web", "tag": "Cada tecla cuenta.", "ft_gh": "GitHub", "ft_priv": "Política de privacidad", "ft_lic": "Software libre bajo licencia GPL-3.0.", "ft_by": "Hecho con cariño por Pol Rué."}, "en": {"title": "Privacy policy · Tapomo", "desc": "What Tapomo measures, what it stores on your computer, what it sends over the internet (only if you turn it on) and how to delete your data.", "skip": "Skip to content", "home": "Tapomo, home", "nav": "Back to the home page", "back": "Back to the website", "tag": "Every key counts.", "ft_gh": "GitHub", "ft_priv": "Privacy policy", "ft_lic": "Free software under the GPL-3.0 licence.", "ft_by": "Made with love by Pol Rué."}, "ca": {"title": "Política de privadesa · Tapomo", "desc": "Què mesura Tapomo, què desa al teu equip, què envia per internet (només si ho actives) i com esborrar les teves dades.", "skip": "Salta al contingut", "home": "Tapomo, inici", "nav": "Torna a la pàgina principal", "back": "Torna al web", "tag": "Cada tecla compta.", "ft_gh": "GitHub", "ft_priv": "Política de privadesa", "ft_lic": "Programari lliure amb llicència GPL-3.0.", "ft_by": "Fet amb estima per Pol Rué."}, "fr": {"title": "Politique de confidentialité · Tapomo", "desc": "Ce que Tapomo mesure, ce qu’il enregistre sur ton ordinateur, ce qu’il envoie sur internet (seulement si tu l’actives) et comment effacer tes données.", "skip": "Aller au contenu", "home": "Tapomo, accueil", "nav": "Retour à la page d’accueil", "back": "Retour au site", "tag": "Chaque touche compte.", "ft_gh": "GitHub", "ft_priv": "Politique de confidentialité", "ft_lic": "Logiciel libre sous licence GPL-3.0.", "ft_by": "Fait avec amour par Pol Rué."}, "de": {"title": "Datenschutzerklärung · Tapomo", "desc": "Was Tapomo misst, was auf deinem Rechner gespeichert wird, was über das Internet gesendet wird (nur wenn du es aktivierst) und wie du deine Daten löschst.", "skip": "Zum Inhalt springen", "home": "Tapomo, Startseite", "nav": "Zurück zur Startseite", "back": "Zurück zur Website", "tag": "Jede Taste zählt.", "ft_gh": "GitHub", "ft_priv": "Datenschutzerklärung", "ft_lic": "Freie Software unter der GPL-3.0-Lizenz.", "ft_by": "Mit Liebe gemacht von Pol Rué."}};
+  </script>
+  <script src="js/privacy.js"></script>
+</body>
+</html>
