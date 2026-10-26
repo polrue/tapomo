@@ -10,6 +10,7 @@ mod i18n;
 mod keystore;
 mod league;
 mod lessons;
+mod packaged;
 mod password;
 mod pet;
 mod pet_tip;
@@ -109,6 +110,7 @@ fn main() {
             commands::remove_exclusion,
             commands::open_logs_dir,
             commands::get_pet_tip,
+            commands::is_store_build,
             updater::check_update,
             updater::install_update,
             pet::pet_set_hit,
@@ -152,10 +154,20 @@ fn main() {
             }
             log::info!("database: {}", db_path.display());
             let conn = db::open(&db_path)?;
-            let settings = db::get_settings(&conn)?;
+            let mut settings = db::get_settings(&conn)?;
+            // The Store package keeps the stored setting in step with its StartupTask, which the
+            // user can also switch from Windows (and which starts off).
+            if packaged::is_packaged() {
+                let on = packaged::startup_enabled();
+                if settings.autostart != on {
+                    settings.autostart = on;
+                    db::set_settings(&conn, &settings)?;
+                }
+            }
 
-            // Autostart defaults to ON, but only the installed app should register itself.
-            if !cfg!(debug_assertions) && settings.autostart && !app.autolaunch().is_enabled().unwrap_or(false) {
+            // Autostart defaults to ON, but only the installed app should register itself. The Store
+            // package starts with Windows only once the user turns it on (StartupTask, Store policy).
+            if !cfg!(debug_assertions) && !packaged::is_packaged() && settings.autostart && !app.autolaunch().is_enabled().unwrap_or(false) {
                 if let Err(e) = app.autolaunch().enable() {
                     log::warn!("could not enable autostart: {e}");
                 }
@@ -206,9 +218,9 @@ fn main() {
 
             updater::spawn(app.handle().clone());
 
-            // Autostart launches with --minimized and stays in the tray; opening
-            // Tapomo by hand (Start menu, installer) shows the window.
-            if !std::env::args().any(|a| a == "--minimized") {
+            // Autostart launches with --minimized (the Store package: through its StartupTask) and
+            // stays in the tray; opening Tapomo by hand (Start menu, installer) shows the window.
+            if !std::env::args().any(|a| a == "--minimized") && !packaged::launched_at_startup() {
                 show_main(app.handle());
             }
             Ok(())

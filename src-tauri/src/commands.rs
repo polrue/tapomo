@@ -294,7 +294,20 @@ pub fn set_alias(state: State<AppState>, exe: String, alias: String) -> CmdResul
 
 #[tauri::command]
 pub fn get_settings(state: State<AppState>) -> CmdResult<Settings> {
-    state.with_db(db::get_settings)
+    let mut settings = state.with_db(db::get_settings)?;
+    if crate::packaged::is_packaged() {
+        // The Store package: Windows owns both (StartupTask, Store updates).
+        settings.autostart = crate::packaged::startup_enabled();
+        settings.check_updates = false;
+        settings.auto_update = false;
+    }
+    Ok(settings)
+}
+
+/// The Microsoft Store build: the page hides the update settings.
+#[tauri::command]
+pub fn is_store_build() -> bool {
+    crate::packaged::is_packaged()
 }
 
 #[tauri::command]
@@ -336,13 +349,14 @@ pub fn apply_settings(app: &AppHandle, settings: Settings) -> CmdResult<()> {
         }
     }
 
-    let autolaunch = app.autolaunch();
-    let enabled = autolaunch.is_enabled().unwrap_or(false);
-    if settings.autostart != enabled {
-        let result = if settings.autostart { autolaunch.enable() } else { autolaunch.disable() };
-        if let Err(e) = result {
-            log::warn!("could not change autostart: {e}");
+    if crate::packaged::is_packaged() {
+        if settings.autostart != crate::packaged::startup_enabled() {
+            if let Err(e) = crate::packaged::set_startup(settings.autostart) {
+                log::warn!("could not change the startup task: {e}");
+            }
         }
+    } else {
+        apply_autolaunch(app, settings.autostart);
     }
 
     if settings.show_pet && old.as_ref().is_some_and(|o| !o.show_pet) {
@@ -449,4 +463,16 @@ pub fn quit(app: &AppHandle) {
         let _ = ack_rx.recv_timeout(Duration::from_secs(2));
     }
     app.exit(0);
+}
+
+/// Start with Windows through the registry Run key (the GitHub build).
+fn apply_autolaunch(app: &AppHandle, on: bool) {
+    let autolaunch = app.autolaunch();
+    let enabled = autolaunch.is_enabled().unwrap_or(false);
+    if on != enabled {
+        let result = if on { autolaunch.enable() } else { autolaunch.disable() };
+        if let Err(e) = result {
+            log::warn!("could not change autostart: {e}");
+        }
+    }
 }

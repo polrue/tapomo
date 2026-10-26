@@ -257,6 +257,8 @@ a { color: var(--accent-strong); font-weight: 700; }
 @media (max-width: 560px) { .live-body { flex-direction: column; align-items: stretch; gap: 4px; } }
 
 [hidden] { display: none !important; }
+/* The Microsoft Store build is updated by the Store. */
+.store-build .upd-only { display: none !important; }
 
 @media (prefers-reduced-motion: reduce) {
   .live-fill { transition: none; }
