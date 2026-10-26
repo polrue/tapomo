@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "💬 Preguntas, opiniones y charla / Questions, feedback and chat"
+    url: https://github.com/polrue/tapomo/discussions
+    about: "Para dudas, opiniones o enseñar tus progresos. / For questions, opinions or showing your progress."

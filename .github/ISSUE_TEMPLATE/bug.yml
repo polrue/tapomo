@@ -1,0 +1,45 @@
+name: "🐞 Algo no funciona / Something isn't working"
+description: "Cuéntanos qué ha fallado. / Tell us what went wrong."
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ¡Gracias por avisar! Puedes escribir en español, catalán, inglés, francés o alemán.
+        Thanks for reporting! Any of Spanish, Catalan, English, French or German is fine.
+
+        🔒 No pegues nada privado (textos que hayas escrito, contraseñas, rutas con tu nombre…).
+        Don't paste anything private (text you typed, passwords, paths with your name…).
+  - type: textarea
+    id: what
+    attributes:
+      label: "¿Qué ha pasado? / What happened?"
+      description: "Y qué esperabas que pasara. / And what you expected instead."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: "¿Cómo se repite? / How can we reproduce it?"
+      placeholder: |
+        1. Abro las lecciones… / I open the lessons…
+        2. …
+  - type: input
+    id: version
+    attributes:
+      label: "Versión de Tapomo / Tapomo version"
+      description: "Ajustes → Acerca de. / Settings → About."
+      placeholder: "0.8.0"
+  - type: dropdown
+    id: windows
+    attributes:
+      label: "Windows"
+      options:
+        - "Windows 11"
+        - "Windows 10"
+        - "No lo sé / Don't know"
+  - type: textarea
+    id: extra
+    attributes:
+      label: "Algo más / Anything else"
+      description: "Una captura ayuda mucho (sin datos privados). / A screenshot helps a lot (no private data)."

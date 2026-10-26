@@ -1,0 +1,20 @@
+name: "💡 Tengo una idea / I have an idea"
+description: "Algo que te gustaría que Tapomo hiciera. / Something you'd like Tapomo to do."
+labels: ["idea"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ¡Gracias! Las ideas de quien usa Tapomo son las que más ayudan.
+        Thanks! Ideas from people who use Tapomo help the most.
+  - type: textarea
+    id: idea
+    attributes:
+      label: "Tu idea / Your idea"
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: "¿Para qué te serviría? / What would it help you with?"
+      description: "Por ejemplo: «me distrae en clase», «quiero practicar números»… / e.g. «it distracts me in class», «I want to practise numbers»…"
