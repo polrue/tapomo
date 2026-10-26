@@ -10,6 +10,8 @@ body[data-view="lessons"] #range-tabs { visibility: hidden; }
 .ls-layout-pick { display: inline-flex; gap: 6px; align-items: center; font-weight: 700; }
 .ls-real { font-weight: 800; color: var(--accent-strong); }
 .ls-units { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 8px; }
+.ls-block > h3 { margin: 0; font-size: 1.1rem; }
+.ls-block > .hint { margin: 2px 0 8px; }
 .ls-unit { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: var(--bg); }
 .ls-unit h3 { margin: 0; font-size: 1rem; }
 .ls-keys { margin: 2px 0 8px; color: var(--muted); font-family: ui-monospace, Consolas, monospace; letter-spacing: .05em; }
