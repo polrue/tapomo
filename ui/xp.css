@@ -1,7 +1,7 @@
 /* Level card, "Retos del día", wardrobe and level-up reveal (0.3.2). Uses the tokens in style.css. */
 
 /* ------------------------------------------------------------ level card */
-.level { display: flex; align-items: center; gap: 16px; padding: 14px 20px; }
+.level { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 14px 20px; }
 .lv-badge {
   flex: none; width: 72px; height: 72px; border-radius: 22px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -279,3 +279,40 @@
 .cr-keys kbd { min-width: 2.6rem; padding: 8px 10px; text-align: center; font: 800 1.3rem ui-monospace, Consolas, monospace; border-radius: 10px; background: var(--card); border: 1px solid var(--line); border-bottom-width: 3px; }
 .cr-keys small { color: var(--muted); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
 .cr-go { margin: 0 0 6px; }
+
+/* ----------------------------------------- challenges folded into the level card */
+.lv-ch { flex: 1 0 100%; border-top: 1px solid var(--line); padding-top: 10px; margin-top: -4px; }
+.lv-ch[hidden] { display: none; }
+.lv-ch-toggle {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 4px; border-radius: 10px; background: none;
+  color: var(--ink); font-weight: 800; font-size: 0.92rem; text-align: left; cursor: pointer;
+}
+.lv-ch-toggle::after { content: none; }
+.lv-ch-toggle:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.lv-ch-toggle:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 2px; }
+.lv-ch-tick {
+  flex: none; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 999px;
+  background: var(--accent); color: #23202b; font-size: 0.75rem; line-height: 1;
+}
+.lv-ch-toggle > span:nth-child(2) { flex: 1; min-width: 0; }
+.lv-ch-caret {
+  flex: none; width: 8px; height: 8px; margin-right: 6px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg); transition: transform 150ms;
+}
+.lv-ch-toggle[aria-expanded="true"] .lv-ch-caret { transform: rotate(45deg); }
+#lv-ch-list-wrap { padding-top: 8px; }
+#lv-ch-list-wrap[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .lv-ch-caret { transition: none; } }
+
+/* One-time question about Windows notifications */
+.ch-ask {
+  margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--card)); display: grid; gap: 8px;
+}
+.ch-ask[hidden] { display: none; }
+.challenges > .ch-ask { margin-top: 10px; }
+.lv-ch > .ch-ask { margin-top: 10px; }
+.ch-ask p { margin: 0; font-weight: 700; }
+.ch-ask-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.ch-ask-btns button { font-size: 0.88rem; padding: 6px 14px; }
+.ch-ask-no { background: none; color: var(--muted); border: 1px solid var(--line); }

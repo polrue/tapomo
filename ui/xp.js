@@ -117,14 +117,12 @@ const Progress = (() => {
   let openChallenge = null; // id of the row whose explanation is open (one at a time)
   let expiryTimer = null;
 
-  function renderChallenges(fresh = []) {
-    const card = $('challenges');
-    card.hidden = !st || range !== 'today';
-    if (card.hidden) return;
-    const list = $('ch-list');
+  let allOpen = false; // the folded "all done" list in the level card is open
+  let cardWasHidden = null;
+
+  /** One row per challenge into `list` (shared by the card and the folded list). */
+  function fillChallenges(list, fresh, now) {
     list.replaceChildren();
-    clearTimeout(expiryTimer);
-    const now = new Date();
     for (const c of st.challenges) {
       const lost = expired(c, now);
       const li = document.createElement('li');
@@ -182,15 +180,56 @@ const Progress = (() => {
       li.append(head, how);
       list.append(li);
     }
+  }
+
+  /**
+   * While something is pending: the big card. Once all of today's are done it folds into one line in
+   * the level card («✓ Retos del día completados · 3 de 3») that opens the same list again.
+   */
+  function renderChallenges(fresh = []) {
+    clearTimeout(expiryTimer);
+    const today = !!st && range === 'today';
+    const all = today && st.challenges.length > 0 && st.challenges.every((c) => c.done);
+    const card = $('challenges');
+    card.hidden = !today || all;
+    $('lv-ch').hidden = !all;
+    if (cardWasHidden !== card.hidden) {
+      cardWasHidden = card.hidden;
+      if (typeof SectionNav !== 'undefined') SectionNav.render(); // the chip follows the card
+    }
+    if (!today) return;
+    const now = new Date();
+    fillChallenges(all ? $('lv-ch-list') : $('ch-list'), fresh, now);
+    if (all) {
+      const n = st.challenges.length;
+      $('lv-ch-text').textContent = t('ch.all_done', { n: fmt(n) });
+      $('ch-full').textContent = t('ch.full');
+      $('lv-ch-toggle').setAttribute('aria-expanded', String(allOpen));
+      $('lv-ch-list-wrap').hidden = !allOpen;
+    }
+    renderAsk(all);
     // Re-draw the moment an open deadline runs out, so the row turns into «Se acabó el tiempo» by itself.
     const next = st.challenges.filter((c) => c.deadline_min != null && !c.done && !expired(c, now))[0];
     if (next) {
       const ms = ((next.deadline_min - (now.getHours() * 60 + now.getMinutes())) * 60 - now.getSeconds()) * 1000 + 500;
       expiryTimer = setTimeout(() => renderChallenges(), Math.min(ms, 2_000_000_000));
     }
-    const full = st.challenges.every((c) => c.done);
-    $('ch-full').hidden = !full;
-    $('ch-full').textContent = t('ch.full');
+  }
+
+  /** The one-time question about Windows notifications, once a first challenge is done. */
+  function renderAsk(all) {
+    const ask = $('ch-ask');
+    const due = typeof settings !== 'undefined' && settings && !settings.notify_asked && !settings.notify_challenges && st.challenges.some((c) => c.done);
+    ask.hidden = !due;
+    if (!due) return;
+    const host = all ? $('lv-ch') : $('challenges');
+    if (ask.parentElement !== host) host.append(ask);
+  }
+
+  function answerAsk(yes) {
+    saveSettings({ notify_asked: true, ...(yes ? { notify_challenges: true } : {}) })
+      .then(() => { renderChallenges(); if (typeof renderSettings === 'function') renderSettings(); })
+      .catch(showError);
   }
 
   // --------------------------------------------------------------- wardrobe
@@ -567,6 +606,13 @@ const Progress = (() => {
   }
 
   function bind() {
+    $('lv-ch-toggle').addEventListener('click', () => {
+      allOpen = !allOpen;
+      $('lv-ch-toggle').setAttribute('aria-expanded', String(allOpen));
+      $('lv-ch-list-wrap').hidden = !allOpen;
+    });
+    $('ch-ask-yes').addEventListener('click', () => answerAsk(true));
+    $('ch-ask-no').addEventListener('click', () => answerAsk(false));
     $('wardrobe').addEventListener('toggle', () => {
       if ($('wardrobe').open && !wardrobeBuilt) buildWardrobe();
     });

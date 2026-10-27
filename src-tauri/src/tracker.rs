@@ -539,6 +539,7 @@ impl Tracker {
                 Vec::new()
             }
         };
+        crate::notify::announce(&self.app, &self.conn, &settled, self.shared.window_visible.load(Ordering::Relaxed));
         if !new_badges.is_empty() {
             settled.total = xp::total(&self.conn).unwrap_or(settled.total);
         }

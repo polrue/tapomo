@@ -391,6 +391,8 @@ fn changed_settings(old: &Settings, new: &Settings) -> Vec<&'static str> {
         ("lessons_in_goal", old.lessons_in_goal != new.lessons_in_goal),
         ("shortcut_tips", old.shortcut_tips != new.shortcut_tips),
         ("count_corrections", old.count_corrections != new.count_corrections),
+        ("notify_challenges", old.notify_challenges != new.notify_challenges),
+        ("notify_asked", old.notify_asked != new.notify_asked),
     ]
     .into_iter()
     .filter_map(|(name, changed)| changed.then_some(name))

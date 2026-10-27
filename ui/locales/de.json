@@ -712,5 +712,15 @@
   "lessons.hands_tip": "Hände unter der Tastatur ein- oder ausblenden",
   "lessons.restart": "Neu starten",
   "lessons.restart_tip": "Diese Übung von vorn beginnen (Strg+Eingabe). Dieser Versuch wird nicht gespeichert.",
+  "notify.challenge.title": "Challenge geschafft!",
+  "notify.challenge.body": "{name} · +{xp} XP",
+  "notify.all.title": "Tages-Challenges geschafft!",
+  "notify.all.body": "Morgen gibt es mehr.",
+  "ch.all_done": "Tages-Challenges geschafft · {n} von {n}",
+  "ch.notify.ask": "Soll Tapomo dich mit einer Windows-Benachrichtigung informieren, wenn du eine Challenge schaffst?",
+  "ch.notify.yes": "Ja, bitte",
+  "ch.notify.no": "Nein, danke",
+  "settings.notify_challenges": "Mit einer Windows-Benachrichtigung informieren, wenn ich eine Challenge schaffe",
+  "settings.notify_challenges.hint": "Nur wenn Tapomo nicht sichtbar ist. Schaffst du alle drei, bekommst du nur eine Meldung. Die Benachrichtigung enthält nur den Text der Challenge, nichts von dem, was du tippst.",
   "lessons.practice.bigrams":"Knifflige Paare: {pairs}"
 }

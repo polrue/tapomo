@@ -297,6 +297,7 @@ function renderSettings() {
   $('s-corrections').checked = settings.count_corrections;
   $('s-lessons-goal').checked = settings.lessons_in_goal;
   $('s-sc-tips').checked = settings.shortcut_tips;
+  $('s-notify').checked = settings.notify_challenges;
   $('s-sc-tips').disabled = !settings.count_shortcuts;
   $('s-updates').checked = settings.check_updates;
   $('s-auto-update').checked = settings.auto_update;
@@ -423,6 +424,8 @@ function bindControls() {
   $('s-pet').addEventListener('change', () => saveSettings({ show_pet: $('s-pet').checked }));
   $('s-sc-tips').addEventListener('change', () => saveSettings({ shortcut_tips: $('s-sc-tips').checked }).then(() => Album.refreshTip()).catch(showError));
   $('s-lessons-goal').addEventListener('change', () => saveSettings({ lessons_in_goal: $('s-lessons-goal').checked }).then(() => renderGoal()).catch(showError));
+  // Choosing here also settles the one-time question in the challenges area.
+  $('s-notify').addEventListener('change', () => saveSettings({ notify_challenges: $('s-notify').checked, notify_asked: true }).then(() => Progress.relabel()).catch(showError));
   $('s-corrections').addEventListener('change', () => saveSettings({ count_corrections: $('s-corrections').checked }).then(() => { renderSettings(); Corrections.refresh(); }).catch(showError));
   $('s-shortcuts').addEventListener('change', () => saveSettings({ count_shortcuts: $('s-shortcuts').checked }).then(() => { renderSettings(); Shortcuts.refresh(); Album.refreshTip(); }).catch(showError));
   $('s-updates').addEventListener('change', async () => {

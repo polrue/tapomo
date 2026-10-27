@@ -712,5 +712,15 @@
   "lessons.hands_tip": "Show or hide the hands under the keyboard",
   "lessons.restart": "Restart",
   "lessons.restart_tip": "Start this exercise again (Ctrl+Enter). This attempt isn't saved.",
+  "notify.challenge.title": "Challenge complete!",
+  "notify.challenge.body": "{name} · +{xp} XP",
+  "notify.all.title": "Daily challenges complete!",
+  "notify.all.body": "More tomorrow.",
+  "ch.all_done": "Daily challenges complete · {n} of {n}",
+  "ch.notify.ask": "Would you like Tapomo to let you know with a Windows notification when you complete a challenge?",
+  "ch.notify.yes": "Yes, let me know",
+  "ch.notify.no": "No, thanks",
+  "settings.notify_challenges": "Notify me with a Windows notification when I complete a challenge",
+  "settings.notify_challenges.hint": "Only when Tapomo is not in view. If you finish all three, you get a single notice. The notification only carries the challenge text, nothing you type.",
   "lessons.practice.bigrams":"Tricky pairs: {pairs}"
 }

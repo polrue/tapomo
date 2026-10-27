@@ -712,5 +712,15 @@
   "lessons.hands_tip": "Mostrar o amagar les mans sota el teclat",
   "lessons.restart": "Reiniciar",
   "lessons.restart_tip": "Tornar a començar aquest exercici (Ctrl+Intro). Aquest intent no es desa.",
+  "notify.challenge.title": "Repte complert!",
+  "notify.challenge.body": "{name} · +{xp} XP",
+  "notify.all.title": "Reptes del dia completats!",
+  "notify.all.body": "Demà, més.",
+  "ch.all_done": "Reptes del dia completats · {n} de {n}",
+  "ch.notify.ask": "Vols que Tapomo t'avisi amb una notificació de Windows quan completis un repte?",
+  "ch.notify.yes": "Sí, avisa'm",
+  "ch.notify.no": "No, gràcies",
+  "settings.notify_challenges": "Avisa'm amb una notificació de Windows en completar un repte",
+  "settings.notify_challenges.hint": "Només quan Tapomo no és a la vista. Si completes els tres, reps un sol avís. La notificació només porta el text del repte, res del que escrius.",
   "lessons.practice.bigrams":"Binomis difícils: {pairs}"
 }

@@ -712,5 +712,15 @@
   "lessons.hands_tip": "Mostrar u ocultar las manos bajo el teclado",
   "lessons.restart": "Reiniciar",
   "lessons.restart_tip": "Empezar de nuevo este ejercicio (Ctrl+Intro). Este intento no se guarda.",
+  "notify.challenge.title": "¡Reto cumplido!",
+  "notify.challenge.body": "{name} · +{xp} XP",
+  "notify.all.title": "¡Retos del día completados!",
+  "notify.all.body": "Mañana, más.",
+  "ch.all_done": "Retos del día completados · {n} de {n}",
+  "ch.notify.ask": "¿Quieres que Tapomo te avise con una notificación de Windows cuando completes un reto?",
+  "ch.notify.yes": "Sí, avísame",
+  "ch.notify.no": "No, gracias",
+  "settings.notify_challenges": "Avisarme con una notificación de Windows al completar un reto",
+  "settings.notify_challenges.hint": "Solo cuando Tapomo no está a la vista. Si completas los tres, recibes un único aviso. La notificación solo lleva el texto del reto, nada de lo que escribes.",
   "lessons.practice.bigrams":"Binomios difíciles: {pairs}"
 }
