@@ -712,5 +712,15 @@
   "lessons.hands_tip": "Afficher ou masquer les mains sous le clavier",
   "lessons.restart": "Recommencer",
   "lessons.restart_tip": "Recommencer cet exercice (Ctrl+Entrée). Cet essai n'est pas enregistré.",
+  "notify.challenge.title": "Défi accompli !",
+  "notify.challenge.body": "{name} · +{xp} XP",
+  "notify.all.title": "Défis du jour terminés !",
+  "notify.all.body": "À demain pour la suite.",
+  "ch.all_done": "Défis du jour terminés · {n} sur {n}",
+  "ch.notify.ask": "Voulez-vous que Tapomo vous prévienne par une notification Windows quand vous terminez un défi ?",
+  "ch.notify.yes": "Oui, prévenez-moi",
+  "ch.notify.no": "Non, merci",
+  "settings.notify_challenges": "Me prévenir par une notification Windows quand je termine un défi",
+  "settings.notify_challenges.hint": "Seulement quand Tapomo n'est pas à l'écran. Si vous terminez les trois, vous recevez un seul avis. La notification ne contient que le texte du défi, rien de ce que vous tapez.",
   "lessons.practice.bigrams":"Paires difficiles : {pairs}"
 }

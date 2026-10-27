@@ -113,6 +113,8 @@ pub struct Settled {
     pub total: u64,
     /// Challenges completed by this settle (ids), to celebrate them.
     pub new_challenges: Vec<&'static str>,
+    /// This settle completed the last of today's challenges (the full house was just awarded).
+    pub full_house: bool,
 }
 
 /// Brings the ledger up to date with the stored bursts. Cheap enough to run after every burst.
@@ -141,6 +143,7 @@ pub fn settle(conn: &Connection) -> rusqlite::Result<Settled> {
     };
     let from = db::get_raw(conn, "xp_settled_day")?.and_then(|v| v.parse::<i64>().ok()).unwrap_or(since).max(since);
     let mut new_challenges = Vec::new();
+    let mut full_house = false;
     let shortcuts = crate::shortcuts::daily(conn)?;
     for day in from..=today {
         let used = shortcuts.iter().filter(|(d, _)| *d == day).map(|(_, n)| *n).sum();
@@ -157,11 +160,11 @@ pub fn settle(conn: &Connection) -> rusqlite::Result<Settled> {
             }
         }
         if list.iter().all(|c| c.done) {
-            award(conn, day, "full", xp::FULL_HOUSE_XP)?;
+            full_house |= award(conn, day, "full", xp::FULL_HOUSE_XP)? && day == today;
         }
     }
     db::set_raw(conn, "xp_settled_day", &today.to_string())?;
-    Ok(Settled { total: total(conn)?, new_challenges })
+    Ok(Settled { total: total(conn)?, new_challenges, full_house })
 }
 
 /// A personal record (10 s peak or clean run) beaten now: +10 XP, at most twice a day.
@@ -303,6 +306,21 @@ mod tests {
         let s = settle(&c).unwrap();
         assert!(s.new_challenges.contains(&"bursts") && s.new_challenges.contains(&"chars"), "{:?}", s.new_challenges);
         assert!(settle(&c).unwrap().new_challenges.is_empty());
+    }
+
+    #[test]
+    fn full_house_is_reported_once_and_with_the_last_challenge() {
+        let c = mem();
+        settle(&c).unwrap();
+        // Enough bursts and characters to finish the three welcome challenges at once.
+        for _ in 0..3 {
+            burst(&c, 0, 30, 400);
+        }
+        let first = settle(&c).unwrap();
+        let all = first.new_challenges.len() == 3;
+        assert_eq!(first.full_house, all, "{first:?}");
+        let again = settle(&c).unwrap();
+        assert!(again.new_challenges.is_empty() && !again.full_house, "a restart must not repeat it: {again:?}");
     }
 
     #[test]
