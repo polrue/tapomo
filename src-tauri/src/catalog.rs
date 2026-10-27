@@ -366,15 +366,23 @@ pub struct AlbumItem {
     pub days: u32,
 }
 
+/// The album only lists useful shortcuts: global ones, those for an app with at least one burst in the
+/// last 30 days, and anything the user already used or marked as known (earned progress never disappears).
 pub fn album(conn: &Connection, lang: &str) -> rusqlite::Result<Vec<AlbumItem>> {
     let olang = office_lang(conn, lang)?;
-    let mut stmt = conn.prepare("SELECT id, days_used FROM shortcut_levels")?;
-    let days: HashMap<String, u32> = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?.collect::<rusqlite::Result<_>>()?;
+    let mut stmt = conn.prepare("SELECT id, days_used, known FROM shortcut_levels")?;
+    let progress: HashMap<String, (u32, bool)> =
+        stmt.query_map([], |r| Ok((r.get(0)?, (r.get(1)?, r.get(2)?))))?.collect::<rusqlite::Result<_>>()?;
+    let since = db::range_start_ms(conn, "30d")?;
+    let mut stmt = conn.prepare("SELECT DISTINCT a.exe FROM bursts b JOIN apps a ON a.id = b.app_id WHERE b.start_ms >= ?1")?;
+    let used_apps: Vec<String> = stmt.query_map([since], |r| r.get::<_, String>(0))?.collect::<rusqlite::Result<_>>()?;
+    let fits = |e: &Entry| app_list(e).is_none_or(|list| list.iter().any(|a| used_apps.iter().any(|x| x.eq_ignore_ascii_case(a))));
     Ok(catalogue()
         .entries
         .iter()
+        .filter(|e| progress.get(&e.id).is_some_and(|p| p.0 > 0 || p.1) || fits(e))
         .map(|e| {
-            let d = days.get(&e.id).copied().unwrap_or(0);
+            let d = progress.get(&e.id).map_or(0, |p| p.0);
             AlbumItem {
                 id: e.id.clone(),
                 label: e
@@ -433,6 +441,57 @@ mod tests {
         assert_eq!(resolve(ctrl_t, "Photoshop.exe", "en"), ["free_transform"]);
         assert_eq!(resolve(known_combo(ALT, 0x26).unwrap(), "Code.exe", "en"), ["move_line"]);
         assert_eq!(known_combo(CTRL | ALT | WIN, 0x51), None);
+        // Termius (SSH client): its own entries, only inside Termius.
+        assert_eq!(resolve(known_combo(CTRL, 0x4A).unwrap(), "Termius.exe", "en"), ["termius_jump_tab"]);
+        assert!(resolve(known_combo(CTRL, 0x4A).unwrap(), "notepad.exe", "en").is_empty());
+        assert_eq!(resolve(known_combo(CTRL, 0x54).unwrap(), "termius.exe", "en"), ["termius_new_tab"]);
+        assert_eq!(resolve(known_combo(CTRL, 0x4B).unwrap(), "Termius.exe", "en"), ["termius_palette"]);
+        assert_eq!(resolve(known_combo(CTRL | ALT, 0x25).unwrap(), "Termius.exe", "en"), ["termius_pane_left"]);
+        assert_eq!(resolve(known_combo(CTRL | ALT, 0x27).unwrap(), "Termius.exe", "en"), ["termius_pane_right"]);
+        assert_eq!(known_combo(CTRL | ALT, 0x42), None);
+    }
+
+    fn burst_at(c: &Connection, exe: &str, start_ms: i64) {
+        let app = db::intern_app(c, exe).unwrap();
+        let b = tapomo_core::Burst {
+            app_id: app,
+            start_ms: start_ms as u64,
+            end_ms: start_ms as u64 + 5000,
+            chars: 20,
+            backspaces: 0,
+            word_deletes: 0,
+            peak_wpm: None,
+            best_streak: 0,
+            mash: false,
+        };
+        db::insert_burst(c, &b).unwrap();
+    }
+
+    fn ids(c: &Connection) -> Vec<String> {
+        album(c, "en").unwrap().into_iter().map(|a| a.id).collect()
+    }
+
+    #[test]
+    fn the_album_shows_global_shortcuts_and_those_of_apps_used_in_the_last_30_days() {
+        let c = mem();
+        let now: i64 = c.query_row("SELECT CAST(strftime('%s', 'now') AS INTEGER) * 1000", [], |r| r.get(0)).unwrap();
+        let day = 86_400_000;
+        let shown = ids(&c);
+        assert!(shown.iter().any(|i| i == "copy"), "global shortcuts are always there");
+        assert!(!shown.iter().any(|i| i == "new_tab" || i == "termius_jump_tab" || i == "office_bold"), "no app used yet");
+        burst_at(&c, "TERMIUS.EXE", now - 2 * day);
+        burst_at(&c, "WINWORD.EXE", now - 2 * day);
+        burst_at(&c, "chrome.exe", now - 40 * day); // too old
+        let shown = ids(&c);
+        assert!(shown.iter().any(|i| i == "termius_jump_tab"), "exe compare is case-insensitive");
+        assert!(shown.iter().any(|i| i == "office_bold"), "the office alias expands");
+        assert!(!shown.iter().any(|i| i == "new_tab"), "Chrome was last used more than 30 days ago");
+        // Earned progress and «ya lo sé» stay even when the app is no longer used.
+        record_use(&c, "new_tab").unwrap();
+        mark_known(&c, "close_tab").unwrap();
+        let shown = ids(&c);
+        assert!(shown.iter().any(|i| i == "new_tab") && shown.iter().any(|i| i == "close_tab"));
+        assert!(!shown.iter().any(|i| i == "reopen_tab"), "the rest of Chrome's shortcuts stay hidden");
     }
 
     #[test]

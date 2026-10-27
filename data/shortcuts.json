@@ -839,6 +839,86 @@
      "label": "Ctrl+S"
     }
    }
+  },
+  {
+   "id": "termius_new_tab",
+   "apps": [
+    "termius.exe"
+   ],
+   "mods": "c",
+   "vk": 84,
+   "label": "Ctrl+T",
+   "category": "code",
+   "level": "basic",
+   "tip": {
+    "es": "Abre una pestaña nueva y empieza a escribir para buscar un host.",
+    "en": "Opens a new tab; start typing to search your hosts."
+   },
+   "label_en": "Ctrl+T"
+  },
+  {
+   "id": "termius_palette",
+   "apps": [
+    "termius.exe"
+   ],
+   "mods": "c",
+   "vk": 75,
+   "label": "Ctrl+K",
+   "category": "code",
+   "level": "medium",
+   "tip": {
+    "es": "Abre la paleta de comandos: todas tus pestañas y hosts en un solo sitio.",
+    "en": "Opens the command palette: all your tabs and hosts in one place."
+   },
+   "label_en": "Ctrl+K"
+  },
+  {
+   "id": "termius_jump_tab",
+   "apps": [
+    "termius.exe"
+   ],
+   "mods": "c",
+   "vk": 74,
+   "label": "Ctrl+J",
+   "category": "code",
+   "level": "medium",
+   "tip": {
+    "es": "Salta rápido entre las pestañas abiertas.",
+    "en": "Jumps quickly between your open tabs."
+   },
+   "label_en": "Ctrl+J"
+  },
+  {
+   "id": "termius_pane_left",
+   "apps": [
+    "termius.exe"
+   ],
+   "mods": "ca",
+   "vk": 37,
+   "label": "Ctrl+Alt+←",
+   "category": "code",
+   "level": "advanced",
+   "tip": {
+    "es": "Cambia al terminal anterior del espacio de trabajo.",
+    "en": "Switches to the previous terminal in the workspace."
+   },
+   "label_en": "Ctrl+Alt+←"
+  },
+  {
+   "id": "termius_pane_right",
+   "apps": [
+    "termius.exe"
+   ],
+   "mods": "ca",
+   "vk": 39,
+   "label": "Ctrl+Alt+→",
+   "category": "code",
+   "level": "advanced",
+   "tip": {
+    "es": "Cambia al terminal siguiente del espacio de trabajo.",
+    "en": "Switches to the next terminal in the workspace."
+   },
+   "label_en": "Ctrl+Alt+→"
   }
  ]
 }
