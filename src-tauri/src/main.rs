@@ -10,6 +10,7 @@ mod i18n;
 mod keystore;
 mod league;
 mod lessons;
+mod notify;
 mod packaged;
 mod password;
 mod pet;
@@ -68,6 +69,7 @@ fn main() {
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| show_main(app)))
         .plugin(log_plugin())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, Some(vec!["--minimized"])))
         .invoke_handler(tauri::generate_handler![

@@ -184,6 +184,16 @@
         <div class="lv-bar" id="lv-bar" role="progressbar" aria-valuemin="0" data-i18n-aria="level.title"><i id="lv-fill"></i></div>
         <p class="lv-next" id="lv-next"></p>
       </div>
+      <!-- All of today's challenges done: the big card goes away and they live here, folded. -->
+      <div class="lv-ch" id="lv-ch" hidden>
+        <button type="button" class="lv-ch-toggle" id="lv-ch-toggle" aria-expanded="false" aria-controls="lv-ch-list">
+          <span class="lv-ch-tick" aria-hidden="true">✓</span><span id="lv-ch-text"></span><span class="lv-ch-caret" aria-hidden="true"></span>
+        </button>
+        <div id="lv-ch-list-wrap" hidden>
+          <ul class="ch-list" id="lv-ch-list"></ul>
+          <p class="ch-full" id="ch-full"></p>
+        </div>
+      </div>
     </section>
 
     <section class="card league" id="league" aria-labelledby="lg-name" hidden>
@@ -227,8 +237,15 @@
     <section class="card challenges" id="challenges" aria-labelledby="ch-title" hidden>
       <h2><span id="ch-title" data-i18n="ch.title"></span><button type="button" class="info" data-tip="tip.challenges" data-i18n-aria="tip.more">i</button></h2>
       <ul class="ch-list" id="ch-list"></ul>
-      <p class="ch-full" id="ch-full" hidden></p>
     </section>
+
+    <div class="ch-ask" id="ch-ask" role="group" aria-labelledby="ch-ask-text" hidden>
+      <p id="ch-ask-text" data-i18n="ch.notify.ask"></p>
+      <div class="ch-ask-btns">
+        <button type="button" class="ch-ask-yes" id="ch-ask-yes" data-i18n="ch.notify.yes"></button>
+        <button type="button" class="ch-ask-no" id="ch-ask-no" data-i18n="ch.notify.no"></button>
+      </div>
+    </div>
 
     <p id="social-percentile" class="social-percentile" hidden></p>
     <p id="yesterday" class="muted yesterday" hidden></p>
@@ -409,6 +426,8 @@
       <label class="check"><input id="s-corrections" type="checkbox"><span data-i18n="settings.count_corrections"></span></label>
       <p class="hint" data-i18n="settings.count_corrections.hint"></p>
       <label class="check"><input id="s-sc-tips" type="checkbox"><span data-i18n="settings.shortcut_tips"></span></label>
+      <label class="check"><input id="s-notify" type="checkbox"><span data-i18n="settings.notify_challenges"></span></label>
+      <p class="hint" data-i18n="settings.notify_challenges.hint"></p>
       <label class="check"><input id="s-autostart" type="checkbox"><span data-i18n="settings.autostart"></span></label>
       <label class="check"><input id="s-fullscreen" type="checkbox"><span data-i18n="settings.fullscreen"></span></label>
       <p class="hint" data-i18n="settings.fullscreen.hint"></p>

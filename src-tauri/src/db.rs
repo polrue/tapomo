@@ -240,6 +240,12 @@ pub struct Settings {
     pub shortcut_tips: bool,
     /// Count the key pressed right before a Backspace, as a daily total per key (never a sequence).
     pub count_corrections: bool,
+    /// Windows notification when a daily challenge (or all of them) is completed. Off until asked.
+    #[serde(default)]
+    pub notify_challenges: bool,
+    /// The one-time in-app question about the notifications has been answered (either way).
+    #[serde(default)]
+    pub notify_asked: bool,
 }
 
 fn default_hair() -> String {
@@ -294,6 +300,8 @@ pub fn get_settings(conn: &Connection) -> rusqlite::Result<Settings> {
         lessons_in_goal: flag("lessons_in_goal", true)?,
         shortcut_tips: flag("shortcut_tips", true)?,
         count_corrections: flag("count_corrections", true)?,
+        notify_challenges: flag("notify_challenges", false)?,
+        notify_asked: flag("notify_asked", false)?,
     })
 }
 
@@ -318,7 +326,9 @@ pub fn set_settings(conn: &Connection, s: &Settings) -> rusqlite::Result<()> {
     set_raw(conn, "count_shortcuts", b(s.count_shortcuts))?;
     set_raw(conn, "lessons_in_goal", b(s.lessons_in_goal))?;
     set_raw(conn, "shortcut_tips", b(s.shortcut_tips))?;
-    set_raw(conn, "count_corrections", b(s.count_corrections))
+    set_raw(conn, "count_corrections", b(s.count_corrections))?;
+    set_raw(conn, "notify_challenges", b(s.notify_challenges))?;
+    set_raw(conn, "notify_asked", b(s.notify_asked))
 }
 
 /// Saved position of the floating Tapomo (physical px). Kept out of [`Settings`]
