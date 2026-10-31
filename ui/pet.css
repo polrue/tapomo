@@ -107,3 +107,28 @@ html, body {
   100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), -46px) scale(.9); }
 }
 @media (prefers-reduced-motion: reduce) { .sc-pop { display: none; } }
+
+/* Going under the ground (pet.js goUnder/comeUp): Tapomo sinks below a small ground line, which
+   then shrinks to its centre; two soft rings mark the spot. Same timings as the lab's shy mode. */
+.pet.under .stage { clip-path: inset(-80px -80px 0 -80px); }
+.stage .mascot { transition: transform 600ms cubic-bezier(.55, 0, .75, .3); }
+.pet.under .stage .mascot { transform: translateY(124px); }
+.pet.under .m-breath { animation: none; }
+.pet.under .livebar, .pet.under .bubble { display: none; }
+.ground {
+  position: absolute; left: 18px; right: 18px; bottom: 0; height: 3px; border-radius: 3px; z-index: 1;
+  background: #d9c9bd; box-shadow: 0 0 0 1px rgba(35, 32, 43, .22); opacity: 0;
+  transform: scaleX(1); transform-origin: 50% 50%;
+  transition: opacity 250ms ease, transform 420ms cubic-bezier(.6, 0, .4, 1);
+}
+.ground.show { opacity: 1; }
+.ground.shrink { transform: scaleX(0); opacity: 0; transition: transform 420ms cubic-bezier(.6, 0, .4, 1), opacity 160ms ease 300ms; }
+/* Sits on the ground line's centre (the stage is 120 px wide at left 45, top 64). */
+.under-fx { position: absolute; left: 105px; top: 184px; width: 0; height: 0; z-index: 2; pointer-events: none; }
+.under-fx i { position: absolute; left: 0; top: 0; display: block; width: 40px; height: 10px; margin: -5px 0 0 -20px;
+  border-radius: 50%; border: 2.5px solid #b49c8e; opacity: 0;
+  animation: under-ripple 1100ms ease-out forwards; animation-delay: calc(var(--i) * 260ms); }
+@keyframes under-ripple { 0% { transform: scale(.15); opacity: .9; } 100% { transform: scale(1.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .stage .mascot, .ground, .ground.shrink { transition: none; }
+}

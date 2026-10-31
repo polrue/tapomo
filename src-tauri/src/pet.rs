@@ -143,8 +143,17 @@ pub fn sync(app: &AppHandle, shared: &Shared) {
     if shared.pet_visible.swap(visible, Ordering::Relaxed) == visible {
         return;
     }
+    let gen = shared.pet_hide_gen.fetch_add(1, Ordering::Relaxed) + 1;
     if let Some(window) = app.get_webview_window(LABEL) {
-        let _ = if visible { window.show() } else { window.hide() };
+        if visible {
+            let _ = window.show();
+        } else if fullscreen {
+            // A game or presentation just took the screen: no animation over it.
+            let _ = window.hide();
+        } else {
+            // pet.js sinks Tapomo under the ground on `pet-state`; hide the window once it is done.
+            hide_after_animation(app.clone(), gen);
+        }
     }
     if visible {
         log::info!("pet shown");
@@ -163,6 +172,24 @@ pub fn sync(app: &AppHandle, shared: &Shared) {
             rt.hover.store(false, Ordering::Relaxed);
         }
     }
+}
+
+/// Length of the going-under animation in pet.js (sink, ground line shrinks, ripple).
+const HIDE_ANIM: Duration = Duration::from_millis(2400);
+
+/// Hides the pet window after the going-under animation, unless it was shown again meanwhile.
+fn hide_after_animation(app: AppHandle, gen: u32) {
+    let _ = std::thread::Builder::new().name("tapomo-pet-hide".into()).spawn(move || {
+        std::thread::sleep(HIDE_ANIM);
+        let Some(state) = app.try_state::<AppState>() else { return };
+        let shared = &state.shared;
+        if shared.pet_hide_gen.load(Ordering::Relaxed) != gen || shared.pet_visible.load(Ordering::Relaxed) {
+            return;
+        }
+        if let Some(window) = app.get_webview_window(LABEL) {
+            let _ = window.hide();
+        }
+    });
 }
 
 /// Whether the floating Tapomo is on screen and, if not, why (for the main window's header).
