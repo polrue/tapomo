@@ -18,7 +18,7 @@
   // Strings the app takes from es.json (keyboard.aria, finger.*), copied here so the lab needs no locale edit.
   const KB_STR = { 'keyboard.aria': 'Teclado', 'finger.0': 'Meñique izquierdo', 'finger.1': 'Anular izquierdo', 'finger.2': 'Corazón izquierdo', 'finger.3': 'Índice izquierdo', 'finger.thumbs': 'Pulgares', 'finger.6': 'Índice derecho', 'finger.7': 'Corazón derecho', 'finger.8': 'Anular derecho', 'finger.9': 'Meñique derecho' };
 
-  const st = { drill: 0, layout: 'es', speed: 1, text: DRILLS[0].text, pos: 0, playing: false, timer: 0, own: false, style: 'ilu', op: 0.3 };
+  const st = { drill: 0, layout: 'es', speed: 1, text: DRILLS[0].text, pos: 0, playing: false, timer: 0, own: false, style: 'ilu', op: 0.3, colour: 'key', moving: true };
   let kb = null;
   let sil = null; // hands2.js proposal (silhouette over the keyboard), if loaded
   let ilu = null; // hands3.js proposal (drawn hands + ghost finger), if loaded
@@ -127,6 +127,8 @@
       if (sil) sil.setEnabled(v === 'sil');
       if (ilu) ilu.setEnabled(v === 'ilu');
       $.opRow.hidden = v === 'cur';
+      $.markSeg.hidden = v !== 'ilu';
+      $.nudgeSeg.hidden = v !== 'ilu';
     });
     styleSeg.append(h('span', { class: 'pend' }, 'Propuesta, pendiente de Pol'));
     box.append(styleSeg);
@@ -135,7 +137,16 @@
     $.op.addEventListener('input', () => { st.op = Number($.op.value); $.opOut.textContent = `${Math.round(st.op * 100)} %`; if (sil) sil.setOpacity(st.op); if (ilu) ilu.setOpacity(st.op); });
     $.opRow = h('div', { class: 'hn-row' }, h('label', {}, 'Opacidad de la silueta ', $.op), $.opOut);
     box.append($.opRow);
-    box.append(h('p', { class: 'note' }, 'Ilustradas (como typing.com): un dibujo de las dos manos, translúcido y quieto, con los dedos en la fila base. Para cada tecla sale un «dedo fantasma» naranja desde el nudillo hasta la tecla; en las teclas de la fila base solo se ilumina la yema, y en el espacio los dos pulgares. Silueta: el intento anterior con manos que se mueven, aparcado.'));
+    $.markSeg = seg('Color del dedo', [['key', 'De su tecla'], ['accent', 'Naranja'], ['none', 'Sin color']], () => st.colour, (v) => {
+      st.colour = v;
+      if (ilu) ilu.setColour(v);
+    });
+    $.markSeg.append(h('span', { class: 'pend' }, 'Elige una'));
+    box.append($.markSeg);
+    $.nudgeSeg = seg('Los dedos se mueven', [[true, 'Sí'], [false, 'No']], () => st.moving, (v) => { st.moving = v; if (ilu) ilu.setMoving(v); });
+    box.append($.nudgeSeg);
+    box.append(h('p', { class: 'note' }, 'El dibujo está recortado en palma y dedos: el dedo que toca se dobla o se estira hasta la tecla, y si la tecla queda lejos la mano entera se acerca un poco. Color: el dedo se pinta del color de su tecla (como la leyenda), en naranja o no se pinta.'));
+    box.append(h('p', { class: 'note' }, 'Ilustradas (como typing.com): un dibujo de las dos manos, translúcido, con los dedos en la fila base. Silueta: el intento anterior, aparcado.'));
   }
 
   $.text = h('div', { class: 'hn-text', 'aria-live': 'off' });
@@ -164,7 +175,7 @@
 
   kb = Keyboard.render($.stage, st.layout, { t: (k) => KB_STR[k] || k, legend: true });
   if (typeof Hands2 !== 'undefined') sil = Hands2.attach(kb, { opacity: st.op, enabled: st.style === 'sil' });
-  if (typeof Hands3 !== 'undefined') ilu = Hands3.attach(kb, { opacity: st.op, enabled: st.style === 'ilu' });
+  if (typeof Hands3 !== 'undefined') ilu = Hands3.attach(kb, { opacity: st.op, enabled: st.style === 'ilu', colour: st.colour, moving: st.moving });
   window.__labKb = kb; // lab screenshots drive it directly
   buildText();
   paint();

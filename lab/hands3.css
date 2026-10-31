@@ -18,13 +18,17 @@
 .hd3-body { opacity: calc(var(--hd3-op, 0.3) * var(--hd3-k)); }
 .hd3-ink { fill: var(--hd3-ink); }
 
-/* Ghost finger: translucent accent finger from the knuckle to the key, ring on the fingertip. */
-.hd3-ghost { opacity: 0; transition: opacity 0.14s ease; }
-.hd3-ghost.is-active { opacity: 1; }
-.hd3-ghost.is-after { opacity: 1; }
-.hd3-shaft { stroke: var(--hd3-ghost); opacity: 0.38; }
-.hd3-tip { fill: var(--hd3-ghost); opacity: 0.38; }
-.hd3-ring { fill: none; stroke: var(--hd3-ghost); stroke-width: 2.2; opacity: 0.9; }
-.hd3-ghost.is-after .hd3-shaft, .hd3-ghost.is-after .hd3-tip { opacity: 0; }
-.hd3-ghost.is-after .hd3-ring { opacity: 0.55; stroke-width: 1.8; stroke-dasharray: 3.5 3; }
-@media (prefers-reduced-motion: reduce) { .hd3-ghost { transition: none; } }
+/* The palm and fingers move as the drawing's pieces; the lit copy of the finger to use sits on top. */
+.hd3-hand, .hd3-finger { transform-box: view-box; transform-origin: 0 0; transition: transform var(--hd3-move, 0.17s) ease-out; }
+.hd3-lit { opacity: 0; transition: transform var(--hd3-move, 0.17s) ease-out, opacity 0.14s ease; }
+/* Stronger versions of the legend's pastel finger colours (the pastels vanish over the grey hands). */
+.hd3-lit { --tc: #d39a6a; } /* thumbs: warm caramel, the legend beige vanishes */
+.hd3-lit.kb-f0 { --tc: #f27a96; } .hd3-lit.kb-f1 { --tc: #f5a463; } .hd3-lit.kb-f2 { --tc: #e5bd2e; }
+.hd3-lit.kb-f3 { --tc: #62bf62; } .hd3-lit.kb-f6 { --tc: #44b3cb; } .hd3-lit.kb-f7 { --tc: #7a91f0; }
+.hd3-lit.kb-f8 { --tc: #a77fe6; } .hd3-lit.kb-f9 { --tc: #e276be; }
+.hd3-lit stop { stop-color: var(--tc); }
+.hd3-c-accent .hd3-lit stop { stop-color: var(--hd3-ghost); }
+.hd3-lit.is-active { opacity: 0.9; }
+.hd3-lit.is-after { opacity: 0.3; }
+.hd3-c-none .hd3-lit { display: none; }
+@media (prefers-reduced-motion: reduce) { .hd3-hand, .hd3-finger, .hd3-lit { transition: none; } }
