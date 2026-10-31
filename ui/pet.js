@@ -558,17 +558,62 @@ function bindDrag() {
   });
 }
 
-// Coming back after being hidden (setting, one hour, fullscreen): a hop and a greeting.
+// Going under the ground (approved in the lab's shy mode): Tapomo sinks below a little ground line,
+// the line shrinks to its centre and two soft rings mark the spot. pet.rs hides the window once it
+// is over (HIDE_ANIM). Coming out plays it backwards: the line grows and Tapomo pops up through it.
+const ground = Object.assign(document.createElement('div'), { className: 'ground' });
+const fxLayer = Object.assign(document.createElement('div'), { className: 'under-fx' });
+let underTimers = [];
+const later = (ms, fn) => underTimers.push(setTimeout(fn, ms));
+
+function goUnder() {
+  underTimers.forEach(clearTimeout);
+  underTimers = [];
+  $('bubble').hidden = true;
+  pet.classList.add('under');
+  ground.classList.remove('shrink');
+  ground.classList.add('show');
+  later(650, () => ground.classList.add('shrink'));
+  later(1050, () => {
+    if (Mascot.reduced()) return;
+    fxLayer.replaceChildren(...[0, 1].map((i) => {
+      const ring = document.createElement('i');
+      ring.style.setProperty('--i', String(i));
+      return ring;
+    }));
+  });
+}
+
+/** Back from under the ground; returns how long until Tapomo is fully up. */
+function comeUp() {
+  underTimers.forEach(clearTimeout);
+  underTimers = [];
+  fxLayer.replaceChildren();
+  if (!pet.classList.contains('under')) return 0;
+  ground.classList.add('show');
+  ground.classList.remove('shrink');
+  later(330, () => pet.classList.remove('under'));
+  later(900, () => ground.classList.remove('show'));
+  return 330 + 600;
+}
+
+// Hidden (setting, one hour): it goes under. A fullscreen app hides the window at once.
+// Coming back: it pops up, hops and says hello.
 let wasVisible = false;
 function onPetState(p) {
   const visible = !!(p && p.visible);
   const appeared = visible && !wasVisible;
+  const left = !visible && wasVisible;
   wasVisible = visible;
+  if (left && p.reason !== 'fullscreen') goUnder();
   if (!appeared) return;
-  // The window has only just been shown; give the webview a beat to paint before the greeting.
+  // The window has only just been shown; give the webview a beat to paint before coming up.
   setTimeout(() => {
-    say('pet.here', 2500);
-    Mascot.jump(svg, { big: false });
+    const up = comeUp();
+    setTimeout(() => {
+      say('pet.here', 2500);
+      Mascot.jump(svg, { big: false });
+    }, up);
   }, 200);
 }
 
@@ -577,6 +622,8 @@ function onPetState(p) {
 async function init() {
   await loadAll();
   Mascot.mount(svg);
+  $('stage').append(ground);
+  pet.append(fxLayer); // outside the stage, whose clip would cut the rings in half
   renderFace();
   bindDrag();
   reportHit();

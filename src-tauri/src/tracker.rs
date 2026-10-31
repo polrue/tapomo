@@ -78,6 +78,9 @@ pub struct Shared {
     pub snooze_gen: AtomicU32,
     /// When the running snooze ends, in ms since the Unix epoch (0 = none).
     pub snooze_until_ms: AtomicU64,
+    /// Bumped on every show/hide of the pet, so a delayed hide (after the going-under animation)
+    /// can tell the pet came back meanwhile.
+    pub pet_hide_gen: AtomicU32,
     /// Length of the burst being typed (0 when none): it counts towards today's goal before it is stored.
     pub open_burst_ms: AtomicU64,
     /// When the last key of any kind arrived, in ms since the Unix epoch (0 = none yet). Only a
