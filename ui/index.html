@@ -26,25 +26,214 @@
       <p class="hide-note" id="hide-note" aria-live="polite" hidden><span id="hide-text"></span><button type="button" class="pill" id="hide-btn" hidden></button></p>
       <p class="tagline" id="paused-banner" hidden data-i18n="paused.banner"></p>
     </div>
-    <button type="button" class="lessons-btn" id="lessons-btn" aria-pressed="false" data-i18n="lessons.button"></button>
-    <nav class="tabs" id="range-tabs" role="tablist">
-      <button role="tab" data-range="today" data-i18n="range.today"></button>
-      <button role="tab" data-range="7d" data-i18n="range.7d"></button>
-      <button role="tab" data-range="30d" data-i18n="range.30d"></button>
-      <button role="tab" data-range="all" data-i18n="range.all"></button>
+    <!-- The window is split into pages by topic; settings and support are the two small icons. -->
+    <nav class="page-nav" id="page-nav" data-i18n-aria="nav.pages">
+      <div class="tabs page-tabs" role="tablist">
+        <button role="tab" data-page="hoy" data-i18n="nav.page.today"></button>
+        <button role="tab" data-page="progreso" data-i18n="nav.page.progress"></button>
+        <button role="tab" data-page="aprender" data-i18n="nav.page.learn"></button>
+        <button role="tab" data-page="tapomo" data-i18n="nav.page.tapomo"></button>
+      </div>
+      <button type="button" class="page-icon" data-page="ajustes" data-i18n-title="settings.title" data-i18n-aria="settings.title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></button>
+      <button type="button" class="page-icon heart" data-page="apoya" data-i18n-title="support.title" data-i18n-aria="support.title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.1C1.6 8.2 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.6 3.7 4.4 6.9-1.7 4.5-9.2 9.1-9.2 9.1Z"/></svg></button>
     </nav>
   </header>
   <nav class="section-nav" id="section-nav" data-i18n-aria="nav.sections"><ul class="sn-list" id="sn-list"></ul></nav>
   </div>
 
   <main>
-    <section class="card lessons" id="lessons" aria-labelledby="ls-title">
+    <section data-page="hoy" class="card live" id="live" data-zone="idle" aria-live="off">
+      <div class="live-head">
+        <h2><span data-i18n="live.title"></span><button type="button" class="info" data-tip="tip.live" data-tip-speed="live" data-i18n-aria="tip.more">i</button></h2>
+        <span class="live-zone" id="live-zone"></span>
+      </div>
+      <div class="live-body">
+        <div class="live-num"><strong id="live-wpm">–</strong><span class="unit" data-i18n="unit.wpm"></span></div>
+        <div class="live-bar-wrap">
+          <span class="live-label live-label-pace" id="live-pace-label" data-i18n="live.pace"></span>
+          <div class="live-bar" id="live-bar" role="meter" aria-valuemin="0" aria-valuemax="130" aria-valuenow="0" data-i18n-aria="live.bar">
+            <div class="live-fill" id="live-fill"></div>
+            <div class="live-tick" id="live-tick"></div>
+            <div class="live-record" id="live-record" hidden></div>
+          </div>
+          <span class="live-label live-label-record" id="live-record-label" hidden></span>
+        </div>
+      </div>
+      <dl class="live-stats" id="live-stats">
+        <div><dt data-i18n="live.stat.week"></dt><dd id="stat-week">–</dd></div>
+        <div><dt data-i18n="live.stat.today"></dt><dd id="stat-today">–</dd></div>
+        <div><dt data-i18n="live.stat.last"></dt><dd id="stat-last">–</dd></div>
+        <div><dt data-i18n="live.stat.best"></dt><dd id="stat-best">–</dd></div>
+      </dl>
+      <div class="live-note"><p class="live-text" id="live-text"></p><button type="button" class="info" id="live-burst-info" data-tip="tip.longburst" data-i18n-aria="tip.more" hidden>i</button></div>
+    </section>
+
+    <section data-page="hoy" class="card goal" id="goal" aria-labelledby="goal-title" hidden>
+      <h2 class="sr" id="goal-title" data-i18n="goal.title"></h2>
+      <div class="goal-ring" id="goal-ring">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <circle class="goal-track" cx="50" cy="50" r="42"></circle>
+          <circle class="goal-arc" id="goal-arc" cx="50" cy="50" r="42"></circle>
+        </svg>
+        <strong id="goal-pct"></strong>
+      </div>
+      <div class="goal-text">
+        <p class="goal-progress" id="goal-progress" role="progressbar" aria-valuemin="0"></p>
+        <p class="goal-sub" id="goal-sub"></p>
+      </div>
+      <div class="goal-streak">
+        <svg class="flame" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.6 3.2 3.6 5 5.2 8.2 1.7 3.3.4 8.3-5.2 8.3-4.8 0-7-3.8-5.7-7.4.5 1.2 1.3 1.9 2.3 2.1C7.9 9.8 10.4 6.4 12 2z"></path><path class="flame-core" d="M12 13c.4 1.6 2.3 2.4 2.3 4.3 0 1.6-1.1 2.7-2.3 2.7s-2.3-1.1-2.3-2.7c0-1.3.7-1.9 1.2-2.7.3-.4.9-.9 1.1-1.6z"></path></svg>
+        <div>
+          <p class="goal-days" id="goal-days"></p>
+          <p class="goal-saved" id="goal-saved" hidden></p>
+          <p class="goal-shields" id="goal-shields" role="img" hidden></p>
+        </div>
+      </div>
+    </section>
+
+    <section data-page="hoy" class="card level" id="level" aria-labelledby="lv-label" hidden>
+      <div class="lv-badge"><span id="lv-label" data-i18n="level.title"></span><strong id="lv-num"></strong></div>
+      <div class="lv-body">
+        <div class="lv-row"><span class="lv-xp" id="lv-xp"></span><span class="lv-today" id="lv-today" hidden></span></div>
+        <div class="lv-bar" id="lv-bar" role="progressbar" aria-valuemin="0" data-i18n-aria="level.title"><i id="lv-fill"></i></div>
+        <p class="lv-next" id="lv-next"></p>
+      </div>
+      <!-- All of today's challenges done: the big card goes away and they live here, folded. -->
+      <div class="lv-ch" id="lv-ch" hidden>
+        <button type="button" class="lv-ch-toggle" id="lv-ch-toggle" aria-expanded="false" aria-controls="lv-ch-list">
+          <span class="lv-ch-tick" aria-hidden="true">✓</span><span id="lv-ch-text"></span><span class="lv-ch-caret" aria-hidden="true"></span>
+        </button>
+        <div id="lv-ch-list-wrap" hidden>
+          <ul class="ch-list" id="lv-ch-list"></ul>
+          <p class="ch-full" id="ch-full"></p>
+        </div>
+      </div>
+    </section>
+
+    <section data-page="hoy" class="card challenges" id="challenges" aria-labelledby="ch-title" hidden>
+      <h2><span id="ch-title" data-i18n="ch.title"></span><button type="button" class="info" data-tip="tip.challenges" data-i18n-aria="tip.more">i</button></h2>
+      <ul class="ch-list" id="ch-list"></ul>
+    </section>
+
+    <div data-page="hoy" class="ch-ask" id="ch-ask" role="group" aria-labelledby="ch-ask-text" hidden>
+      <p id="ch-ask-text" data-i18n="ch.notify.ask"></p>
+      <div class="ch-ask-btns">
+        <button type="button" class="ch-ask-yes" id="ch-ask-yes" data-i18n="ch.notify.yes"></button>
+        <button type="button" class="ch-ask-no" id="ch-ask-no" data-i18n="ch.notify.no"></button>
+      </div>
+    </div>
+
+    <section data-page="hoy" class="card league" id="league" aria-labelledby="lg-name" hidden>
+      <div class="lg-emblem" id="lg-emblem"></div>
+      <div class="lg-body">
+        <div class="lg-head"><h2 class="lg-name" id="lg-name"></h2><span class="lg-days" id="lg-days"></span></div>
+        <p class="lg-text" id="lg-text"></p>
+        <div class="lg-bar" id="lg-bar" role="progressbar" aria-valuemin="0" data-i18n-aria="league.bar" hidden><i id="lg-fill"></i></div>
+        <button type="button" class="link lg-letter" id="lg-letter" data-i18n="weekly.open"></button>
+      </div>
+    </section>
+
+    <!-- The range only changes the stats, so its tabs live on this page. -->
+    <nav class="tabs range-tabs" id="range-tabs" role="tablist" data-page="progreso">
+      <button role="tab" data-range="today" data-i18n="range.today"></button>
+      <button role="tab" data-range="7d" data-i18n="range.7d"></button>
+      <button role="tab" data-range="30d" data-i18n="range.30d"></button>
+      <button role="tab" data-range="all" data-i18n="range.all"></button>
+    </nav>
+
+    <p data-page="progreso" id="social-percentile" class="social-percentile" hidden></p>
+
+    <p data-page="progreso" id="yesterday" class="muted yesterday" hidden></p>
+
+    <section data-page="progreso" id="empty" class="empty" hidden>
+      <h2 data-i18n="empty.title"></h2>
+      <p><span data-i18n="empty.text"></span><button type="button" class="info" data-tip="tip.burst" data-i18n-aria="tip.more">i</button></p>
+    </section>
+
+    <div data-page="progreso" id="data">
+      <section class="tiles" id="tiles">
+        <article class="tile big">
+          <span class="label"><span data-i18n="tile.avg"></span><button type="button" class="info" data-tip="tip.avg" data-tip-speed="avg" data-i18n-aria="tip.more">i</button></span>
+          <strong id="t-avg">–</strong>
+          <small id="t-net"></small>
+          <small id="t-cpm"></small>
+        </article>
+        <article class="tile">
+          <span class="label"><span data-i18n="tile.peak"></span><button type="button" class="info" data-tip="tip.peak" data-tip-speed="peak" data-i18n-aria="tip.more">i</button></span>
+          <strong id="t-peak">–</strong>
+          <small id="t-peak-cpm"></small>
+        </article>
+        <article class="tile">
+          <span class="label"><span data-i18n="tile.best"></span><button type="button" class="info" data-tip="tip.best" data-i18n-aria="tip.more">i</button></span>
+          <strong id="t-best">–</strong>
+        </article>
+        <article class="tile">
+          <span class="label"><span data-i18n="tile.current"></span><button type="button" class="info" data-tip="tip.current" data-i18n-aria="tip.more">i</button></span>
+          <strong id="t-current">–</strong>
+        </article>
+        <article class="tile">
+          <span class="label"><span data-i18n="tile.time"></span><button type="button" class="info" data-tip="tip.time" data-i18n-aria="tip.more">i</button></span>
+          <strong id="t-time">–</strong>
+        </article>
+        <article class="tile">
+          <span class="label"><span data-i18n="tile.chars"></span><button type="button" class="info" data-tip="tip.chars" data-i18n-aria="tip.more">i</button></span>
+          <strong id="t-chars">–</strong>
+        </article>
+      </section>
+
+      <section class="card">
+        <h2><span data-i18n="heatmap.title"></span><button type="button" class="info" data-tip="tip.heatmap" data-i18n-aria="tip.more">i</button></h2>
+        <div id="heatmap" class="heatmap" role="group" data-i18n-aria="heatmap.title"></div>
+        <div id="heatmap-legend" class="heat-legend" hidden>
+          <span class="chip"><i data-zone="warming"></i><span data-i18n="heatmap.z.warming"></span></span>
+          <span class="chip"><i data-zone="rhythm"></i><span data-i18n="heatmap.z.rhythm"></span></span>
+          <span class="chip"><i data-zone="good"></i><span data-i18n="heatmap.z.good"></span></span>
+          <span class="chip"><i data-zone="fire"></i><span data-i18n="heatmap.z.fire"></span></span>
+          <span class="chip"><i data-zone="beating"></i><span data-i18n="heatmap.z.beating"></span></span>
+          <span class="chip"><i data-zone="super"></i><span data-i18n="heatmap.z.super"></span></span>
+          <span class="chip more"><i class="ramp"></i><span data-i18n="heatmap.more"></span></span>
+        </div>
+        <p id="heatmap-note" class="muted heat-note" data-i18n="heatmap.calibrating" hidden></p>
+      </section>
+
+      <section class="card">
+        <h2><span data-i18n="apps.title"></span><button type="button" class="info" data-tip="tip.apps" data-i18n-aria="tip.more">i</button></h2>
+        <table class="apps">
+          <thead>
+            <tr><th data-i18n="apps.app"></th><th class="num" data-i18n="apps.wpm"></th><th class="num" data-i18n="apps.chars"></th></tr>
+          </thead>
+          <tbody id="apps-body"></tbody>
+        </table>
+        <p id="apps-empty" class="muted" data-i18n="apps.empty" hidden></p>
+      </section>
+    </div>
+
+    <section data-page="progreso" class="card records" id="records" aria-labelledby="rc-title" hidden>
+      <h2><span id="rc-title" data-i18n="records.title"></span><button type="button" class="info" data-tip="tip.records" data-i18n-aria="tip.more">i</button></h2>
+      <ul class="rc-grid" id="rc-grid"></ul>
+    </section>
+
+    <section data-page="progreso" class="card badges" id="badges" aria-labelledby="bd-title">
+      <h2><span id="bd-title" data-i18n="badges.title"></span><button type="button" class="info" data-tip="tip.badges" data-i18n-aria="tip.more">i</button></h2>
+      <p class="bd-count" id="bd-count"></p>
+      <ul class="bd-grid" id="bd-grid"></ul>
+    </section>
+
+    <section data-page="progreso" class="card shortcuts" id="shortcuts" aria-labelledby="sc-title" hidden>
+      <div class="sc-head">
+        <h2><span id="sc-title" data-i18n="shortcuts.title"></span><button type="button" class="info" data-tip="tip.shortcuts" data-i18n-aria="tip.more">i</button></h2>
+        <strong class="sc-total" id="sc-total"></strong>
+      </div>
+      <p class="sc-line muted" id="sc-line"></p>
+      <ul class="chips sc-kinds" id="sc-kinds"></ul>
+    </section>
+
+    <section data-page="aprender" class="card lessons" id="lessons" aria-labelledby="ls-title">
       <div class="ls-head">
         <h2 id="ls-title" data-i18n="lessons.title"></h2>
         <label class="ls-layout-pick"><span data-i18n="lessons.layout"></span>
           <select id="ls-layout"><option value="es" data-i18n="lessons.layout.es"></option><option value="us" data-i18n="lessons.layout.us"></option><option value="fr" data-i18n="lessons.layout.fr"></option><option value="de" data-i18n="lessons.layout.de"></option></select>
         </label>
-        <button type="button" class="ghost" id="ls-close" data-i18n="lessons.close"></button>
       </div>
       <div id="ls-map">
         <p class="hint" data-i18n="lessons.intro"></p>
@@ -128,85 +317,7 @@
       </div>
     </section>
 
-    <section class="card live" id="live" data-zone="idle" aria-live="off">
-      <div class="live-head">
-        <h2><span data-i18n="live.title"></span><button type="button" class="info" data-tip="tip.live" data-tip-speed="live" data-i18n-aria="tip.more">i</button></h2>
-        <span class="live-zone" id="live-zone"></span>
-      </div>
-      <div class="live-body">
-        <div class="live-num"><strong id="live-wpm">–</strong><span class="unit" data-i18n="unit.wpm"></span></div>
-        <div class="live-bar-wrap">
-          <span class="live-label live-label-pace" id="live-pace-label" data-i18n="live.pace"></span>
-          <div class="live-bar" id="live-bar" role="meter" aria-valuemin="0" aria-valuemax="130" aria-valuenow="0" data-i18n-aria="live.bar">
-            <div class="live-fill" id="live-fill"></div>
-            <div class="live-tick" id="live-tick"></div>
-            <div class="live-record" id="live-record" hidden></div>
-          </div>
-          <span class="live-label live-label-record" id="live-record-label" hidden></span>
-        </div>
-      </div>
-      <dl class="live-stats" id="live-stats">
-        <div><dt data-i18n="live.stat.week"></dt><dd id="stat-week">–</dd></div>
-        <div><dt data-i18n="live.stat.today"></dt><dd id="stat-today">–</dd></div>
-        <div><dt data-i18n="live.stat.last"></dt><dd id="stat-last">–</dd></div>
-        <div><dt data-i18n="live.stat.best"></dt><dd id="stat-best">–</dd></div>
-      </dl>
-      <div class="live-note"><p class="live-text" id="live-text"></p><button type="button" class="info" id="live-burst-info" data-tip="tip.longburst" data-i18n-aria="tip.more" hidden>i</button></div>
-    </section>
-
-    <section class="card goal" id="goal" aria-labelledby="goal-title" hidden>
-      <h2 class="sr" id="goal-title" data-i18n="goal.title"></h2>
-      <div class="goal-ring" id="goal-ring">
-        <svg viewBox="0 0 100 100" aria-hidden="true">
-          <circle class="goal-track" cx="50" cy="50" r="42"></circle>
-          <circle class="goal-arc" id="goal-arc" cx="50" cy="50" r="42"></circle>
-        </svg>
-        <strong id="goal-pct"></strong>
-      </div>
-      <div class="goal-text">
-        <p class="goal-progress" id="goal-progress" role="progressbar" aria-valuemin="0"></p>
-        <p class="goal-sub" id="goal-sub"></p>
-      </div>
-      <div class="goal-streak">
-        <svg class="flame" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.6 3.2 3.6 5 5.2 8.2 1.7 3.3.4 8.3-5.2 8.3-4.8 0-7-3.8-5.7-7.4.5 1.2 1.3 1.9 2.3 2.1C7.9 9.8 10.4 6.4 12 2z"></path><path class="flame-core" d="M12 13c.4 1.6 2.3 2.4 2.3 4.3 0 1.6-1.1 2.7-2.3 2.7s-2.3-1.1-2.3-2.7c0-1.3.7-1.9 1.2-2.7.3-.4.9-.9 1.1-1.6z"></path></svg>
-        <div>
-          <p class="goal-days" id="goal-days"></p>
-          <p class="goal-saved" id="goal-saved" hidden></p>
-          <p class="goal-shields" id="goal-shields" role="img" hidden></p>
-        </div>
-      </div>
-    </section>
-
-    <section class="card level" id="level" aria-labelledby="lv-label" hidden>
-      <div class="lv-badge"><span id="lv-label" data-i18n="level.title"></span><strong id="lv-num"></strong></div>
-      <div class="lv-body">
-        <div class="lv-row"><span class="lv-xp" id="lv-xp"></span><span class="lv-today" id="lv-today" hidden></span></div>
-        <div class="lv-bar" id="lv-bar" role="progressbar" aria-valuemin="0" data-i18n-aria="level.title"><i id="lv-fill"></i></div>
-        <p class="lv-next" id="lv-next"></p>
-      </div>
-      <!-- All of today's challenges done: the big card goes away and they live here, folded. -->
-      <div class="lv-ch" id="lv-ch" hidden>
-        <button type="button" class="lv-ch-toggle" id="lv-ch-toggle" aria-expanded="false" aria-controls="lv-ch-list">
-          <span class="lv-ch-tick" aria-hidden="true">✓</span><span id="lv-ch-text"></span><span class="lv-ch-caret" aria-hidden="true"></span>
-        </button>
-        <div id="lv-ch-list-wrap" hidden>
-          <ul class="ch-list" id="lv-ch-list"></ul>
-          <p class="ch-full" id="ch-full"></p>
-        </div>
-      </div>
-    </section>
-
-    <section class="card league" id="league" aria-labelledby="lg-name" hidden>
-      <div class="lg-emblem" id="lg-emblem"></div>
-      <div class="lg-body">
-        <div class="lg-head"><h2 class="lg-name" id="lg-name"></h2><span class="lg-days" id="lg-days"></span></div>
-        <p class="lg-text" id="lg-text"></p>
-        <div class="lg-bar" id="lg-bar" role="progressbar" aria-valuemin="0" data-i18n-aria="league.bar" hidden><i id="lg-fill"></i></div>
-        <button type="button" class="link lg-letter" id="lg-letter" data-i18n="weekly.open"></button>
-      </div>
-    </section>
-
-    <section class="card sc-tip" id="sc-tip" aria-labelledby="sc-tip-title" hidden>
+    <section data-page="aprender" class="card sc-tip" id="sc-tip" aria-labelledby="sc-tip-title" hidden>
       <div>
         <h2 id="sc-tip-title" data-i18n="album.tip_title"></h2>
         <p><kbd id="sc-tip-keys"></kbd> <span id="sc-tip-text"></span></p>
@@ -217,16 +328,7 @@
       </div>
     </section>
 
-    <section class="card shortcuts" id="shortcuts" aria-labelledby="sc-title" hidden>
-      <div class="sc-head">
-        <h2><span id="sc-title" data-i18n="shortcuts.title"></span><button type="button" class="info" data-tip="tip.shortcuts" data-i18n-aria="tip.more">i</button></h2>
-        <strong class="sc-total" id="sc-total"></strong>
-      </div>
-      <p class="sc-line muted" id="sc-line"></p>
-      <ul class="chips sc-kinds" id="sc-kinds"></ul>
-    </section>
-
-    <section class="card corrections" id="corrections" aria-labelledby="cr-title" hidden>
+    <section data-page="aprender" class="card corrections" id="corrections" aria-labelledby="cr-title" hidden>
       <h2><span id="cr-title" data-i18n="corrections.title"></span></h2>
       <p class="muted cr-empty" id="cr-empty" data-i18n="corrections.empty" hidden></p>
       <ul class="cr-keys" id="cr-keys"></ul>
@@ -234,104 +336,31 @@
       <p class="hint" data-i18n="corrections.privacy"></p>
     </section>
 
-    <section class="card challenges" id="challenges" aria-labelledby="ch-title" hidden>
-      <h2><span id="ch-title" data-i18n="ch.title"></span><button type="button" class="info" data-tip="tip.challenges" data-i18n-aria="tip.more">i</button></h2>
-      <ul class="ch-list" id="ch-list"></ul>
-    </section>
-
-    <div class="ch-ask" id="ch-ask" role="group" aria-labelledby="ch-ask-text" hidden>
-      <p id="ch-ask-text" data-i18n="ch.notify.ask"></p>
-      <div class="ch-ask-btns">
-        <button type="button" class="ch-ask-yes" id="ch-ask-yes" data-i18n="ch.notify.yes"></button>
-        <button type="button" class="ch-ask-no" id="ch-ask-no" data-i18n="ch.notify.no"></button>
-      </div>
-    </div>
-
-    <p id="social-percentile" class="social-percentile" hidden></p>
-    <p id="yesterday" class="muted yesterday" hidden></p>
-
-    <section id="empty" class="empty" hidden>
-      <h2 data-i18n="empty.title"></h2>
-      <p><span data-i18n="empty.text"></span><button type="button" class="info" data-tip="tip.burst" data-i18n-aria="tip.more">i</button></p>
-    </section>
-
-    <div id="data">
-      <section class="tiles" id="tiles">
-        <article class="tile big">
-          <span class="label"><span data-i18n="tile.avg"></span><button type="button" class="info" data-tip="tip.avg" data-tip-speed="avg" data-i18n-aria="tip.more">i</button></span>
-          <strong id="t-avg">–</strong>
-          <small id="t-net"></small>
-          <small id="t-cpm"></small>
-        </article>
-        <article class="tile">
-          <span class="label"><span data-i18n="tile.peak"></span><button type="button" class="info" data-tip="tip.peak" data-tip-speed="peak" data-i18n-aria="tip.more">i</button></span>
-          <strong id="t-peak">–</strong>
-          <small id="t-peak-cpm"></small>
-        </article>
-        <article class="tile">
-          <span class="label"><span data-i18n="tile.best"></span><button type="button" class="info" data-tip="tip.best" data-i18n-aria="tip.more">i</button></span>
-          <strong id="t-best">–</strong>
-        </article>
-        <article class="tile">
-          <span class="label"><span data-i18n="tile.current"></span><button type="button" class="info" data-tip="tip.current" data-i18n-aria="tip.more">i</button></span>
-          <strong id="t-current">–</strong>
-        </article>
-        <article class="tile">
-          <span class="label"><span data-i18n="tile.time"></span><button type="button" class="info" data-tip="tip.time" data-i18n-aria="tip.more">i</button></span>
-          <strong id="t-time">–</strong>
-        </article>
-        <article class="tile">
-          <span class="label"><span data-i18n="tile.chars"></span><button type="button" class="info" data-tip="tip.chars" data-i18n-aria="tip.more">i</button></span>
-          <strong id="t-chars">–</strong>
-        </article>
-      </section>
-
-      <section class="card">
-        <h2><span data-i18n="heatmap.title"></span><button type="button" class="info" data-tip="tip.heatmap" data-i18n-aria="tip.more">i</button></h2>
-        <div id="heatmap" class="heatmap" role="group" data-i18n-aria="heatmap.title"></div>
-        <div id="heatmap-legend" class="heat-legend" hidden>
-          <span class="chip"><i data-zone="warming"></i><span data-i18n="heatmap.z.warming"></span></span>
-          <span class="chip"><i data-zone="rhythm"></i><span data-i18n="heatmap.z.rhythm"></span></span>
-          <span class="chip"><i data-zone="good"></i><span data-i18n="heatmap.z.good"></span></span>
-          <span class="chip"><i data-zone="fire"></i><span data-i18n="heatmap.z.fire"></span></span>
-          <span class="chip"><i data-zone="beating"></i><span data-i18n="heatmap.z.beating"></span></span>
-          <span class="chip"><i data-zone="super"></i><span data-i18n="heatmap.z.super"></span></span>
-          <span class="chip more"><i class="ramp"></i><span data-i18n="heatmap.more"></span></span>
-        </div>
-        <p id="heatmap-note" class="muted heat-note" data-i18n="heatmap.calibrating" hidden></p>
-      </section>
-
-      <section class="card">
-        <h2><span data-i18n="apps.title"></span><button type="button" class="info" data-tip="tip.apps" data-i18n-aria="tip.more">i</button></h2>
-        <table class="apps">
-          <thead>
-            <tr><th data-i18n="apps.app"></th><th class="num" data-i18n="apps.wpm"></th><th class="num" data-i18n="apps.chars"></th></tr>
-          </thead>
-          <tbody id="apps-body"></tbody>
-        </table>
-        <p id="apps-empty" class="muted" data-i18n="apps.empty" hidden></p>
-      </section>
-    </div>
-
-    <section class="card badges" id="badges" aria-labelledby="bd-title">
-      <h2><span id="bd-title" data-i18n="badges.title"></span><button type="button" class="info" data-tip="tip.badges" data-i18n-aria="tip.more">i</button></h2>
-      <p class="bd-count" id="bd-count"></p>
-      <ul class="bd-grid" id="bd-grid"></ul>
-    </section>
-
-    <section class="card records" id="records" aria-labelledby="rc-title" hidden>
-      <h2><span id="rc-title" data-i18n="records.title"></span><button type="button" class="info" data-tip="tip.records" data-i18n-aria="tip.more">i</button></h2>
-      <ul class="rc-grid" id="rc-grid"></ul>
-    </section>
-
-    <details class="card album" id="album">
+    <details data-page="aprender" class="card album" id="album">
       <summary><h2 data-i18n="album.title"></h2></summary>
       <p class="hint" data-i18n="album.hint"></p>
       <p class="al-count" id="al-count"></p>
       <div id="al-grid"></div>
     </details>
 
-    <details class="card friends" id="friends">
+    <details data-page="tapomo" class="card wardrobe" id="wardrobe">
+      <summary><h2 data-i18n="wd.title"></h2></summary>
+      <p class="hint" data-i18n="wd.hint"></p>
+      <fieldset class="wd-style">
+        <legend data-i18n="wd.style"></legend>
+        <label><input type="radio" name="wd-style" value="bold"><span data-i18n="wd.style.bold"></span></label>
+        <label><input type="radio" name="wd-style" value="subtle"><span data-i18n="wd.style.subtle"></span></label>
+      </fieldset>
+      <p class="hint" data-i18n="wd.style.hint"></p>
+      <div class="wd-hair" id="wd-hair" hidden><span class="wd-hair-label" data-i18n="wd.hair"></span><div class="wd-hair-row" id="wd-hair-row" role="group" data-i18n-aria="wd.hair"></div></div>
+      <h3 data-i18n="wd.skins"></h3>
+      <div class="wd-grid" id="wd-skins"></div>
+      <h3 data-i18n="wd.accessories"></h3>
+      <p class="wd-removed" id="wd-removed" aria-live="polite" hidden></p>
+      <div class="wd-grid" id="wd-accs"></div>
+    </details>
+
+    <details data-page="tapomo" class="card friends" id="friends">
       <summary><h2 data-i18n="social.leagues"></h2></summary>
       <p class="hint" data-i18n="social.leagues.hint"></p>
       <div id="lf-join">
@@ -355,45 +384,7 @@
       </div>
     </details>
 
-    <details class="card wardrobe" id="wardrobe">
-      <summary><h2 data-i18n="wd.title"></h2></summary>
-      <p class="hint" data-i18n="wd.hint"></p>
-      <fieldset class="wd-style">
-        <legend data-i18n="wd.style"></legend>
-        <label><input type="radio" name="wd-style" value="bold"><span data-i18n="wd.style.bold"></span></label>
-        <label><input type="radio" name="wd-style" value="subtle"><span data-i18n="wd.style.subtle"></span></label>
-      </fieldset>
-      <p class="hint" data-i18n="wd.style.hint"></p>
-      <div class="wd-hair" id="wd-hair" hidden><span class="wd-hair-label" data-i18n="wd.hair"></span><div class="wd-hair-row" id="wd-hair-row" role="group" data-i18n-aria="wd.hair"></div></div>
-      <h3 data-i18n="wd.skins"></h3>
-      <div class="wd-grid" id="wd-skins"></div>
-      <h3 data-i18n="wd.accessories"></h3>
-      <p class="wd-removed" id="wd-removed" aria-live="polite" hidden></p>
-      <div class="wd-grid" id="wd-accs"></div>
-    </details>
-
-    <section class="card support" id="support" aria-labelledby="sp-title">
-      <div class="sp-art"><svg id="sp-mascot" viewBox="0 0 160 160" aria-hidden="true"></svg><span class="sp-heart" aria-hidden="true">💗</span></div>
-      <div class="sp-body">
-        <h2 id="sp-title" data-i18n="support.title"></h2>
-        <div id="sp-ask">
-          <p data-i18n="support.text"></p>
-          <p class="sp-buttons">
-            <a class="sp-btn" id="sp-kofi" href="#" target="_blank" rel="noopener" data-i18n="support.kofi"></a>
-            <a class="sp-btn ghost" id="sp-sponsors" href="#" target="_blank" rel="noopener" data-i18n="support.sponsors"></a>
-          </p>
-          <p class="hint" data-i18n="support.perk"></p>
-        </div>
-        <p class="sp-thanks" id="sp-thanks" data-i18n="support.thanks" hidden></p>
-        <details class="sp-code-box">
-          <summary data-i18n="support.have_code"></summary>
-          <div class="sp-code-row"><input id="sp-code" autocomplete="off" spellcheck="false" data-i18n-placeholder="support.code_ph"><button type="button" id="sp-redeem" data-i18n="support.redeem"></button></div>
-          <p class="hint" id="sp-msg" aria-live="polite" hidden></p>
-        </details>
-      </div>
-    </section>
-
-    <section class="card" id="settings">
+    <section data-page="ajustes" class="card" id="settings">
       <h2 data-i18n="settings.title"></h2>
 
       <div class="row">
@@ -466,12 +457,7 @@
       </form>
     </section>
 
-    <details class="card glossary" id="glossary">
-      <summary><h2 data-i18n="gloss.title"></h2></summary>
-      <dl id="glossary-list"></dl>
-    </details>
-
-    <section class="card about">
+    <section data-page="ajustes" class="card about" id="about">
       <h2 data-i18n="about.title"></h2>
       <p id="about-version" class="muted"></p>
       <p class="privacy" data-i18n="about.privacy"></p>
@@ -485,6 +471,32 @@
         <a href="https://github.com/polrue/tapomo/issues/new/choose" target="_blank" rel="noopener" data-i18n="about.feedback"></a>
       </p>
     </section>
+
+    <section data-page="apoya" class="card support" id="support" aria-labelledby="sp-title">
+      <div class="sp-art"><svg id="sp-mascot" viewBox="0 0 160 160" aria-hidden="true"></svg><span class="sp-heart" aria-hidden="true">💗</span></div>
+      <div class="sp-body">
+        <h2 id="sp-title" data-i18n="support.title"></h2>
+        <div id="sp-ask">
+          <p data-i18n="support.text"></p>
+          <p class="sp-buttons">
+            <a class="sp-btn" id="sp-kofi" href="#" target="_blank" rel="noopener" data-i18n="support.kofi"></a>
+            <a class="sp-btn ghost" id="sp-sponsors" href="#" target="_blank" rel="noopener" data-i18n="support.sponsors"></a>
+          </p>
+          <p class="hint" data-i18n="support.perk"></p>
+        </div>
+        <p class="sp-thanks" id="sp-thanks" data-i18n="support.thanks" hidden></p>
+        <details class="sp-code-box">
+          <summary data-i18n="support.have_code"></summary>
+          <div class="sp-code-row"><input id="sp-code" autocomplete="off" spellcheck="false" data-i18n-placeholder="support.code_ph"><button type="button" id="sp-redeem" data-i18n="support.redeem"></button></div>
+          <p class="hint" id="sp-msg" aria-live="polite" hidden></p>
+        </details>
+      </div>
+    </section>
+
+    <details data-page="all" class="card glossary" id="glossary">
+      <summary><h2 data-i18n="gloss.title"></h2></summary>
+      <dl id="glossary-list"></dl>
+    </details>
   </main>
 
   <div id="welcome" class="welcome" hidden>

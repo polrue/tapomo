@@ -63,6 +63,7 @@ const Support = (() => {
 
   function openCard() {
     const card = $('support');
+    SectionNav.show('apoya');
     card.scrollIntoView({ behavior: Mascot.reduced() ? 'auto' : 'smooth', block: 'center' });
     $('sp-code').focus({ preventScroll: true });
   }

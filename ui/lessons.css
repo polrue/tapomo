@@ -1,10 +1,4 @@
-/* Typing lessons (0.4). The lessons view replaces the stats in the main window. */
-.lessons { display: none; }
-body[data-view="lessons"] .lessons { display: block; }
-body[data-view="lessons"] main > :not(.lessons) { display: none !important; }
-body[data-view="lessons"] #range-tabs { visibility: hidden; }
-.lessons-btn { border-radius: 999px; padding: 8px 16px; font-weight: 800; }
-.lessons-btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+/* Typing lessons (0.4), on the «Aprender» page. */
 .ls-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
 .ls-head h2 { margin: 0; flex: 1; min-width: 200px; }
 .ls-layout-pick { display: inline-flex; gap: 6px; align-items: center; font-weight: 700; }

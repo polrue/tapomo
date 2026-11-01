@@ -39,3 +39,27 @@ main > section, main > details, main > div#data { scroll-margin-top: calc(var(--
 }
 body { padding-top: var(--head-full, 150px); }
 body.nav-measure .sticky-head, body.nav-measure .sticky-head * { transition: none !important; }
+
+/* Pages by topic: four tabs plus two icons (Ajustes, Apoya) in the header. */
+.page-nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.page-tabs button { padding: 7px 16px; }
+.page-icon {
+  display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 50%;
+  background: var(--card); border: 1px solid var(--line); color: var(--muted); cursor: pointer;
+}
+.page-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+.page-icon.heart svg { stroke-width: 2; }
+.page-icon:hover { color: var(--ink); border-color: var(--accent); }
+.page-icon[aria-current] { background: var(--accent); border-color: var(--accent); color: #23202b; }
+.page-icon.heart[aria-current] svg { fill: currentColor; }
+.range-tabs { width: fit-content; margin: 0 0 14px; }
+body.scrolled .page-tabs button { padding: 5px 13px; }
+body.scrolled .page-icon { width: 32px; height: 32px; }
+
+/* Only the cards of the page you're on («all» = every page). */
+body[data-page="hoy"] main > [data-page]:not([data-page="hoy"], [data-page="all"]),
+body[data-page="progreso"] main > [data-page]:not([data-page="progreso"], [data-page="all"]),
+body[data-page="aprender"] main > [data-page]:not([data-page="aprender"], [data-page="all"]),
+body[data-page="tapomo"] main > [data-page]:not([data-page="tapomo"], [data-page="all"]),
+body[data-page="ajustes"] main > [data-page]:not([data-page="ajustes"], [data-page="all"]),
+body[data-page="apoya"] main > [data-page]:not([data-page="apoya"], [data-page="all"]) { display: none !important; }

@@ -98,14 +98,13 @@ const Progress = (() => {
   /** Where the explanation can send you: [label key, action]. */
   const GO = {
     early_goal: ['ch.go.goal', () => goToSetting('s-goal')],
-    lesson: ['ch.go.lessons', () => { window.scrollTo({ top: 0 }); Lessons.open(); }],
+    lesson: ['ch.go.lessons', () => SectionNav.show('aprender')],
     shortcuts: ['ch.go.shortcuts', () => SectionNav.jump('shortcuts')],
     learnt: ['ch.go.shortcuts', () => SectionNav.jump('shortcuts')],
   };
 
-  /** Opens Settings (leaving the lessons view if needed), scrolls to a field and highlights it briefly. */
+  /** Opens Settings (switching page if needed), scrolls to a field and highlights it briefly. */
   function goToSetting(id) {
-    if (document.body.dataset.view === 'lessons') Lessons.close();
     SectionNav.jump('settings');
     const el = $(id);
     const target = el.closest('.row, label, div') || el;
@@ -547,7 +546,6 @@ const Progress = (() => {
     look.type = 'button';
     look.addEventListener('click', () => {
       closeToast(level);
-      if (document.body.dataset.view === 'lessons') Lessons.close();
       SectionNav.jump('wardrobe');
     });
     nav.append(look);
