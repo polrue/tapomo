@@ -351,7 +351,8 @@ async function refreshAll() {
     renderSpeedStats().catch(showError);
     renderYesterday().catch(showError);
     renderGoal().catch(showError);
-    Progress.refresh(range).then(() => Badges.refresh()).then(() => League.refresh()).catch(showError);
+    // Challenges and level live on «Hoy», whatever range the stats page shows.
+    Progress.refresh('today').then(() => Badges.refresh()).then(() => League.refresh()).catch(showError);
     Shortcuts.refresh(range).catch(showError);
     Corrections.refresh().catch(showError);
     Album.refreshTip(range).catch(showError);

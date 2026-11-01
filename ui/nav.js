@@ -1,15 +1,22 @@
-// Sticky header + section bar (0.7.0): the main window is long, so the header (Tapomo, Lessons and the
-// range tabs) stays on top, a little smaller once you scroll, and a bar of chips jumps to any card.
-// Only cards that are visible right now get a chip; the one you're looking at is highlighted.
+// Sticky header + section bar (0.7.0): the header stays on top, a little smaller once you scroll, and a
+// bar of chips jumps to any card. Only cards that are visible right now get a chip; the one you're
+// looking at is highlighted.
+// Pages: the window is split by topic (Hoy, Progreso, Aprender, Tapomo, plus Ajustes and Apoya behind two
+// icons). Every card in <main> says its page in data-page ("all" = every page); the chips only list the
+// cards of the page you're on.
 const SectionNav = (() => {
   const $ = (id) => document.getElementById(id);
   // [element id, i18n key of its chip]
   const SECTIONS = [
     ['live', 'nav.live'], ['goal', 'goal.title'], ['level', 'nav.level'], ['league', 'nav.league'], ['challenges', 'ch.title'],
     ['shortcuts', 'nav.shortcuts'], ['data', 'nav.stats'], ['records', 'records.title'], ['badges', 'badges.title'],
-    ['album', 'album.title'], ['friends', 'social.leagues'], ['wardrobe', 'wd.title'], ['support', 'support.title'],
-    ['settings', 'settings.title'],
+    ['lessons', 'lessons.button'], ['corrections', 'corrections.title'], ['album', 'album.title'],
+    ['friends', 'social.leagues'], ['wardrobe', 'wd.title'], ['support', 'support.title'],
+    ['settings', 'settings.title'], ['about', 'about.title'],
   ];
+  const PAGES = ['hoy', 'progreso', 'aprender', 'tapomo', 'ajustes', 'apoya'];
+  const PAGE_KEY = 'tapomo.page';
+  let page = 'hoy';
   let current = null;
   let shown = [];
 
@@ -19,14 +26,13 @@ const SectionNav = (() => {
     if (!document.body.classList.contains('scrolled')) syncOffset(); // labels may have changed its height
     const bar = $('section-nav');
     const list = $('sn-list');
-    const lessons = document.body.dataset.view === 'lessons';
-    bar.hidden = lessons;
     list.replaceChildren();
-    shown = [];
-    if (lessons) return;
     // Chips follow the page's own order, so the highlight and the bar always agree.
     shown = SECTIONS.filter(([id]) => visible($(id)))
       .sort(([a], [b]) => ($(a).compareDocumentPosition($(b)) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+    // A page with a single card needs no bar.
+    bar.hidden = shown.length < 2;
+    if (bar.hidden) shown = [];
     for (const [id, key] of shown) {
       const li = document.createElement('li');
       const a = document.createElement('a');
@@ -43,9 +49,33 @@ const SectionNav = (() => {
     highlight();
   }
 
+  /** Shows one page: the others' cards are hidden by CSS (body[data-page]). Lessons run only on theirs. */
+  function show(next, { remember = true } = {}) {
+    if (!PAGES.includes(next)) next = 'hoy';
+    const was = page;
+    page = next;
+    document.body.dataset.page = next;
+    document.querySelectorAll('#page-nav [data-page]').forEach((b) => {
+      const on = b.dataset.page === next;
+      if (b.getAttribute('role') === 'tab') b.setAttribute('aria-selected', String(on));
+      else b.toggleAttribute('aria-current', on);
+    });
+    if (remember) { try { localStorage.setItem(PAGE_KEY, next); } catch (_) { /* storage can be unavailable */ } }
+    if (typeof Lessons !== 'undefined') {
+      if (next === 'aprender' && document.body.dataset.view !== 'lessons') Lessons.open();
+      else if (next !== 'aprender' && was === 'aprender') Lessons.close();
+    }
+    // Folded cards (wardrobe, leagues, album) open on their own page: there's little else on it.
+    document.querySelectorAll(`main > details[data-page="${next}"]`).forEach((d) => { d.open = true; });
+    window.scrollTo({ top: 0 });
+    render();
+  }
+
   /** Scrolls so the card's top sits just under the header (compact, unless it's the first card). */
   function jump(id) {
     const el = $(id);
+    const home = el.closest('main > [data-page]');
+    if (home && home.dataset.page !== 'all' && home.dataset.page !== page) show(home.dataset.page);
     if (el.tagName === 'DETAILS') el.open = true; // wardrobe, album and leagues open when you jump to them
     const wasCompact = document.body.classList.contains('scrolled');
     // Measure the header as it will be where we land (compact), without waiting for its transition.
@@ -122,6 +152,14 @@ const SectionNav = (() => {
   }
 
   function bind() {
+    document.querySelectorAll('#page-nav [data-page]').forEach((b) => b.addEventListener('click', () => show(b.dataset.page)));
+    // A mouse wheel has no sideways scroll: turn it into one while over the chips.
+    $('sn-list').addEventListener('wheel', (e) => {
+      const list = e.currentTarget;
+      if (list.scrollWidth <= list.clientWidth || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      e.preventDefault();
+      list.scrollBy({ left: e.deltaY, behavior: 'auto' });
+    }, { passive: false });
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', () => {
       // Re-measure the full header at the new width.
@@ -137,8 +175,10 @@ const SectionNav = (() => {
       pending = setTimeout(render, 150);
     }).observe(document.querySelector('main'), { attributes: true, attributeFilter: ['hidden'], subtree: true });
     syncOffset();
-    render();
+    let saved = null;
+    try { saved = localStorage.getItem(PAGE_KEY); } catch (_) { /* storage can be unavailable */ }
+    show(saved || 'hoy', { remember: false });
   }
 
-  return { bind, render, jump };
+  return { bind, render, jump, show };
 })();

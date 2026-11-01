@@ -503,7 +503,7 @@ const Lessons = (() => {
 
   /** From the «Teclas que más corriges» card: open the lessons and start the practice at once. */
   async function practiceNow() {
-    open();
+    SectionNav.show('aprender');
     await refresh();
     if (practiceKeys.length) startPractice();
   }
@@ -852,14 +852,10 @@ const Lessons = (() => {
   // ------------------------------------------------------------- the view
   function open() {
     document.body.dataset.view = 'lessons';
-    SectionNav.render();
-    $('lessons-btn').setAttribute('aria-pressed', 'true');
     refresh().catch(showError);
   }
   function close() {
     document.body.dataset.view = '';
-    SectionNav.render();
-    $('lessons-btn').setAttribute('aria-pressed', 'false');
     stopTick();
     run = null;
     if (kb) kb.clear();
@@ -867,8 +863,6 @@ const Lessons = (() => {
   }
 
   function bind() {
-    $('lessons-btn').addEventListener('click', () => (document.body.dataset.view === 'lessons' ? close() : open()));
-    $('ls-close').addEventListener('click', close);
     $('ls-layout').addEventListener('change', () => {
       layout = $('ls-layout').value;
       try { localStorage.setItem(STORE, layout); } catch (_) { /* optional */ }
