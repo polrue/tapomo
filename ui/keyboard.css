@@ -19,10 +19,8 @@
   --kb-next-ring: var(--accent-strong, #f0764a);
   --kb-ok: #7fd49a;
   --kb-bad: #f29a9a;
-  --hd-skin: #fff1ea;
-  --hd-line: rgba(120, 90, 90, 0.38);
-  --hd-face: #7a5560;
-  --hd-cheek: #ffb3bd;
+  --kh-ink: #5b4a63; /* hands drawing */
+  --kh-op: 0.3;
   font-family: var(--font, "Nunito", "Segoe UI", system-ui, sans-serif);
   container-type: inline-size;
   width: 100%;
@@ -48,10 +46,8 @@
     --kb-f9: #674266;
     --kb-ok: #5fbf7f;
     --kb-bad: #d97a7a;
-    --hd-skin: #4a4155;
-    --hd-line: rgba(0, 0, 0, 0.5);
-    --hd-face: #f5eefb;
-    --hd-cheek: #a2566e;
+    --kh-ink: #f3e9ff;
+    --kh-op: 0.24;
   }
 }
 
@@ -161,63 +157,23 @@
   box-shadow: inset 0 -2px 0 color-mix(in oklab, var(--fc) 70%, var(--kb-lip-mix)), 0 0 0 1px var(--kb-edge);
 }
 
-/* Hands under the keyboard: chubby mochi hands, the finger to use lights up. */
-.kb-hands {
-  display: block;
-  /* Same scale as the keyboard: the hands viewBox is a 464/612 slice that starts at x = 44. */
-  width: calc(464 / 612 * 100%);
-  margin: 2px 0 0 calc(44 / 612 * 100%);
-  height: auto;
-  overflow: visible;
-  pointer-events: none;
-  user-select: none;
-}
-.hd-f0 { --fc: var(--kb-f0); }
-.hd-f1 { --fc: var(--kb-f1); }
-.hd-f2 { --fc: var(--kb-f2); }
-.hd-f3 { --fc: var(--kb-f3); }
-.hd-f4, .hd-f5 { --fc: var(--kb-thumb); }
-.hd-f6 { --fc: var(--kb-f6); }
-.hd-f7 { --fc: var(--kb-f7); }
-.hd-f8 { --fc: var(--kb-f8); }
-.hd-f9 { --fc: var(--kb-f9); }
-
-.hd-shape {
-  fill: color-mix(in oklab, var(--fc) 62%, var(--hd-skin));
-  stroke: var(--hd-line);
-  stroke-width: 2;
-  transition: fill 0.18s ease;
-}
-.hd-palm {
-  fill: var(--hd-skin);
-  stroke: var(--hd-line);
-  stroke-width: 2;
-}
-.hd-nail { fill: #fff; opacity: 0.45; }
-.hd-eye { fill: var(--hd-face); }
-.hd-smile { fill: none; stroke: var(--hd-face); stroke-width: 2.2; stroke-linecap: round; }
-.hd-cheek { fill: var(--hd-cheek); opacity: 0.55; }
-
-.hd-part { transform-box: fill-box; }
-.has-next .hd-part:not(.is-active):not(.is-after) .hd-shape { opacity: 0.8; }
-.hd-part.is-active .hd-shape {
-  fill: color-mix(in oklab, var(--fc) 45%, var(--kb-next));
-  stroke: var(--kb-next-ring);
-  stroke-width: 3.2;
-}
-.hd-part.is-active .hd-nail { opacity: 0.85; }
-.hd-part.is-after .hd-shape {
-  fill: color-mix(in oklab, var(--fc) 80%, var(--kb-next));
-  stroke: var(--kb-next-ring);
-  stroke-width: 2.4;
-  stroke-dasharray: 5 4;
-}
-.hd-part.is-active { animation: hd-press 0.12s ease-out both; }
-@keyframes hd-press {
-  from { transform: translateY(5px); }
-  to { transform: translateY(-4px); }
-}
+/* Hands over the keyboard (hands.js): a translucent drawing resting on the home row; the finger to
+   use bends to the key and its tip takes the colour of its keys. */
+.kb.kh-on { position: relative; }
+.kb.kh-on > .kb-svg { margin-bottom: var(--kh-extra, 10%); }
+.kh { position: absolute; inset: 0 0 auto 0; width: 100%; height: auto; overflow: visible; pointer-events: none; user-select: none; }
+.kh-body { opacity: var(--kh-op); }
+.kh-ink { fill: var(--kh-ink); }
+.kh-hand, .kh-finger { transform-box: view-box; transform-origin: 0 0; transition: transform var(--kh-move, 0.17s) ease-out; }
+.kh-lit { opacity: 0; transition: transform var(--kh-move, 0.17s) ease-out, opacity 0.14s ease; }
+/* Stronger versions of the legend colours: the pastels vanish over the translucent hands. */
+.kh-lit { --tc: #d39a6a; } /* thumbs */
+.kh-lit.kb-f0 { --tc: #f27a96; } .kh-lit.kb-f1 { --tc: #f5a463; } .kh-lit.kb-f2 { --tc: #e5bd2e; }
+.kh-lit.kb-f3 { --tc: #62bf62; } .kh-lit.kb-f6 { --tc: #44b3cb; } .kh-lit.kb-f7 { --tc: #7a91f0; }
+.kh-lit.kb-f8 { --tc: #a77fe6; } .kh-lit.kb-f9 { --tc: #e276be; }
+.kh-lit stop { stop-color: var(--tc); }
+.kh-lit.is-active { opacity: 0.9; }
+.kh-lit.is-after { opacity: 0.3; }
 @media (prefers-reduced-motion: reduce) {
-  .hd-shape { transition: none; }
-  .hd-part.is-active { animation: none; transform: translateY(-4px); }
+  .kh-hand, .kh-finger, .kh-lit { transition: none; }
 }
