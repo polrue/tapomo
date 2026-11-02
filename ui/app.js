@@ -871,10 +871,9 @@ function renderGlossary() {
 }
 
 function openGlossary() {
-  const g = $('glossary');
-  g.open = true;
-  g.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
-  g.querySelector('summary').focus({ preventScroll: true });
+  // It lives on the settings page: jump() switches page, opens it and scrolls.
+  SectionNav.jump('glossary');
+  $('glossary').querySelector('summary').focus({ preventScroll: true });
 }
 
 // -------------------------------------------------------------------- init
