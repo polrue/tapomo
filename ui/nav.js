@@ -12,7 +12,7 @@ const SectionNav = (() => {
     ['shortcuts', 'nav.shortcuts'], ['data', 'nav.stats'], ['records', 'records.title'], ['badges', 'badges.title'],
     ['lessons', 'lessons.button'], ['corrections', 'corrections.title'], ['album', 'album.title'],
     ['friends', 'social.leagues'], ['wardrobe', 'wd.title'], ['support', 'support.title'],
-    ['settings', 'settings.title'], ['about', 'about.title'],
+    ['settings', 'settings.title'], ['glossary', 'gloss.title'], ['about', 'about.title'],
   ];
   const PAGES = ['hoy', 'progreso', 'aprender', 'tapomo', 'ajustes', 'apoya'];
   const PAGE_KEY = 'tapomo.page';
@@ -66,7 +66,8 @@ const SectionNav = (() => {
       else if (next !== 'aprender' && was === 'aprender') Lessons.close();
     }
     // Folded cards (wardrobe, leagues, album) open on their own page: there's little else on it.
-    document.querySelectorAll(`main > details[data-page="${next}"]`).forEach((d) => { d.open = true; });
+    // The glossary stays folded: it's reference, below the settings.
+    document.querySelectorAll(`main > details[data-page="${next}"]:not(#glossary)`).forEach((d) => { d.open = true; });
     window.scrollTo({ top: 0 });
     render();
   }
@@ -174,6 +175,9 @@ const SectionNav = (() => {
       clearTimeout(pending);
       pending = setTimeout(render, 150);
     }).observe(document.querySelector('main'), { attributes: true, attributeFilter: ['hidden'], subtree: true });
+    // The header grows back with a transition, and its chip bar comes and goes with the page: measuring
+    // only when the class flips caught it half-grown, and the full header then covered the first card.
+    new ResizeObserver(() => syncOffset()).observe($('sticky-head'));
     syncOffset();
     let saved = null;
     try { saved = localStorage.getItem(PAGE_KEY); } catch (_) { /* storage can be unavailable */ }
