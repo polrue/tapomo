@@ -257,7 +257,7 @@ Function PageReinstall
   ; Reinstalling the same version
   ${If} $R0 = 0
     StrCpy $R1 "$(tapomoSameText)"
-    StrCpy $R2 "$(tapomoReinstall)"
+    StrCpy $R2 "$(tapomoUpdate)" ; same action as an upgrade, and the word people expect
     StrCpy $R3 "$(uninstallApp)"
     !insertmacro MUI_HEADER_TEXT "$(alreadyInstalled)" "$(tapomoChoose)"
   ; Upgrading
@@ -558,10 +558,8 @@ LangString tapomoCleanReinstall ${LANG_SPANISH} "Desinstalar la versión anterio
 LangString tapomoCleanReinstall ${LANG_ENGLISH} "Uninstall the earlier version and install again"
 LangString tapomoDoNothing ${LANG_SPANISH} "No hacer nada y salir"
 LangString tapomoDoNothing ${LANG_ENGLISH} "Do nothing and exit"
-LangString tapomoSameText ${LANG_SPANISH} "Esta versión de Tapomo ya está instalada. Elige qué quieres hacer y pulsa Siguiente. Al reinstalar, tus datos y ajustes se conservan."
-LangString tapomoSameText ${LANG_ENGLISH} "This version of Tapomo is already installed. Choose what you want to do and click Next. Reinstalling keeps your data and settings."
-LangString tapomoReinstall ${LANG_SPANISH} "Reinstalar (recomendado)"
-LangString tapomoReinstall ${LANG_ENGLISH} "Reinstall (recommended)"
+LangString tapomoSameText ${LANG_SPANISH} "Ya tienes Tapomo instalado. Elige qué quieres hacer y pulsa Siguiente. Al actualizar, tus datos y ajustes se conservan."
+LangString tapomoSameText ${LANG_ENGLISH} "Tapomo is already installed. Choose what you want to do and click Next. Updating keeps your data and settings."
 
 Function .onInit
   ; TAPOMO: unpack the extra step bitmaps (paths are absolute at build time, see TAPOMO_* defines above)
