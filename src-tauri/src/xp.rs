@@ -111,8 +111,11 @@ pub fn challenges(conn: &Connection, day: i64, settings: &db::Settings) -> rusql
 /// `learnt` challenge, which would otherwise never say which shortcut it means. At most three.
 #[derive(Debug, Serialize, PartialEq)]
 pub struct LearntShortcut {
+    pub id: String,
     pub label: String,
     pub text: String,
+    /// The app it is for, when it is app-specific (so the challenge can say where to use it).
+    pub app: Option<String>,
 }
 
 pub fn learnt_shortcuts(conn: &Connection, day: i64, settings: &db::Settings) -> rusqlite::Result<Vec<LearntShortcut>> {
@@ -126,7 +129,7 @@ pub fn learnt_shortcuts(conn: &Connection, day: i64, settings: &db::Settings) ->
     let mut out = Vec::new();
     for id in ids {
         if let Some(tip) = crate::catalog::describe(conn, &id, lang)? {
-            out.push(LearntShortcut { label: tip.label, text: tip.text });
+            out.push(LearntShortcut { id: tip.id, label: tip.label, text: tip.text, app: tip.app });
         }
         if out.len() == 3 {
             break;

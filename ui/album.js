@@ -4,6 +4,7 @@ const Album = (() => {
   const $ = (id) => document.getElementById(id);
   const LEVELS = ['undiscovered', 'learning', 'getting', 'almost', 'mastered'];
   let built = false;
+  let pendingReveal = null; // shortcut ids to scroll to and highlight once the album is drawn
 
   // The catalogue only has Spanish and English text; Catalan users get Spanish (same keyboard and Office labels),
   // French and German users get English.
@@ -42,6 +43,7 @@ const Album = (() => {
         const li = document.createElement('li');
         li.className = 'al-item';
         li.dataset.level = String(i.level);
+        li.dataset.id = i.id;
         const k = document.createElement('kbd');
         k.textContent = i.label;
         const txt = document.createElement('span');
@@ -59,6 +61,33 @@ const Album = (() => {
       }
       grid.append(h, ul);
     }
+    if (pendingReveal) highlight(pendingReveal);
+  }
+
+  /**
+   * Scrolls to the first of these shortcuts and flashes it (the «learnt yesterday» challenge sends you here);
+   * with none, to the album itself. Done after drawing: the lessons above it grow the page meanwhile, so
+   * the scroll worked out when the page switched falls short.
+   */
+  function highlight(ids) {
+    pendingReveal = null;
+    const behavior = Mascot.reduced() ? 'auto' : 'smooth';
+    const li = ids.map((id) => $('al-grid').querySelector(`[data-id="${CSS.escape(id)}"]`)).find(Boolean);
+    if (!li) {
+      $('album').scrollIntoView({ block: 'start', behavior });
+      return;
+    }
+    li.scrollIntoView({ block: 'center', behavior });
+    li.classList.add('flash');
+    setTimeout(() => li.classList.remove('flash'), 2600);
+  }
+
+  /** Opens the album on its page; with ids, it lands on those shortcuts. */
+  function reveal(ids = []) {
+    pendingReveal = ids;
+    const wasOpen = $('album').open;
+    SectionNav.jump('album'); // opening it fires `toggle`, which draws it
+    if (wasOpen) renderAlbum().catch(showError);
   }
 
   function bind() {
@@ -73,5 +102,5 @@ const Album = (() => {
     if (built && $('album').open) renderAlbum().catch(showError);
   }
 
-  return { bind, refreshTip, renderAlbum, onUsed };
+  return { bind, refreshTip, renderAlbum, onUsed, reveal };
 })();
