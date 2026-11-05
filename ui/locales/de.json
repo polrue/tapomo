@@ -95,6 +95,8 @@
   "pet.peak_record": "Geschwindigkeitsrekord!",
   "pet.week_record": "Bester Peak der Woche!",
   "pet.oops": "hoppla!",
+  "pet.oops2": "hoppla, hoppla!",
+  "pet.oops3": "oje, oje, oje! 😵",
   "pet.hi": "hallo!",
   "live.calibrating.bar": "Kalibrierung: {have} von {need} langen Sprints",
   "settings.logs": "Protokolle",

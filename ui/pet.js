@@ -37,6 +37,7 @@ const state = {
   zone: null,
   streak: { current: 0, best: 0 },
   oopsUntil: 0,
+  oopsSize: 1, // 1-3: how big the last "oops" was (characters fixed)
   superSince: 0, // when Supermochi started (0 = off)
   crownHoldUntil: 0, // the crown waits for the new-record jump to finish
   // Live value shown (percent of the personal reference) and how it moves.
@@ -62,7 +63,11 @@ function renderFace() {
   }
   // Supermochi keeps its own face, and the crown (if any) stays on even if a backspace reset the streak.
   if (state.zone === 'super') return Mascot.setFace(svg, { eyes: 'sparkle', mouth: 'open', cheeks: true });
-  if (Date.now() < state.oopsUntil) return Mascot.setFace(svg, { eyes: 'dots', mouth: 'wavy' });
+  if (Date.now() < state.oopsUntil) {
+    if (state.oopsSize === 3) return Mascot.setFace(svg, { eyes: 'wide', mouth: 'o', brows: true, cheeks: true });
+    if (state.oopsSize === 2) return Mascot.setFace(svg, { eyes: 'wide', mouth: 'wavy', brows: true });
+    return Mascot.setFace(svg, { eyes: 'dots', mouth: 'wavy' });
+  }
   const level = faceLevel();
   Mascot.setCrown(svg, level === 5);
   if (level === 0) Mascot.setFace(svg, { eyes: 'round', mouth: 'smile' });
@@ -212,12 +217,16 @@ function onKey(cls) {
       reviewTimer = setTimeout(() => setReview(false), REVIEW_IDLE_MS);
     }
     if (run && run.typo && run.n <= TYPO_MAX_DELETES && run.streakBefore >= OOPS_MIN_STREAK && now - run.lastAt <= REVIEW_PAUSE_MS) {
+      // One more character to fix, a bigger (still comic) fuss: «¡ups!», «¡uy, uy!», «¡ay, ay, ay!».
+      const size = run.n;
+      const ms = OOPS_MS + (size - 1) * 350;
       Mascot.crownFlyOff(svg);
-      say('pet.oops', OOPS_MS);
-      Mascot.tilt(svg);
-      state.oopsUntil = now + OOPS_MS;
+      say(size === 1 ? 'pet.oops' : `pet.oops${size}`, ms);
+      Mascot.tilt(svg, size);
+      state.oopsSize = size;
+      state.oopsUntil = now + ms;
       clearTimeout(oopsTimer);
-      oopsTimer = setTimeout(renderFace, OOPS_MS + 20);
+      oopsTimer = setTimeout(renderFace, ms + 20);
     }
   }
   renderFace();
