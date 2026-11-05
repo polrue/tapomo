@@ -734,5 +734,5 @@
   "ch.notify.no": "No, gràcies",
   "settings.notify_challenges": "Avisa'm amb una notificació de Windows en completar un repte",
   "settings.notify_challenges.hint": "Només quan Tapomo no és a la vista. Si completes els tres, reps un sol avís. La notificació només porta el text del repte, res del que escrius.",
-  "lessons.practice.bigrams":"Binomis difícils: {pairs}"
+  "lessons.practice.bigrams": "Binomis difícils: {pairs}"
 }
