@@ -95,6 +95,8 @@
   "pet.peak_record": "Record de vitesse !",
   "pet.week_record": "Meilleur pic de la semaine !",
   "pet.oops": "oups !",
+  "pet.oops2": "oups, oups !",
+  "pet.oops3": "aïe, aïe, aïe ! 😵",
   "pet.hi": "salut !",
   "live.calibrating.bar": "Calibrage : {have} sur {need} rafales longues",
   "settings.logs": "Journaux",

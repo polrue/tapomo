@@ -95,6 +95,8 @@
   "pet.peak_record": "Speed record!",
   "pet.week_record": "Best peak of the week!",
   "pet.oops": "oops!",
+  "pet.oops2": "whoops, whoops!",
+  "pet.oops3": "oh no, no, no! 😵",
   "pet.hi": "hi!",
   "live.calibrating.bar": "Calibrating: {have} of {need} long bursts",
   "settings.logs": "Logs",

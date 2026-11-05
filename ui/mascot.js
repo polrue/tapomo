@@ -263,19 +263,24 @@ const Mascot = (() => {
     svg.__anim.squishShadow = run(shadow, [{ transform: 'scale(1,1)' }, { transform: 'scale(1.05,.95)', offset: 0.3 }, { transform: 'scale(1,1)' }], { duration: 180, easing: 'ease-out' });
   }
 
-  /** Tilt of the head ("oops"): -6deg, 4deg, back. */
-  function tilt(svg) {
+  /**
+   * Tilt of the head ("oops"). `size` 1-3 grows it, always comic: 1 a small -6/4deg tilt, 2 a wobble
+   * with a little hop, 3 a dizzy wobble that sways a few times and squashes on landing.
+   */
+  const TILTS = [
+    null,
+    { ms: 460, frames: [[0, 0, 1, 1], [-6, 0, 1, 1], [4, 0, 1, 1], [0, 0, 1, 1]] },
+    { ms: 640, frames: [[0, 0, 1, 1], [-11, -4, 1, 1], [9, -2, 1, 1], [-4, 0, 1, 1], [0, 0, 1, 1]] },
+    { ms: 900, frames: [[0, 0, 1, 1], [-16, -9, .96, 1.06], [14, -6, 1, 1], [-11, -2, 1, 1], [7, 0, 1.08, .92], [-3, 0, 1, 1], [0, 0, 1, 1]] },
+  ];
+  function tilt(svg, size = 1) {
     const hop = part(svg, '.m-hop');
+    const t = TILTS[Math.max(1, Math.min(3, size))];
     svg.__anim.hop?.cancel();
     svg.__anim.hop = run(
       hop,
-      [
-        { transform: 'rotate(0deg)', easing: 'ease-out' },
-        { transform: 'rotate(-6deg)', offset: 0.28, easing: 'ease-in-out' },
-        { transform: 'rotate(4deg)', offset: 0.62, easing: 'ease-in-out' },
-        { transform: 'rotate(0deg)' },
-      ],
-      { duration: 460 }
+      t.frames.map(([r, y, sx, sy]) => ({ transform: `translateY(${y}px) rotate(${r}deg) scale(${sx},${sy})`, easing: 'ease-in-out' })),
+      { duration: t.ms }
     );
   }
 
