@@ -1,0 +1,75 @@
+/* Lab only: «Hay una actualización» study (actualiza.js). */
+/* The signs: hidden until a version is found. */
+.up-a, .up-b, .up-c { opacity: 0; transition: opacity calc(200ms / var(--speed)) ease, transform calc(200ms / var(--speed)) ease-in; }
+.up-a { transform-origin: 146px 137px; transform: scale(.3); }
+.up-b { transform-origin: 80px 138px; transform: translateY(18px) scale(.5); }
+.up-c { transform-origin: 117px 53px; transform: scale(0); }
+.found .up-a, .found .up-b, .found .up-c { opacity: 1; transform: none; transition: opacity calc(160ms / var(--speed)) ease, transform calc(520ms / var(--speed)) cubic-bezier(.34, 1.6, .64, 1); }
+.up-gift { cursor: pointer; }
+.up-parcel { transform-origin: 80px 124px; }
+/* A: the box hops now and then; the arrow floats; the ring only while downloading. */
+.found .up-box { transform-origin: 146px 137px; animation: up-hop calc(5s / var(--speed)) ease-in-out calc(1.2s / var(--speed)) infinite; }
+@keyframes up-hop { 0%, 84%, 100% { transform: none; } 88% { transform: scale(1.08, .9); } 93% { transform: translateY(-6px) scale(.96, 1.05); } 97% { transform: scale(1.04, .95); } }
+.found .up-arrow { animation: up-float calc(1.8s / var(--speed)) ease-in-out infinite; }
+@keyframes up-float { 0%, 100% { transform: none; } 50% { transform: translateY(-2.5px); } }
+.up-ring { opacity: 0; transition: opacity calc(200ms / var(--speed)) ease; }
+.busy .up-ring { opacity: 1; }
+.busy .up-arrow { animation-duration: calc(.6s / var(--speed)); }
+.up-ring-fill { transition: stroke-dashoffset 120ms linear; }
+/* C: a slow glow; faster while downloading. */
+.up-dot-glow { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; }
+.found .up-dot-glow { animation: up-glow calc(2.4s / var(--speed)) ease-out infinite; }
+.busy .up-dot-glow { animation-duration: calc(.8s / var(--speed)); }
+@keyframes up-glow { 0% { transform: scale(1); opacity: .6; } 100% { transform: scale(2.6); opacity: 0; } }
+/* B: while installing, the parcel bobs. */
+.busy .up-parcel { animation: up-bob calc(.5s / var(--speed)) ease-in-out infinite; }
+@keyframes up-bob { 50% { transform: translateY(-2px) rotate(-2deg); } }
+
+/* Progress under Tapomo, where the pace bar lives on the desktop pet. */
+.up-prog { position: absolute; left: 30px; right: 30px; top: 184px; display: grid; gap: 3px; justify-items: center; padding: 3px 8px 4px; border-radius: 10px;
+  background: color-mix(in srgb, var(--av-card) 88%, transparent); color: var(--av-ink); font-size: 10.5px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.up-bar { width: 100%; height: 7px; border-radius: 999px; background: rgba(255, 255, 255, .6); box-shadow: 0 0 0 1px rgba(35, 32, 43, .28); overflow: hidden; }
+.up-bar i { display: block; height: 100%; width: 0; border-radius: inherit; background: #3ddc97; }
+.up-prog.installing .up-bar i { background: repeating-linear-gradient(-45deg, #3ddc97 0 6px, #8ff0c4 6px 12px); background-size: 200% 100%; animation: up-stripes calc(700ms / var(--speed)) linear infinite; }
+@keyframes up-stripes { to { background-position: -17px 0; } }
+
+/* Native Windows 11 context menu look (what Tauri's menu shows). */
+.up-menu {
+  --m-bg: #f9f9f9; --m-fg: #1b1b1b; --m-line: rgba(0, 0, 0, .1); --m-hover: rgba(0, 0, 0, .06); --m-muted: #5d5d5d;
+  position: absolute; right: 152px; bottom: 112px; z-index: 6; list-style: none; margin: 0; padding: 4px; min-width: 196px;
+  background: var(--m-bg); color: var(--m-fg); border-radius: 8px; border: 1px solid var(--m-line);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, .14); font: 12.5px/1.2 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  animation: up-menu calc(160ms / var(--speed)) ease-out;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .up-menu { --m-bg: #2c2c2c; --m-fg: #f3f3f3; --m-line: rgba(255, 255, 255, .1); --m-hover: rgba(255, 255, 255, .08); --m-muted: #c5c5c5; } }
+:root[data-theme="dark"] .up-menu { --m-bg: #2c2c2c; --m-fg: #f3f3f3; --m-line: rgba(255, 255, 255, .1); --m-hover: rgba(255, 255, 255, .08); --m-muted: #c5c5c5; }
+@keyframes up-menu { from { opacity: 0; transform: translateY(-4px); } }
+.up-menu li { display: flex; align-items: center; gap: 10px; padding: 7px 12px 7px 8px; border-radius: 4px; cursor: default; white-space: nowrap; }
+.up-menu li:hover, .up-menu li.hl { background: var(--m-hover); }
+.up-menu li.up-new { font-weight: 600; }
+.up-menu .up-sep { height: 1px; padding: 0; margin: 4px 0; background: var(--m-line); border-radius: 0; }
+.up-menu .up-sep:hover { background: var(--m-line); }
+.up-ic, .up-pad, .up-chk { width: 14px; height: 14px; flex: none; }
+.up-ic { border-radius: 4px; background: #74d6bf; box-shadow: inset 0 0 0 1.5px #23202b; position: relative; }
+.up-ic::after { content: ""; position: absolute; left: 4px; top: 3px; width: 4px; height: 4px; border-left: 1.8px solid #23202b; border-top: 1.8px solid #23202b; transform: rotate(45deg); }
+.up-chk { border-radius: 3px; box-shadow: inset 0 0 0 1.3px var(--m-muted); }
+.up-cursor { position: absolute; right: 140px; bottom: 96px; z-index: 4; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 18px solid #fff; transform: rotate(-28deg); filter: drop-shadow(0 0 1px #000) drop-shadow(0 1px 1px rgba(0, 0, 0, .5)); pointer-events: none; }
+
+/* Microsoft Store (Store build): Windows' own window. */
+.up-store { position: absolute; left: 70px; top: 70px; z-index: 3; width: 186px; border-radius: 8px; overflow: hidden; background: #f3f3f3; color: #1b1b1b; box-shadow: 0 8px 18px rgba(0, 0, 0, .2); font: 12px/1.3 "Segoe UI", system-ui, sans-serif; animation: up-menu calc(220ms / var(--speed)) ease-out; }
+.up-store-bar { display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: 11px; background: #e9e9e9; }
+.up-store-ic { width: 10px; height: 10px; border-radius: 2px; background: linear-gradient(135deg, #f25022 0 50%, #7fba00 0) top / 100% 50% no-repeat, linear-gradient(135deg, #00a4ef 0 50%, #ffb900 0) bottom / 100% 50% no-repeat; }
+.up-store-body { display: grid; grid-template-columns: 22px 1fr; gap: 4px 8px; align-items: center; padding: 10px; }
+.up-store-body small { display: block; color: #5d5d5d; }
+.up-store-app { width: 22px; height: 22px; border-radius: 6px; }
+.up-store-btn { grid-column: 1 / -1; justify-self: end; padding: 4px 12px; border-radius: 4px; background: #005fb8; color: #fff; font-weight: 600; }
+.up-flav li::marker { color: var(--accent-strong); }
+
+@media (prefers-reduced-motion: reduce) {
+  .up-screen * { animation: none !important; transition: none !important; }
+}
+
+
+/* «¡Me he actualizado! Mira las novedades»: the bubble is a link. */
+.av-core .st-bubble.up-hi { cursor: pointer; font-size: 13px; line-height: 1.3; }
+.av-core .st-bubble.up-hi u { text-decoration-thickness: 1.5px; text-underline-offset: 2px; color: #b04a26; }

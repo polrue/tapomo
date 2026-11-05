@@ -228,3 +228,7 @@
 .lu-designs li button { text-align: left; }
 .lu-designs .note { margin: 0; }
 @media (max-width: 480px) { .lu-designs li { grid-template-columns: 1fr; gap: 3px; } .lu-designs li button { justify-self: start; } }
+
+/* Decided: A's badge rays behind Tapomo in B on levels 10, 25 and 50. */
+.lu-b .lu-b-rays { left: 50%; top: 18px; margin-left: -115px; }
+.lu-b .lu-a-xp { margin-top: 14px; }

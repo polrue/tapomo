@@ -112,7 +112,7 @@
   }
 
   // ---- build the fieldset
-  const root = h('fieldset', { id: 'hn' }, h('legend', {}, 'Manos en las lecciones'));
+  const root = h('fieldset', { id: 'hn', class: 'done' }, h('legend', {}, 'Manos en las lecciones ', h('span', { class: 'ok' }, 'Decidido 2026-10-31')));
   const box = h('div', { class: 'hn' });
   root.append(box);
 
@@ -121,32 +121,24 @@
   box.append(seg('Ejercicio', DRILLS.map((d, i) => [i, d.name]), () => st.drill, (v) => { st.drill = v; $.own.value = ''; setText(DRILLS[v].text); }));
   box.append(seg('Teclado', LAYOUTS, () => st.layout, (v) => { st.layout = v; kb.setLayout(v); }));
   box.append(seg('Velocidad', SPEEDS.map(([n], i) => [i, n]), () => st.speed, (v) => { st.speed = v; }));
-  if (typeof Hands2 !== 'undefined') {
-    const styleSeg = seg('Estilo de manos', [['cur', 'Actuales'], ['ilu', 'Ilustradas (propuesta)'], ['sil', 'Silueta (aparcada)']], () => st.style, (v) => {
-      st.style = v;
-      if (sil) sil.setEnabled(v === 'sil');
-      if (ilu) ilu.setEnabled(v === 'ilu');
-      $.opRow.hidden = v === 'cur';
-      $.markSeg.hidden = v !== 'ilu';
-      $.nudgeSeg.hidden = v !== 'ilu';
-    });
-    styleSeg.append(h('span', { class: 'pend' }, 'Propuesta, pendiente de Pol'));
-    box.append(styleSeg);
+  // Decided 2026-10-31: «Ilustradas» with moving fingers (lab v29, hands3.*). The silhouette hands
+  // (hands2.js) were parked: the file stays, but it is no longer attached or offered here.
+  if (typeof Hands3 !== 'undefined') {
+    st.style = 'ilu';
+    st.moving = true;
+    box.prepend(h('p', { class: 'decided-cap' }, 'Ilustradas, con los dedos que se mueven hasta la tecla (lab v29). Siluetas: aparcadas.'));
     $.opOut = h('output', {}, `${Math.round(st.op * 100)} %`);
-    $.op = h('input', { type: 'range', min: '0.08', max: '0.5', step: '0.01', value: String(st.op), 'aria-label': 'Opacidad de la silueta' });
-    $.op.addEventListener('input', () => { st.op = Number($.op.value); $.opOut.textContent = `${Math.round(st.op * 100)} %`; if (sil) sil.setOpacity(st.op); if (ilu) ilu.setOpacity(st.op); });
-    $.opRow = h('div', { class: 'hn-row' }, h('label', {}, 'Opacidad de la silueta ', $.op), $.opOut);
+    $.op = h('input', { type: 'range', min: '0.08', max: '0.5', step: '0.01', value: String(st.op), 'aria-label': 'Opacidad de las manos' });
+    $.op.addEventListener('input', () => { st.op = Number($.op.value); $.opOut.textContent = `${Math.round(st.op * 100)} %`; if (ilu) ilu.setOpacity(st.op); });
+    $.opRow = h('div', { class: 'hn-row' }, h('label', {}, 'Opacidad de las manos ', $.op), $.opOut);
     box.append($.opRow);
     $.markSeg = seg('Color del dedo', [['key', 'De su tecla'], ['accent', 'Naranja'], ['none', 'Sin color']], () => st.colour, (v) => {
       st.colour = v;
       if (ilu) ilu.setColour(v);
     });
-    $.markSeg.append(h('span', { class: 'pend' }, 'Elige una'));
+    $.markSeg.append(h('span', { class: 'note' }, ' «De su tecla» salvo que Pol elija otro'));
     box.append($.markSeg);
-    $.nudgeSeg = seg('Los dedos se mueven', [[true, 'Sí'], [false, 'No']], () => st.moving, (v) => { st.moving = v; if (ilu) ilu.setMoving(v); });
-    box.append($.nudgeSeg);
-    box.append(h('p', { class: 'note' }, 'El dibujo está recortado en palma y dedos: el dedo que toca se dobla o se estira hasta la tecla, y si la tecla queda lejos la mano entera se acerca un poco. Color: el dedo se pinta del color de su tecla (como la leyenda), en naranja o no se pinta.'));
-    box.append(h('p', { class: 'note' }, 'Ilustradas (como typing.com): un dibujo de las dos manos, translúcido, con los dedos en la fila base. Silueta: el intento anterior, aparcado.'));
+    box.append(h('p', { class: 'note' }, 'El dibujo está recortado en palma y dedos: el dedo que toca se dobla o se estira hasta la tecla, y si la tecla queda lejos la mano entera se acerca un poco. Solo la punta del dedo toma el color.'));
   }
 
   $.text = h('div', { class: 'hn-text', 'aria-live': 'off' });
@@ -174,8 +166,10 @@
   if (anchor) anchor.after(root); else panel.append(root);
 
   kb = Keyboard.render($.stage, st.layout, { t: (k) => KB_STR[k] || k, legend: true });
-  if (typeof Hands2 !== 'undefined') sil = Hands2.attach(kb, { opacity: st.op, enabled: st.style === 'sil' });
   if (typeof Hands3 !== 'undefined') ilu = Hands3.attach(kb, { opacity: st.op, enabled: st.style === 'ilu', colour: st.colour, moving: st.moving });
+  // Inside the closed «Ya decidido» block the keyboard has no size yet: re-fit the hands when it opens.
+  const fold = root.closest('details');
+  if (fold) fold.addEventListener('toggle', () => { if (fold.open && ilu) requestAnimationFrame(() => ilu.refresh()); });
   window.__labKb = kb; // lab screenshots drive it directly
   buildText();
   paint();

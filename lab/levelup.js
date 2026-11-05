@@ -316,6 +316,8 @@
       const pill = el('div', 'lu-b-pill', `Nivel ${fmt(ctx.lv)}`);
       pill.setAttribute('aria-hidden', 'true');
       const svg = heroMascot(wearing(state.saved, ctx.id));
+      // Decided: A's badge rays behind Tapomo on the round levels.
+      if ([10, 25, 50].includes(ctx.lv)) stage.append(el('div', 'lu-a-rays lu-b-rays'));
       stage.append(confetti, pill, svg);
       if (ctx.id) stage.append(el('span', 'lu-b-tag', 'Vista previa'));
       const body = el('div', 'lu-b-body');
@@ -325,9 +327,12 @@
       p.id = 'lu-text';
       if (ctx.id) { p.append('Estrenas '); p.append(el('b', '', NAMES[ctx.id])); p.append('.'); }
       else p.textContent = '¡Tapomo está orgulloso de ti!';
-      const xp = el('div', 'lu-b-xp');
+      // Decided: A's XP bar («Hacia el nivel N · faltan X XP») under the title.
+      const xp = el('div', 'lu-a-xp');
+      const row = el('div', 'lu-a-xp-row');
+      row.append(el('span', '', `Hacia el nivel ${fmt(ctx.lv + 1)}`), el('span', '', `faltan ${fmt(ctx.left)} XP`));
       const b = bar(ctx.pct);
-      xp.append(b, el('span', '', `${fmt(ctx.left)} XP para el nivel ${fmt(ctx.lv + 1)}`));
+      xp.append(row, b);
       body.append(h, p);
       if (!ctx.id && ctx.next) body.append(el('p', 'lu-b-next lu-muted', `Próximo premio en el nivel ${fmt(ctx.next[0])}: ${NAMES[ctx.next[1]]}`));
       body.append(xp);
@@ -406,35 +411,30 @@
   };
 
   // ------------------------------------------------------------------ lab panel
-  const fs = el('fieldset', 'prop');
+  const fs = el('fieldset', 'done');
   const lg = el('legend', '', 'Popup de subida de nivel ');
-  lg.append(el('span', 'pend', 'Propuesta, pendiente de Pol'));
+  lg.append(el('span', 'ok', 'Decidido 2026-10-23'));
   fs.append(lg);
   const wrap = el('div', 'lu-panel');
-  wrap.append(el('p', 'note', 'Pol pidió mejorar la estética del popup al subir de nivel. «Actual» es una copia fiel del de la app; A, B y C son las alternativas. Se abren encima de la página con el Tapomo y los dibujos de premios reales; Esc o la X los cierran.'));
-
-  const DESIGNS = [
-    ['cur', 'Actual', 'Título, «Has desbloqueado:», miniatura del premio y «¡Genial!». Sin Tapomo dentro ni XP.'],
-    ['a', 'A · Insignia', 'La insignia de nivel de la tarjeta crece y cambia de número; barra de XP y una fila con el premio. La más cercana a lo de hoy.'],
-    ['b', 'B · Escenario', 'Tapomo es el protagonista y ya lleva el premio puesto como vista previa, con confeti una vez. «Ponérmelo» es el botón principal.'],
-    ['c', 'C · Aviso discreto', 'Tarjeta pequeña en la esquina: no tapa la app ni roba el foco mientras escribes. Celebra menos, molesta menos.'],
-  ];
+  wrap.append(el('p', 'decided-cap', 'B (escenario) cuando hay premio; C (aviso en la esquina) sin premio o con la ventana sin foco. B lleva la barra de XP de A y sus rayos en los niveles 10, 25 y 50.'));
+  const opts2 = { unfocused: false };
+  const pick = () => (opts2.unfocused || !context().id ? 'c' : 'b');
   const openers = {};
-  const list = el('ul', 'lu-designs');
-  for (const [k, label, note] of DESIGNS) {
-    const li = el('li');
-    const b = btn(label, '');
-    b.setAttribute('aria-haspopup', 'dialog');
-    b.addEventListener('click', () => open(k, b));
-    openers[k] = b;
-    li.append(b, el('p', 'note', note));
-    list.append(li);
-  }
-  const dsub = el('div');
-  dsub.append(el('p', 'rw-sub', 'Abrir diseño'), list);
+  const openBtn = btn('Abrir el popup', '');
+  openBtn.setAttribute('aria-haspopup', 'dialog');
+  openBtn.addEventListener('click', () => open(pick(), openBtn));
+  openers.b = openBtn;
+  openers.c = openBtn;
+  const ufLabel = el('label');
+  const uf = el('input');
+  uf.type = 'checkbox';
+  uf.addEventListener('change', () => { opts2.unfocused = uf.checked; if (cur) open(pick(), cur.opener); });
+  ufLabel.append(uf, 'La ventana no tiene el foco');
+  const dsub = el('div', 'btns');
+  dsub.append(openBtn, ufLabel);
   wrap.append(dsub);
   function syncButtons() {
-    for (const [k, b] of Object.entries(openers)) b.classList.toggle('on', !!cur && cur.design === k);
+    openBtn.classList.toggle('on', !!cur);
   }
 
   /** A segmented control in the lab's style (.seg + .seg-z.on). */
@@ -453,7 +453,7 @@
     sync();
     return { box, sync };
   }
-  const reopen = () => { if (cur) open(cur.design, cur.opener); };
+  const reopen = () => { if (cur) open(pick(), cur.opener); };
 
   const lvSeg = seg('Nivel', [[2, '2'], [4, '4'], [10, '10'], [25, '25'], [50, '50']], () => opts.level, (v) => { opts.level = v; showLevelInfo(); reopen(); });
   const lvInfo = el('p', 'note');
@@ -490,7 +490,7 @@
   wrap.append(csub);
   wrap.append(el('p', 'note', 'Con premio, «Ponérmelo» se lo deja puesto al Tapomo del lab al cerrar. En el lab la XP del nivel nuevo es un 4 % de ejemplo (lo que sobra al subir).'));
   fs.append(wrap);
-  panel.append(fs);
+  (document.getElementById('ya-decidido-body') || panel).append(fs);
 
-  window.LevelupLab = { open: (d) => open(d, openers[d]), close, opts };
+  window.LevelupLab = { open: (d = pick()) => open(d, openBtn), close, opts };
 })();

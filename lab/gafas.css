@@ -1,0 +1,8 @@
+/* Lab only: «Gafas + racha» study (gafas.js), on the lab's Tapomo. */
+/* Tint over the worn lenses (C, and A for «de sol de chulito»): fades in slowly like real
+   photochromic lenses, out a bit faster. Chulito lenses are already dark: their tint is lighter. */
+.gs-tint { opacity: 0; transition: opacity calc(650ms / var(--speed)) ease-out; }
+.gs-c.on .gs-tint { opacity: .9; transition: opacity calc(1100ms / var(--speed)) ease-in-out; }
+.gs-c[data-round="0"].on .gs-tint { opacity: .6; }
+
+@media (prefers-reduced-motion: reduce) { .gs-tint { transition: none !important; } }

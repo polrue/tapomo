@@ -1,0 +1,31 @@
+/* Lab only: what the open studies (estudios.js) and the «Ya decidido» block add to the lab.
+   Everything else uses the lab's own classes (fieldset.prop, .pend, .rw, .seg/.seg-z, .note, .btns…). */
+
+/* «Pendiente de decidir»: the heading and the study fieldsets at the top of the panel. */
+.st-pending { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+.st-pending > .rw-sub { margin: 4px 0 -6px; }
+.st-pending fieldset { scroll-margin-top: 12px; }
+.panel .seg-z:disabled, .panel button:disabled { opacity: .45; cursor: default; }
+
+/* A desktop mock in place of the pet while a study shows it (drawn at 450 px, scaled like .scaler). */
+.stage-box.st-taken .scaler { visibility: hidden; }
+.st-mock { position: absolute; left: 0; top: 0; width: 450px; height: 450px; transform-origin: 0 0; }
+
+/* Study drawings on a mascot: pivots in Tapomo's 160 × 160 view-box px. */
+.st-ov, .st-ov * { transform-box: view-box; }
+.st-blink { transform-box: fill-box !important; transform-origin: 50% 50%; }
+.st-bubble[hidden] { display: none !important; }
+
+/* «Ya decidido»: folded block at the end of the lab panel with only the chosen option of each study. */
+details.decided { border-radius: 12px; background: var(--card); box-shadow: 0 0 0 1px var(--border); padding: 0 12px; }
+details.decided > summary { cursor: pointer; padding: 12px 2px; font-weight: 800; font-size: 1.05rem; list-style-position: inside; }
+details.decided > summary .note { display: inline; font-weight: 600; font-size: 12px; }
+details.decided > summary:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; border-radius: 6px; }
+details.decided[open] > summary { border-bottom: 1.5px solid var(--border); margin-bottom: 12px; }
+.decided-body { display: grid; gap: 14px; padding-bottom: 12px; grid-template-columns: minmax(0, 1fr); }
+fieldset.done { border-color: var(--ok-fg); border-width: 1.5px; }
+.ok { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--ok-bg); color: var(--ok-fg); vertical-align: 1px; }
+.decided-cap { margin: 0 0 8px; font-weight: 700; font-size: 13px; padding: 6px 10px; border-radius: 8px; background: var(--ok-bg); color: var(--ok-fg); }
+/* Ghost buttons, as in «Modo vergonzoso» and «Premios». */
+.st-pending button.ghost, .decided-body button.ghost { background: transparent; color: var(--fg); box-shadow: 0 0 0 1.5px var(--border) inset; }
+.st-pending button.ghost:hover, .decided-body button.ghost:hover { background: var(--chip-on); }

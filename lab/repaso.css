@@ -1,0 +1,58 @@
+/* Lab only: «Modo repaso» study (repaso.js). Overlays live inside Tapomo's body; `.st-on` on the
+   cell turns the mode on. Pivots are in Tapomo's 160 × 160 view-box px. */
+.rp-cell .st-ov { transition-property: transform, opacity; }
+
+/* ---------------------------------------------------------------- A · Lupa de investigador */
+.rp-lupa { transform-origin: 129px 116px; transform: translate(30px, 34px) rotate(32deg) scale(.3); opacity: 0;
+  transition: transform calc(280ms / var(--speed)) ease-in, opacity calc(200ms / var(--speed)) ease-in; }
+.st-on .rp-lupa { transform: none; opacity: 1;
+  transition: transform calc(560ms / var(--speed)) cubic-bezier(.34, 1.5, .64, 1) calc(var(--rp-d, 0ms) / var(--speed)), opacity calc(180ms / var(--speed)) ease calc(var(--rp-d, 0ms) / var(--speed)); }
+.rp-a.has-g { --rp-d: 300ms; }
+.rp-scan { transform-origin: 129px 116px; }
+.rp-b .rp-scan { transform-origin: 139px 132px; }
+.st-on .rp-scan { animation: rp-scan calc(2.8s / var(--speed)) ease-in-out calc(800ms / var(--speed)) infinite; }
+@keyframes rp-scan { 0%, 100% { transform: none; } 30% { transform: translate(-1.6px, .8px) rotate(-2.5deg); } 65% { transform: translate(1.6px, 1.2px) rotate(2deg); } }
+
+/* Glasses come off upwards, then back on with a bounce (after the magnifier has gone). */
+.rp-a .rw-glasses { transform-origin: 80px 84px;
+  transition: transform calc(460ms / var(--speed)) cubic-bezier(.34, 1.56, .64, 1) calc(260ms / var(--speed)), opacity calc(200ms / var(--speed)) ease calc(260ms / var(--speed)) !important; }
+.rp-a.st-on .rw-glasses { transform: translate(8px, -42px) rotate(-16deg); opacity: 0;
+  transition: transform calc(380ms / var(--speed)) cubic-bezier(.5, 0, .75, .4), opacity calc(240ms / var(--speed)) ease-in calc(140ms / var(--speed)) !important; }
+
+/* ---------------------------------------------------------------- B · Detective con gorra */
+.rp-cap { transform-origin: 80px 54px; transform: translateY(-50px) rotate(-12deg); opacity: 0;
+  transition: transform calc(300ms / var(--speed)) ease-in, opacity calc(200ms / var(--speed)) ease-in calc(100ms / var(--speed)); }
+.st-on .rp-cap { transform: none; opacity: 1; transition: transform calc(540ms / var(--speed)) cubic-bezier(.34, 1.6, .64, 1), opacity calc(140ms / var(--speed)) ease; }
+.rp-brows { opacity: 0; transform: translateY(4px); transition: opacity calc(200ms / var(--speed)) ease, transform calc(200ms / var(--speed)) ease; }
+.st-on .rp-brows { opacity: 1; transform: none; transition-delay: calc(260ms / var(--speed)); }
+.rp-lupa-b { transform-origin: 139px 132px; transform: translate(24px, 24px) rotate(30deg) scale(.35); opacity: 0;
+  transition: transform calc(260ms / var(--speed)) ease-in, opacity calc(180ms / var(--speed)) ease-in; }
+.st-on .rp-lupa-b { transform: none; opacity: 1; transition: transform calc(520ms / var(--speed)) cubic-bezier(.34, 1.5, .64, 1) calc(200ms / var(--speed)), opacity calc(160ms / var(--speed)) ease calc(200ms / var(--speed)); }
+.rp-cloud { transform-origin: 44px 44px; transform: scale(.3); opacity: 0; transition: transform calc(200ms / var(--speed)) ease-in, opacity calc(160ms / var(--speed)) ease-in; }
+.st-on .rp-cloud { transform: none; opacity: 1; transition: transform calc(420ms / var(--speed)) cubic-bezier(.34, 1.5, .64, 1) calc(620ms / var(--speed)), opacity calc(200ms / var(--speed)) ease calc(620ms / var(--speed)); }
+.rp-dots { display: none; }
+.st-quiet .rp-hmm { display: none; }
+.st-quiet .rp-dots { display: inline; }
+.rp-dots circle { transform-box: fill-box; transform-origin: 50% 50%; animation: rp-dot calc(1.2s / var(--speed)) ease-in-out infinite; }
+.rp-dots circle:nth-child(2) { animation-delay: calc(150ms / var(--speed)); }
+.rp-dots circle:nth-child(3) { animation-delay: calc(300ms / var(--speed)); }
+@keyframes rp-dot { 0%, 60%, 100% { transform: none; opacity: .5; } 30% { transform: translateY(-2.5px); opacity: 1; } }
+
+/* ---------------------------------------------------------------- C · Lápiz y libreta */
+/* The pencil slides out from behind the head along its own axis. */
+.rp-pencil { transform: translate(-16px, -12px); opacity: 0; transition: transform calc(260ms / var(--speed)) ease-in, opacity calc(160ms / var(--speed)) ease-in calc(100ms / var(--speed)); }
+.st-on .rp-pencil { transform: none; opacity: 1; transition: transform calc(520ms / var(--speed)) cubic-bezier(.34, 1.7, .64, 1), opacity calc(120ms / var(--speed)) ease; }
+.rp-pad { transform-origin: 43px 135px; transform: translate(-6px, 30px) rotate(-16deg) scale(.4); opacity: 0;
+  transition: transform calc(260ms / var(--speed)) ease-in, opacity calc(180ms / var(--speed)) ease-in; }
+.st-on .rp-pad { transform: none; opacity: 1; transition: transform calc(520ms / var(--speed)) cubic-bezier(.34, 1.45, .64, 1) calc(160ms / var(--speed)), opacity calc(160ms / var(--speed)) ease calc(160ms / var(--speed)); }
+.rp-tk { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset calc(320ms / var(--speed)) ease-out; }
+.rp-tk.done { stroke-dashoffset: 0; }
+.rp-tongue { opacity: 0; transform-origin: 83px 103px; transform: scaleY(.2); transition: opacity calc(150ms / var(--speed)) ease, transform calc(150ms / var(--speed)) ease; }
+.st-on .rp-tongue { opacity: 1; transform: none; transition: opacity calc(200ms / var(--speed)) ease calc(500ms / var(--speed)), transform calc(300ms / var(--speed)) cubic-bezier(.34, 1.6, .64, 1) calc(500ms / var(--speed)); }
+/* Glasses slide down to the tip, like reading glasses. */
+.rp-c .rw-glasses { transform-origin: 80px 84px; transition: transform calc(380ms / var(--speed)) cubic-bezier(.34, 1.4, .64, 1) !important; }
+.rp-c.st-on .rw-glasses { transform: translateY(8.5px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .rp-cell *, .rp-cell .st-ov { transition-duration: 1ms !important; transition-delay: 0s !important; animation: none !important; }
+}

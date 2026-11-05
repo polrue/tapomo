@@ -1,0 +1,6 @@
+/* Lab only: «Después de actualizar» study (reinicio.js), on the lab's Tapomo. */
+/* The stone's cracks grow from the centre (pathLength="1"). */
+.rn-crack { stroke-dasharray: 1; stroke-dashoffset: 1; }
+/* «¡Me he actualizado! Mira las novedades»: the pet's bubble is a link. */
+.pet .st-bubble.up-hi { cursor: pointer; font-size: 13px; line-height: 1.3; }
+.pet .st-bubble.up-hi u { text-decoration-thickness: 1.5px; text-underline-offset: 2px; color: #b04a26; }

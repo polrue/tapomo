@@ -1,0 +1,131 @@
+/* Lab only: «Avisos fuera de la app» study (avisos.js). A mock of the bottom-right corner of a Windows
+   screen; the cards use the APP's tokens (ui/style.css), like levelup.css. */
+.av-screen {
+  --av-wall: linear-gradient(160deg, #cfe3f5 0%, #e9def3 55%, #f6dccf 100%);
+  --av-app: #ffffff; --av-app-fg: #3a3644; --av-app-bar: #f3f1f6; --av-task: rgba(243, 241, 246, .92); --av-task-fg: #23202b;
+  --av-card: #ffffff; --av-ink: #23202b; --av-muted: #6f6980; --av-line: #f0e4dc; --av-cell: #f6eee8; --av-accent: #ff9e7a; --av-accent-strong: #f0764a;
+  --av-accent-text: #b04a26; --av-gold: #ffc93c; --av-glow: color-mix(in srgb, #ff9e7a 28%, #fff8f3); --av-shadow: 0 14px 34px rgba(0, 0, 0, .26);
+  --av-win: rgba(35, 32, 43, .5);
+  position: relative; height: 440px; border-radius: 12px; overflow: hidden; background: var(--av-wall);
+  box-shadow: 0 0 0 1px var(--border); font-family: var(--font, "Nunito", "Segoe UI", system-ui, sans-serif); isolation: isolate;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .av-screen { --av-wall: linear-gradient(160deg, #1d2a44 0%, #2a2442 55%, #3a2638 100%); --av-app: #26222f; --av-app-fg: #d9d3e3; --av-app-bar: #1f1c27; --av-task: rgba(32, 29, 40, .94); --av-task-fg: #ece8f2;
+  --av-card: #26222f; --av-ink: #f5eefb; --av-muted: #a9a2b9; --av-line: #38323f; --av-cell: #302b39; --av-accent-text: #ffb497; --av-glow: color-mix(in srgb, #ff9e7a 22%, #26222f); --av-shadow: 0 14px 34px rgba(0, 0, 0, .6); --av-win: rgba(255, 255, 255, .55); } }
+:root[data-theme="dark"] .av-screen { --av-wall: linear-gradient(160deg, #1d2a44 0%, #2a2442 55%, #3a2638 100%); --av-app: #26222f; --av-app-fg: #d9d3e3; --av-app-bar: #1f1c27; --av-task: rgba(32, 29, 40, .94); --av-task-fg: #ece8f2;
+  --av-card: #26222f; --av-ink: #f5eefb; --av-muted: #a9a2b9; --av-line: #38323f; --av-cell: #302b39; --av-accent-text: #ffb497; --av-glow: color-mix(in srgb, #ff9e7a 22%, #26222f); --av-shadow: 0 14px 34px rgba(0, 0, 0, .6); --av-win: rgba(255, 255, 255, .55); }
+
+/* The app being used: a text editor, cut by the corner. */
+.av-app { position: absolute; left: -30px; top: 18px; width: 300px; height: 230px; border-radius: 10px; background: var(--av-app); color: var(--av-app-fg); box-shadow: 0 8px 24px rgba(0, 0, 0, .18); overflow: hidden; font-size: 12.5px; }
+.av-app-bar { display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 10px 0 40px; background: var(--av-app-bar); font-size: 11px; font-weight: 700; opacity: .85; }
+.av-app-bar i { width: 10px; height: 10px; border-radius: 3px; background: #8ccbf0; }
+.av-app-body { padding: 10px 14px 0 44px; line-height: 1.5; }
+.av-app-body p { margin: 0 0 6px; }
+.av-caret::after { content: ""; display: inline-block; width: 1.5px; height: 1.1em; margin-left: 1px; vertical-align: -2px; background: currentColor; animation: av-caret 1s steps(1) infinite; }
+@keyframes av-caret { 50% { opacity: 0; } }
+
+.av-taskbar { position: absolute; left: 0; right: 0; bottom: 0; height: 40px; z-index: 5; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; background: var(--av-task); color: var(--av-task-fg); backdrop-filter: blur(8px); font-size: 11px; font-weight: 700; }
+.av-tb-apps { display: flex; gap: 8px; }
+.av-tb-apps i { width: 22px; height: 22px; border-radius: 6px; background: color-mix(in srgb, var(--av-task-fg) 16%, transparent); }
+.av-tb-apps i:first-child { background: #8ccbf0; }
+.av-tray { display: flex; align-items: center; gap: 10px; }
+.av-tray-ic { width: 14px; height: 14px; border-radius: 4.5px; background: #ff9e7a; box-shadow: inset 0 0 0 1.5px #23202b; flex: none; }
+.av-clock { font-variant-numeric: tabular-nums; }
+
+/* Windows (transparent; outlined with «Ver los bordes de las ventanas»). */
+.av-win { position: absolute; }
+.av-pet { right: 10px; bottom: 40px; width: 210px; height: 210px; z-index: 3; transition: width calc(200ms / var(--speed)) ease, height calc(200ms / var(--speed)) ease; }
+.av-pet.grow-a { width: 236px; height: 276px; }
+.av-pet.grow-c { width: 340px; }
+.show-win .av-pet, .show-win .av-toast { outline: 1.5px dashed var(--av-win); outline-offset: 0; }
+.show-win .av-pet::before { content: "ventana del Tapomo"; position: absolute; left: 4px; top: 3px; font-size: 10px; font-weight: 800; color: var(--av-win); }
+.av-core { position: absolute; right: 0; bottom: 0; width: 210px; height: 210px; }
+.av-stage { position: absolute; right: 45px; bottom: 26px; width: 120px; height: 120px; }
+.av-stage .st-mascot { width: 120px; height: 120px; display: block; overflow: visible; }
+.av-core .bubble { z-index: 4; }
+
+/* Shared card bits. */
+.av-eyebrow { font-size: .68rem; font-weight: 900; letter-spacing: .09em; text-transform: uppercase; color: var(--av-accent-text); }
+.av-title { font-weight: 900; font-size: .98rem; line-height: 1.2; }
+.av-sub { font-size: .76rem; color: var(--av-muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+.av-bar { height: 6px; border-radius: 999px; background: var(--av-cell); overflow: hidden; margin-top: 6px; }
+.av-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--av-accent), var(--av-gold)); animation: av-fill calc(900ms / var(--speed)) cubic-bezier(.34, 1.2, .64, 1) calc(300ms / var(--speed)) both; }
+@keyframes av-fill { from { transform: scaleX(0); transform-origin: 0 50%; } to { transform: none; transform-origin: 0 50%; } }
+.av-timer { position: absolute; left: 12px; right: 12px; bottom: 4px; height: 2.5px; border-radius: 2px; background: color-mix(in srgb, var(--av-accent) 70%, transparent); transform-origin: 0 50%; animation: av-count var(--t, 6000ms) linear forwards; }
+:is(.av-sign, .av-toast, .av-mini):hover .av-timer { animation-play-state: paused; }
+@keyframes av-count { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.av-screen .av-x { position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; padding: 0; border-radius: 999px; display: grid; place-items: center; background: transparent; color: var(--av-muted); box-shadow: none; z-index: 2; }
+.av-screen .av-x:hover { background: var(--av-cell); color: var(--av-ink); }
+.av-screen .av-x svg { width: 13px; height: 13px; }
+.av-screen .av-btn { font: inherit; font-size: .8rem; font-weight: 800; color: #23202b; background: var(--av-accent); border: 0; border-radius: 999px; min-height: 32px; padding: 4px 14px; cursor: pointer; }
+.av-screen .av-btn:hover { background: var(--av-accent-strong); }
+.av-screen .av-btn.av-ghost { background: transparent; color: var(--av-ink); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--av-ink) 20%, transparent); }
+.av-screen .av-btn.av-ghost:hover { background: var(--av-cell); }
+.av-screen .av-btn:disabled { background: var(--av-cell); color: var(--av-ink); cursor: default; }
+.av-screen :is(.av-btn, .av-x):focus-visible { outline: 3px solid var(--av-ink); outline-offset: 2px; }
+.av-badge svg { width: 40px; height: 40px; display: block; }
+.av-out { animation: av-out calc(240ms / var(--speed)) ease-in forwards !important; }
+@keyframes av-out { to { opacity: 0; transform: translateY(8px) scale(.96); } }
+
+/* ---------------------------------------------------------------- A · cartel */
+.av-sign {
+  position: absolute; right: 7px; bottom: 122px; width: 196px; padding: 10px 14px 12px; z-index: 2; cursor: pointer;
+  background: var(--av-card); color: var(--av-ink); border-radius: 16px; text-align: center;
+  box-shadow: 0 0 0 2.5px #23202b, 0 10px 22px -8px rgba(0, 0, 0, .45);
+  transform-origin: 50% 100%; animation: av-raise calc(520ms / var(--speed)) cubic-bezier(.34, 1.5, .64, 1) both;
+}
+@keyframes av-raise { from { opacity: 0; transform: translateY(46px) scale(.5) rotate(-6deg); } to { opacity: 1; transform: none; } }
+.av-sign .av-title { font-size: 1.02rem; }
+.av-sign .av-x { opacity: 0; transition: opacity 150ms; }
+.av-sign:hover .av-x, .av-sign:focus-within .av-x { opacity: 1; }
+.av-mitt { position: absolute; bottom: -9px; width: 16px; height: 16px; border-radius: 50%; box-shadow: 0 0 0 2.2px #23202b; }
+.av-mitt-l { left: 40px; } .av-mitt-r { right: 40px; }
+.av-sign::after { content: ""; position: absolute; left: 50%; bottom: -2px; width: 64px; margin-left: -32px; height: 0; }
+.av-confetti { position: absolute; inset: -20px 0 0; pointer-events: none; z-index: 1; }
+
+/* ---------------------------------------------------------------- B · aviso */
+.av-toast {
+  position: absolute; right: 10px; bottom: 170px; width: min(300px, calc(100% - 20px)); z-index: 4; cursor: pointer;
+  background: var(--av-card); color: var(--av-ink); border-radius: 16px; padding: 10px 12px 14px; text-align: left;
+  border: 1px solid var(--av-line); box-shadow: var(--av-shadow), 0 0 0 3px color-mix(in srgb, var(--av-accent) 22%, transparent);
+  animation: av-slide calc(460ms / var(--speed)) cubic-bezier(.34, 1.25, .64, 1) both;
+}
+@keyframes av-slide { from { opacity: 0; transform: translateX(110%); } to { opacity: 1; transform: none; } }
+.av-toast-head { display: flex; align-items: center; gap: 6px; font-size: .7rem; font-weight: 800; color: var(--av-muted); margin: -2px 0 8px; padding-right: 26px; }
+.av-toast .av-x { top: 4px; right: 4px; }
+.av-toast-row { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 10px; align-items: center; }
+.av-pic { width: 56px; height: 56px; border-radius: 14px; background: var(--av-glow); display: grid; place-items: center; overflow: hidden; }
+.av-pic .av-snap { width: 54px; height: 54px; overflow: visible; }
+.av-toast-nav { display: flex; gap: 8px; margin-top: 10px; }
+.av-toast-nav .av-btn { flex: 1; }
+
+/* ---------------------------------------------------------------- C · tarjeta */
+.av-mini {
+  position: absolute; right: 142px; bottom: 54px; width: 188px; z-index: 2; cursor: pointer;
+  background: var(--av-card); color: var(--av-ink); border-radius: 14px; padding: 9px 10px 12px; text-align: left;
+  border: 1px solid var(--av-line); box-shadow: var(--av-shadow);
+  transform-origin: 100% 70%; animation: av-pop calc(420ms / var(--speed)) cubic-bezier(.34, 1.5, .64, 1) both;
+}
+.av-mini::after { content: ""; position: absolute; right: -8px; bottom: 26px; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 9px solid var(--av-card); filter: drop-shadow(1px 0 0 var(--av-line)); }
+@keyframes av-pop { from { opacity: 0; transform: translateX(20px) scale(.6); } to { opacity: 1; transform: none; } }
+.av-mini-row { display: flex; gap: 8px; align-items: center; padding-right: 18px; }
+.av-mini .av-badge svg { width: 30px; height: 30px; }
+.av-mini .av-title { font-size: .86rem; }
+.av-mini .av-x { top: 3px; right: 3px; width: 22px; height: 22px; }
+.av-screen .av-btn-s { min-height: 28px; margin-top: 8px; width: 100%; font-size: .76rem; }
+
+/* On the lab's stage: the whole box is the screen corner (estudios.css scales it). */
+.av-screen.st-mock { position: absolute; height: 450px; border-radius: 0; box-shadow: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .av-screen *, .av-screen *::after { animation-duration: 1ms !important; animation-delay: 0s !important; transition: none !important; }
+  .av-timer { animation-duration: var(--t, 6000ms) !important; }
+  .av-caret::after { animation: none !important; }
+}
+
+/* Dark: the sign's ink outline would vanish on the dark card; use a light rim instead. */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .av-sign { box-shadow: 0 0 0 2.5px #4a4356, 0 10px 22px -8px rgba(0, 0, 0, .6); } }
+:root[data-theme="dark"] .av-sign { box-shadow: 0 0 0 2.5px #4a4356, 0 10px 22px -8px rgba(0, 0, 0, .6); }
+
+/* The «Automático» mapping: the row that applies to the chosen aviso stands out. */
+table.av-auto td { white-space: normal; }
+table.av-auto tr.on td { font-weight: 800; color: var(--fg); background: var(--chip-on); }
