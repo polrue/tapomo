@@ -344,6 +344,11 @@ fn build(conn: &Connection, id: &str, lang: &str) -> rusqlite::Result<Option<Tip
     Ok(Some(Tip { id: e.id.clone(), label, text, app }))
 }
 
+/// A catalogue shortcut's combination and description as shown to the user (`lang` is `es` or `en`).
+pub fn describe(conn: &Connection, id: &str, lang: &str) -> rusqlite::Result<Option<Tip>> {
+    build(conn, id, lang)
+}
+
 /// "Ya lo sé": never suggest it again (no level is given: levels only come from using it).
 pub fn mark_known(conn: &Connection, id: &str) -> rusqlite::Result<()> {
     conn.execute(

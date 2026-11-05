@@ -107,6 +107,34 @@ pub fn challenges(conn: &Connection, day: i64, settings: &db::Settings) -> rusql
     Ok(list)
 }
 
+/// A catalogue shortcut first used the day before `day`, as the album would show it: for the
+/// `learnt` challenge, which would otherwise never say which shortcut it means. At most three.
+#[derive(Debug, Serialize, PartialEq)]
+pub struct LearntShortcut {
+    pub label: String,
+    pub text: String,
+}
+
+pub fn learnt_shortcuts(conn: &Connection, day: i64, settings: &db::Settings) -> rusqlite::Result<Vec<LearntShortcut>> {
+    if !settings.count_shortcuts {
+        return Ok(Vec::new());
+    }
+    let mut stmt = conn.prepare("SELECT id FROM shortcut_levels WHERE first_day = ?1 ORDER BY id")?;
+    let ids = stmt.query_map([day - 1], |r| r.get::<_, String>(0))?.collect::<rusqlite::Result<Vec<_>>>()?;
+    // The catalogue only has Spanish and English text (Catalan gets Spanish), as in the album.
+    let lang = if matches!(crate::i18n::resolve(&settings.language), "es" | "ca") { "es" } else { "en" };
+    let mut out = Vec::new();
+    for id in ids {
+        if let Some(tip) = crate::catalog::describe(conn, &id, lang)? {
+            out.push(LearntShortcut { label: tip.label, text: tip.text });
+        }
+        if out.len() == 3 {
+            break;
+        }
+    }
+    Ok(out)
+}
+
 /// What a settle changed.
 #[derive(Debug, Default)]
 pub struct Settled {
@@ -191,6 +219,9 @@ pub struct ChallengeOut {
     /// `early_goal`: personal deadline, minutes since local midnight (absent for the others).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deadline_min: Option<u32>,
+    /// `learnt` only: the shortcut(s) first used yesterday; using any one of them today completes it.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub shortcuts: Vec<LearntShortcut>,
 }
 
 /// Everything the Today view and the wardrobe need.
@@ -216,8 +247,11 @@ pub fn state(conn: &Connection) -> rusqlite::Result<XpState> {
     let settings = db::get_settings(conn)?;
     let challenges = challenges(conn, today, &settings)?
         .into_iter()
-        .map(|c| ChallengeOut { id: c.id, target: c.target, progress: c.progress, done: c.done, deadline_min: c.deadline_min })
-        .collect();
+        .map(|c| {
+            let shortcuts = if c.id == "learnt" { learnt_shortcuts(conn, today, &settings)? } else { Vec::new() };
+            Ok(ChallengeOut { id: c.id, target: c.target, progress: c.progress, done: c.done, deadline_min: c.deadline_min, shortcuts })
+        })
+        .collect::<rusqlite::Result<_>>()?;
     let seen_level = db::get_raw(conn, "xp_seen_level")?.and_then(|v| v.parse().ok()).unwrap_or(1);
     let retro: Option<i64> = conn.query_row("SELECT amount FROM xp_events WHERE kind = 'retro'", [], |r| r.get(0)).optional()?;
     let retro_seen = db::get_raw(conn, "xp_retro_seen")?.is_some();
