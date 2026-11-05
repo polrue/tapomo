@@ -78,11 +78,14 @@ const Progress = (() => {
     if (c.id === 'shortcuts') return t('ch.shortcuts', { n: fmt(c.target) });
     if (c.id === 'lesson') return t('ch.lesson');
     if (c.id === 'learnt') {
-      const keys = (c.shortcuts || []).map((x) => x.label);
+      const keys = (c.shortcuts || []).map(learntKey);
       return keys.length ? t(keys.length === 1 ? 'ch.learnt.one' : 'ch.learnt.some', { keys: keys.join(', ') }) : t('ch.learnt');
     }
     return t(`ch.${c.id}`, { n: fmt(c.target) });
   }
+
+  /** «Ctrl+T en Termius»: app-specific shortcuts say where they work. */
+  const learntKey = (x) => (x.app ? t('ch.learnt.key_in', { keys: x.label, app: x.app }) : x.label);
 
   /** Yes/no challenges have no counter; the others show "2 of 3". */
   const counted = (c) => !['beat_avg', 'lesson', 'learnt'].includes(c.id);
@@ -97,7 +100,7 @@ const Progress = (() => {
     const baseline = { n: fmt(c.target), p: fmt(c.progress), m: fmt(c.progress), goal: fmt(c.target), wpm: fmt(c.target), time: c.deadline_min != null ? clock(c.deadline_min) : '' };
     if (c.id === 'learnt' && c.shortcuts?.length) {
       const one = c.shortcuts.length === 1;
-      return t(one ? 'ch.learnt.how.one' : 'ch.learnt.how.some', { keys: c.shortcuts.map((x) => x.label).join(', '), text: c.shortcuts[0].text });
+      return t(one ? 'ch.learnt.how.one' : 'ch.learnt.how.some', { keys: c.shortcuts.map(learntKey).join(', '), text: c.shortcuts[0].text });
     }
     return t(`ch.${c.id}.how`, baseline);
   }
@@ -106,8 +109,9 @@ const Progress = (() => {
   const GO = {
     early_goal: ['ch.go.goal', () => goToSetting('s-goal')],
     lesson: ['ch.go.lessons', () => SectionNav.show('aprender')],
-    shortcuts: ['ch.go.shortcuts', () => SectionNav.jump('shortcuts')],
-    learnt: ['ch.go.shortcuts', () => SectionNav.jump('shortcuts')],
+    // The usage card only shows when the range has shortcuts; otherwise the album is the place to go.
+    shortcuts: ['ch.go.shortcuts', () => ($('shortcuts').hidden ? Album.reveal() : SectionNav.jump('shortcuts'))],
+    learnt: ['ch.go.album', (c) => Album.reveal((c.shortcuts || []).map((x) => x.id))],
   };
 
   /** Opens Settings (switching page if needed), scrolls to a field and highlights it briefly. */
@@ -172,7 +176,7 @@ const Progress = (() => {
         b.type = 'button';
         b.className = 'ch-go';
         b.textContent = t(go[0]);
-        b.addEventListener('click', go[1]);
+        b.addEventListener('click', () => go[1](c));
         how.append(b);
       }
       head.addEventListener('click', () => {
