@@ -47,6 +47,9 @@ thread_local! {
     /// recognise mashing like "aaaa" or "asasas". The one exception is the key right before a plain
     /// Backspace (see `corrected_vk`), sent as a single number and turned into a daily counter.
     static LAST: RefCell<[u32; 2]> = const { RefCell::new([u32::MAX; 2]) };
+    /// When the last character key went down (ms since the epoch, hook thread only): a Backspace only
+    /// counts as correcting it if it follows within `CORRECTION_WINDOW_MS`.
+    static LAST_MS: std::cell::Cell<u64> = const { std::cell::Cell::new(0) };
 }
 
 /// Starts the hook thread. Events are sent as [`Msg::Key`].
@@ -126,6 +129,10 @@ unsafe fn handle(wparam: WPARAM, lparam: LPARAM) {
             }
             let class = classify(vk, ctrl, alt, win);
             if class == KeyClass::Ignored {
+                // Ctrl+arrows and the like still move the caret: the next Backspace is not a typo.
+                if is_nav_vk(vk) {
+                    LAST.with(|l| *l.borrow_mut() = [u32::MAX; 2]);
+                }
                 // A Ctrl/Alt/Win combination becomes one of five kinds right here; the key is dropped.
                 let shift = is_down(VK_SHIFT);
                 if let Some(kind) = tapomo_core::shortcuts::classify(vk, ctrl, alt, win, shift) {
@@ -143,13 +150,14 @@ unsafe fn handle(wparam: WPARAM, lparam: LPARAM) {
                     let mut l = l.borrow_mut();
                     let r = tapomo_core::Repeat { same_as_prev: l[0] == vk, same_as_prev2: l[1] == vk };
                     *l = [vk, l[0]];
+                    LAST_MS.with(|m| m.set(now_ms()));
                     r
                 })
             } else {
                 // A plain Backspace right after a character key: that one key (and only that one,
                 // so held-down backspaces count once) goes out as a number, before LAST is reset.
                 if class == KeyClass::Backspace {
-                    if let Some(key) = LAST.with(|l| super::corrected_vk(l.borrow()[0])) {
+                    if let Some(key) = LAST.with(|l| super::corrected_vk(l.borrow()[0], now_ms().saturating_sub(LAST_MS.with(|m| m.get())))) {
                         if let Some(tx) = SENDER.get() {
                             let _ = tx.send(Msg::Corrected { vk: key, hwnd: GetForegroundWindow().0 as isize });
                         }
@@ -176,6 +184,8 @@ fn classify(vk: u32, ctrl: bool, alt: bool, win: bool) -> KeyClass {
     }
     match vk {
         VK_BACK => KeyClass::Backspace,
+        // PgUp, PgDn, End, Home, arrows
+        0x21..=0x28 => KeyClass::Nav,
         VK_SPACE => KeyClass::Space,
         VK_RETURN => KeyClass::Enter,
         0x30..=0x39 | 0x41..=0x5A => KeyClass::Char,
@@ -187,6 +197,11 @@ fn classify(vk: u32, ctrl: bool, alt: bool, win: bool) -> KeyClass {
         0xE2 => KeyClass::Char,
         _ => KeyClass::Ignored,
     }
+}
+
+/// PgUp, PgDn, End, Home and the arrows: keys that move the caret.
+fn is_nav_vk(vk: u32) -> bool {
+    (0x21..=0x28).contains(&vk)
 }
 
 fn is_down(vk: u16) -> bool {
@@ -213,7 +228,8 @@ mod tests {
         assert_eq!(classify(VK_SPACE, false, false, false), KeyClass::Space);
         assert_eq!(classify(VK_RETURN, false, false, false), KeyClass::Enter);
         assert_eq!(classify(VK_BACK, false, false, false), KeyClass::Backspace);
-        assert_eq!(classify(0x25, false, false, false), KeyClass::Ignored); // arrows
+        assert_eq!(classify(0x25, false, false, false), KeyClass::Nav); // arrows
+        assert_eq!(classify(0x25, true, false, false), KeyClass::Ignored); // Ctrl+arrow stays a shortcut candidate
     }
 
     #[test]

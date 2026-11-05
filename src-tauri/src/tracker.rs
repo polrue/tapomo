@@ -267,7 +267,9 @@ impl Tracker {
         loop {
             match rx.recv_timeout(next_tick.saturating_duration_since(Instant::now())) {
                 Ok(Msg::Key(key)) => {
-                    self.shared.last_key_ms.store(key.t_ms, Ordering::Relaxed);
+                    if key.class != KeyClass::Nav {
+                        self.shared.last_key_ms.store(key.t_ms, Ordering::Relaxed);
+                    }
                     self.on_key(key);
                 }
                 Ok(Msg::Reload) => self.reload(),
@@ -371,6 +373,10 @@ impl Tracker {
 
         if self.shared.ui_visible() {
             let _ = self.app.emit("tapomo://key", class_name(key.class));
+        }
+        // Navigation only tells the mascot the user is moving around; the engine never sees it.
+        if key.class == KeyClass::Nav {
+            return;
         }
         self.last_key_ms = Some(key.t_ms);
 
@@ -746,6 +752,7 @@ fn class_name(class: KeyClass) -> &'static str {
         KeyClass::Backspace => "delete",
         KeyClass::WordDelete => "word_delete",
         KeyClass::Ignored => "ignored",
+        KeyClass::Nav => "nav",
     }
 }
 

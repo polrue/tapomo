@@ -26,9 +26,17 @@ pub enum KeyClass {
     WordDelete,
     /// Navigation, modifiers, shortcuts, function keys… Ignored entirely.
     Ignored,
+    /// Arrows, Home, End, PgUp, PgDn: for the engine exactly like `Ignored` (no burst, no streak, no
+    /// stats). It exists so the mascot can tell the user is moving around the text. Never which key.
+    Nav,
 }
 
 impl KeyClass {
+    /// Keys the engine does not look at at all.
+    fn is_ignored(self) -> bool {
+        matches!(self, KeyClass::Ignored | KeyClass::Nav)
+    }
+
     fn is_correction(self) -> bool {
         matches!(self, KeyClass::Backspace | KeyClass::WordDelete)
     }
@@ -299,7 +307,7 @@ impl Engine {
 
     /// Processes one keystroke. Returns a burst if this keystroke closed one.
     pub fn push(&mut self, ev: KeyEvent) -> Option<Burst> {
-        if ev.class == KeyClass::Ignored {
+        if ev.class.is_ignored() {
             return None;
         }
 
@@ -686,6 +694,7 @@ mod tests {
         type_chars(&mut e, &mut out, 0, 20, 100);
         // Arrow keys during the pause must not keep the burst alive.
         e.push(ev(3_000, KeyClass::Ignored));
+        e.push(ev(3_100, KeyClass::Nav));
         assert!(e.tick(1_900 + 2_001).is_some());
     }
 

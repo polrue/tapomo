@@ -1,5 +1,5 @@
 // Floating Tapomo. Reacts to events from the Rust side; it never sees which key was
-// pressed, only its class (char/space/enter/delete/word_delete), and receives nothing
+// pressed, only its class (char/space/enter/delete/word_delete/nav), and receives nothing
 // at all while a password field has focus.
 //
 // The window is click-through except over Tapomo's body (Rust compares the cursor with the
@@ -131,8 +131,40 @@ function onShortcut(kind) {
   el.addEventListener('animationend', () => el.remove());
 }
 
+// Reactions to deleting. The stats stay strict (any delete resets the streak, in the core engine); the pet
+// only complains about a typo caught on the fly, and only if it cost a long streak. Anything else is
+// reviewing or rewording, which is not a mistake. Only key classes are known here, never keys.
+const TYPO_MS = 1500; // a delete this soon after the last typed character is a typo being fixed
+const TYPO_MAX_DELETES = 3; // a longer run of deletes is rewording
+const OOPS_MIN_STREAK = 30; // the streak (characters) that must be lost for "¡ups!"
+// The burst pause (settings `pause_ms`, 2000 ms by default) is not sent to this window; a delete after
+// this long without typing counts as reviewing.
+const REVIEW_PAUSE_MS = 2000;
+const REVIEW_END_CHARS = 10; // normal typing for this many characters ends review mode
+const REVIEW_IDLE_MS = 6000; // ...or this long without any key
+let lastTypedAt = 0; // last char/space/enter
+let delRun = null; // { n, streakBefore, typo, lastAt } while a run of deletes is going on
+let review = false;
+let reviewChars = 0;
+let reviewTimer = null;
+
+function setReview(on) {
+  if (review === on) return;
+  review = on;
+  if (typeof Mascot.review === 'function') Mascot.review(svg, on);
+}
+
+/** Reviewing (navigating, or deleting after a pause): no complaints until typing carries on for a while. */
+function touchReview() {
+  setReview(true);
+  reviewChars = 0;
+  clearTimeout(reviewTimer);
+  reviewTimer = setTimeout(() => setReview(false), REVIEW_IDLE_MS);
+}
+
 function onKey(cls) {
-  state.lastKeyAt = Date.now();
+  const now = Date.now();
+  state.lastKeyAt = now;
   if (state.asleep) {
     state.asleep = false;
     if (!state.paused) {
@@ -142,21 +174,51 @@ function onKey(cls) {
     }
   }
   if (state.paused) return;
+  if (cls === 'nav') {
+    // Arrows, Home, End, PgUp/PgDn: the user is moving around the text, so what follows is review.
+    delRun = null;
+    touchReview();
+    return;
+  }
   Mascot.keyTick(svg);
-  if ((cls === 'delete' || cls === 'word_delete') && state.zone === 'super') {
+  const isDelete = cls === 'delete' || cls === 'word_delete';
+  if (isDelete && state.zone === 'super') {
     Mascot.superAbsorb(svg); // shielded: no "oops", no tilt, the crown stays
     return;
   }
-  if (cls === 'delete' || cls === 'word_delete') {
-    const big = cls === 'word_delete';
-    // Backspace breaks the streak: the crown (if any) flies off before the face goes back to level 1.
-    Mascot.crownFlyOff(svg);
+  if (isDelete) {
+    const streakBefore = state.streak.current;
+    if (!delRun || now - delRun.lastAt > REVIEW_PAUSE_MS) {
+      const sincePause = lastTypedAt ? now - lastTypedAt : Infinity;
+      // After a pause (or any time while reviewing) a delete is review, not a slip of the fingers.
+      if (sincePause >= REVIEW_PAUSE_MS || review) touchReview();
+      delRun = { n: 0, streakBefore, typo: !review && sincePause <= TYPO_MS, lastAt: now };
+    }
+    delRun.n += cls === 'word_delete' ? TYPO_MAX_DELETES + 1 : 1; // Ctrl+Backspace is always rewording
+    delRun.lastAt = now;
+    if (review) touchReview(); // keep the review going while deleting
+    // The streak stat is already broken; the face just recalculates (the crown, if any, only flies off on a real "oops").
     state.streak = { ...state.streak, current: 0 };
-    say(big ? 'pet.oops_big' : 'pet.oops', OOPS_MS, big);
-    Mascot.tilt(svg);
-    state.oopsUntil = Date.now() + OOPS_MS;
-    clearTimeout(oopsTimer);
-    oopsTimer = setTimeout(renderFace, OOPS_MS + 20);
+  } else {
+    // Typing resumed after a short run of deletes: only now do we know it was a typo and not a long delete.
+    const run = delRun;
+    delRun = null;
+    lastTypedAt = now;
+    if (review && ++reviewChars >= REVIEW_END_CHARS) {
+      clearTimeout(reviewTimer);
+      setReview(false);
+    } else if (review) {
+      clearTimeout(reviewTimer);
+      reviewTimer = setTimeout(() => setReview(false), REVIEW_IDLE_MS);
+    }
+    if (run && run.typo && run.n <= TYPO_MAX_DELETES && run.streakBefore >= OOPS_MIN_STREAK && now - run.lastAt <= REVIEW_PAUSE_MS) {
+      Mascot.crownFlyOff(svg);
+      say('pet.oops', OOPS_MS);
+      Mascot.tilt(svg);
+      state.oopsUntil = now + OOPS_MS;
+      clearTimeout(oopsTimer);
+      oopsTimer = setTimeout(renderFace, OOPS_MS + 20);
+    }
   }
   renderFace();
 }
