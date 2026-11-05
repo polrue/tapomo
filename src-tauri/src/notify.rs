@@ -37,14 +37,17 @@ fn clock(lang: &str, min: u32) -> String {
     }
 }
 
-/// The challenge's text as the Today view shows it (same `ch.*` keys as `ui/xp.js`).
-pub fn challenge_name(lang: &str, c: &core::Challenge) -> String {
+/// The challenge's text as the Today view shows it (same `ch.*` keys as `ui/xp.js`). `learnt` holds the
+/// combinations of the shortcuts first used yesterday (`learnt` challenge only; may be empty).
+pub fn challenge_name(lang: &str, c: &core::Challenge, learnt: &[String]) -> String {
     let n = c.target.to_string();
     let plural = |base: &str| i18n::tr(lang, &format!("{base}_{}", if c.target == 1 { "one" } else { "other" }));
     match c.id {
         "beat_avg" => fill(i18n::tr(lang, "ch.beat_avg"), &[("wpm", n)]),
         "early_goal" => fill(i18n::tr(lang, "ch.early_goal"), &[("goal", n), ("time", clock(lang, c.deadline_min.unwrap_or(0)))]),
         "long_bursts" | "bursts" => fill(plural(&format!("ch.{}", c.id)), &[("n", n)]),
+        "learnt" if learnt.len() == 1 => fill(i18n::tr(lang, "ch.learnt.one"), &[("keys", learnt[0].clone())]),
+        "learnt" if learnt.len() > 1 => fill(i18n::tr(lang, "ch.learnt.some"), &[("keys", learnt.join(", "))]),
         "lesson" | "learnt" => i18n::tr(lang, &format!("ch.{}", c.id)),
         id => fill(i18n::tr(lang, &format!("ch.{id}")), &[("n", n)]),
     }
@@ -59,9 +62,10 @@ pub fn toast_for(conn: &Connection, lang: &str, settled: &xp::Settled) -> rusqli
     let settings = db::get_settings(conn)?;
     let today = db::today_day(conn)?;
     let Some(c) = xp::challenges(conn, today, &settings)?.into_iter().find(|c| c.id == *id) else { return Ok(None) };
+    let learnt: Vec<String> = if c.id == "learnt" { xp::learnt_shortcuts(conn, today, &settings)?.into_iter().map(|s| s.label).collect() } else { Vec::new() };
     Ok(Some(Toast {
         title: i18n::tr(lang, "notify.challenge.title"),
-        body: fill(i18n::tr(lang, "notify.challenge.body"), &[("name", challenge_name(lang, &c)), ("xp", core::CHALLENGE_XP.to_string())]),
+        body: fill(i18n::tr(lang, "notify.challenge.body"), &[("name", challenge_name(lang, &c, &learnt)), ("xp", core::CHALLENGE_XP.to_string())]),
     }))
 }
 
@@ -107,11 +111,15 @@ mod tests {
 
     #[test]
     fn names_use_the_real_challenge_text() {
-        assert_eq!(challenge_name("es", &ch("chars", 3000, None)), "Escribe 3000 caracteres hoy");
-        assert_eq!(challenge_name("es", &ch("bursts", 1, None)), "Haz una ráfaga de escritura");
-        assert_eq!(challenge_name("es", &ch("early_goal", 20, Some(18 * 60))), "Cumple tu objetivo diario (20 min) antes de las 18:00");
-        assert!(challenge_name("en", &ch("early_goal", 20, Some(18 * 60))).ends_with("06:00 PM"));
-        assert!(!challenge_name("de", &ch("lesson", 1, None)).contains("ch."));
+        assert_eq!(challenge_name("es", &ch("chars", 3000, None), &[]), "Escribe 3000 caracteres hoy");
+        assert_eq!(challenge_name("es", &ch("bursts", 1, None), &[]), "Haz una ráfaga de escritura");
+        assert_eq!(challenge_name("es", &ch("early_goal", 20, Some(18 * 60)), &[]), "Cumple tu objetivo diario (20 min) antes de las 18:00");
+        assert!(challenge_name("en", &ch("early_goal", 20, Some(18 * 60)), &[]).ends_with("06:00 PM"));
+        assert!(!challenge_name("de", &ch("lesson", 1, None), &[]).contains("ch."));
+        let one = ["Ctrl+Mayús+T".to_string()];
+        assert_eq!(challenge_name("es", &ch("learnt", 1, None), &one), "Usa hoy Ctrl+Mayús+T, el atajo que aprendiste ayer");
+        assert!(challenge_name("en", &ch("learnt", 1, None), &["Ctrl+C".into(), "Ctrl+V".into()]).ends_with("Ctrl+C, Ctrl+V"));
+        assert_eq!(challenge_name("es", &ch("learnt", 1, None), &[]), "Usa hoy el atajo que aprendiste ayer");
     }
 
     #[test]

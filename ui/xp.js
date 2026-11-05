@@ -77,7 +77,10 @@ const Progress = (() => {
     if (c.id === 'long_bursts' || c.id === 'bursts') return tn(`ch.${c.id}`, c.target, { n: fmt(c.target) });
     if (c.id === 'shortcuts') return t('ch.shortcuts', { n: fmt(c.target) });
     if (c.id === 'lesson') return t('ch.lesson');
-    if (c.id === 'learnt') return t('ch.learnt');
+    if (c.id === 'learnt') {
+      const keys = (c.shortcuts || []).map((x) => x.label);
+      return keys.length ? t(keys.length === 1 ? 'ch.learnt.one' : 'ch.learnt.some', { keys: keys.join(', ') }) : t('ch.learnt');
+    }
     return t(`ch.${c.id}`, { n: fmt(c.target) });
   }
 
@@ -92,6 +95,10 @@ const Progress = (() => {
   /** The longer explanation shown when a row is opened, with real numbers. */
   function howText(c) {
     const baseline = { n: fmt(c.target), p: fmt(c.progress), m: fmt(c.progress), goal: fmt(c.target), wpm: fmt(c.target), time: c.deadline_min != null ? clock(c.deadline_min) : '' };
+    if (c.id === 'learnt' && c.shortcuts?.length) {
+      const one = c.shortcuts.length === 1;
+      return t(one ? 'ch.learnt.how.one' : 'ch.learnt.how.some', { keys: c.shortcuts.map((x) => x.label).join(', '), text: c.shortcuts[0].text });
+    }
     return t(`ch.${c.id}.how`, baseline);
   }
 
