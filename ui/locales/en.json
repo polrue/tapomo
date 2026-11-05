@@ -734,5 +734,5 @@
   "ch.notify.no": "No, thanks",
   "settings.notify_challenges": "Notify me with a Windows notification when I complete a challenge",
   "settings.notify_challenges.hint": "Only when Tapomo is not in view. If you finish all three, you get a single notice. The notification only carries the challenge text, nothing you type.",
-  "lessons.practice.bigrams":"Tricky pairs: {pairs}"
+  "lessons.practice.bigrams": "Tricky pairs: {pairs}"
 }

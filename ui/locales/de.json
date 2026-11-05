@@ -734,5 +734,5 @@
   "ch.notify.no": "Nein, danke",
   "settings.notify_challenges": "Mit einer Windows-Benachrichtigung informieren, wenn ich eine Challenge schaffe",
   "settings.notify_challenges.hint": "Nur wenn Tapomo nicht sichtbar ist. Schaffst du alle drei, bekommst du nur eine Meldung. Die Benachrichtigung enthält nur den Text der Challenge, nichts von dem, was du tippst.",
-  "lessons.practice.bigrams":"Knifflige Paare: {pairs}"
+  "lessons.practice.bigrams": "Knifflige Paare: {pairs}"
 }
