@@ -827,7 +827,8 @@ async function bindEvents() {
     petState = e.payload;
     renderPetState();
   });
-  await listen('tapomo://key', () => {
+  await listen('tapomo://key', (e) => {
+    if (e.payload === 'nav') return; // navigation is only for the pet
     squish();
     // Keep the "current streak" tile live without hammering the database.
     const now = Date.now();
