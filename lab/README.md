@@ -4,7 +4,8 @@ Fuente del artefacto publicado «Tapomo animation lab»: https://claude.ai/artif
 
 Es una copia autónoma para probar a Tapomo: escenario fijo a la izquierda y panel a la derecha. El panel tiene tres partes, de arriba abajo:
 
-1. **Pendiente de decidir** (ahora vacío: muestra «Nada pendiente»): un fieldset por estudio abierto, igual que los demás del lab, con un selector de variante A/B/C y sus controles. Se ven en el escenario con el Tapomo del lab y la ropa elegida en «Premios». Avisos y Actualización (ya en «Ya decidido») necesitan un escritorio: mientras se usan, el escenario muestra una maqueta (Bloc de notas, barra de tareas y el Tapomo de escritorio) y «Volver al escenario» lo devuelve. `estudios.*` tiene lo compartido.
+1. **Pendiente de decidir** (cuando está vacío muestra «Nada pendiente»): un fieldset por estudio abierto, igual que los demás del lab, con un selector de variante A/B/C y sus controles. Se ven en el escenario con el Tapomo del lab y la ropa elegida en «Premios». Avisos y Actualización (ya en «Ya decidido») necesitan un escritorio: mientras se usan, el escenario muestra una maqueta (Bloc de notas, barra de tareas y el Tapomo de escritorio) y «Volver al escenario» lo devuelve. `estudios.*` tiene lo compartido.
+   - «Compartir» (`compartir.*`, `#compartir`, 2026-11-06, abierto): tarjeta para redes creada en el PC (nada se sube, nunca texto escrito) — «Mi semana», «¡Nivel N!», «¡Récord!» y «Tapomo»; diseños A · Cartel, B · Aviso y C · Tarjeta (eco de los avisos), cuadrado 1080 × 1080 de serie (texto arriba, Tapomo grande abajo) u horizontal 1200 × 630 (también vista previa de tapomo.app); nombre opcional, ES/EN, colores; panel de compartir (copiar / guardar / texto + X, LinkedIn, WhatsApp, Telegram, Bluesky, Reddit con el aviso «Imagen copiada · pégala con Ctrl+V»); entradas en la cabecera (icono junto a ⚙ y ♥) y en la página ♥ (tres textos a elegir).
    - «Después de actualizar» (`reinicio.*`, `#reinicio`): decidido 2026-11-06 (ya en «Ya decidido»): A · Estallido y D · ¡Pof! al azar cada vez (selector «Al azar» / A / D); B y C quitadas; solo el reflejo del brillo, sin dorado; la ropa se pone tras el estallido.
 2. **Herramientas** (no son decisiones): premios (skins y accesorios), propuestas y reglas de ropa, reproducción, teclas, rachas, zonas de la barra (con Supermochi), ratón, cabecera y reacciones.
 3. **Ya decidido** (al final del panel, plegado): solo la opción elegida de cada estudio cerrado, con una línea de lo decidido y la fecha.
@@ -21,7 +22,7 @@ Las variantes descartadas ya no se pintan, pero sus archivos y su código siguen
 **No es código de la app:**
 
 - `mascot.css`, `pet.js` e `i18n.js` pueden diferir de los de `ui/`.
-- `rewards.js`, `zones.js`, `shy.*`, `hands.*`, `levelup.*`, `estudios.*`, `repaso.*`, `gafas.*`, `avisos.*`, `actualiza.*`, `reinicio.*` y `lab.js` existen solo aquí; `keyboard.*` son copias de ui/.
+- `rewards.js`, `zones.js`, `shy.*`, `hands.*`, `levelup.*`, `estudios.*`, `repaso.*`, `gafas.*`, `avisos.*`, `actualiza.*`, `reinicio.*`, `compartir.*` y `lab.js` existen solo aquí; `keyboard.*` son copias de ui/.
 - Cuando se implemente la 0.3.2, los dibujos y las reglas se pasarán a `ui/` desde aquí.
 
 **Para republicar:** publica `lab/index.html` como página, con el resto de archivos como `files`, en la misma URL.
