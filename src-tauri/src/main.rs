@@ -77,6 +77,8 @@ fn main() {
             commands::get_daily_goal,
             commands::get_xp,
             commands::ack_xp,
+            commands::swap_challenge,
+            commands::extend_challenge,
             commands::get_badges,
             commands::mark_badges_seen,
             commands::get_league,
