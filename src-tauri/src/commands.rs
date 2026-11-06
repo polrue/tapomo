@@ -446,6 +446,12 @@ pub fn get_pet_tip(state: State<AppState>, lang: String) -> CmdResult<Option<cra
     state.with_db(|c| crate::pet_tip::next_tip(c, lang, open_ms))
 }
 
+/// The floating Tapomo explains a reaction in the log (key classes and counts only, never a key).
+#[tauri::command]
+pub fn pet_trace(line: String) {
+    log::info!("pet: {}", line.chars().take(160).collect::<String>());
+}
+
 /// Opens the folder holding the log files in the file manager.
 #[tauri::command]
 pub fn open_logs_dir(app: AppHandle) -> CmdResult<()> {

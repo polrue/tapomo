@@ -112,6 +112,7 @@ fn main() {
             commands::remove_exclusion,
             commands::open_logs_dir,
             commands::get_pet_tip,
+            commands::pet_trace,
             commands::is_store_build,
             updater::check_update,
             updater::install_update,
