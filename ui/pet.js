@@ -189,6 +189,7 @@ function onKey(cls) {
   const isDelete = cls === 'delete' || cls === 'word_delete';
   if (isDelete && state.zone === 'super') {
     Mascot.superAbsorb(svg); // shielded: no "oops", no tilt, the crown stays
+    trace('delete: Supermochi shield');
     return;
   }
   if (isDelete) {
@@ -203,11 +204,14 @@ function onKey(cls) {
     delRun.n += cls === 'word_delete' ? TYPO_MAX_DELETES + 1 : 1; // Ctrl+Backspace is always rewording
     delRun.lastAt = now;
     if (review) touchReview(); // keep the review going while deleting
+    // A typo fixed on the fly: Tapomo reacts right away, a bit more with each character (up to three; a longer
+    // run is rewording and gets nothing more).
+    const oops = delRun.typo && delRun.n <= TYPO_MAX_DELETES && delRun.streakBefore >= OOPS_MIN_STREAK;
+    trace(`delete n=${delRun.n} streak=${delRun.streakBefore} typo=${delRun.typo} review=${review} -> ${oops ? `oops${delRun.n}` : 'quiet'}`);
+    if (oops) oopsReaction(delRun.n, now);
     // The streak stat is already broken; the face just recalculates (the crown, if any, only flies off on a real "oops").
     state.streak = { ...state.streak, current: 0 };
   } else {
-    // Typing resumed after a short run of deletes: only now do we know it was a typo and not a long delete.
-    const run = delRun;
     delRun = null;
     lastTypedAt = now;
     if (review && ++reviewChars >= REVIEW_END_CHARS) {
@@ -217,20 +221,25 @@ function onKey(cls) {
       clearTimeout(reviewTimer);
       reviewTimer = setTimeout(() => setReview(false), REVIEW_IDLE_MS);
     }
-    if (run && run.typo && run.n <= TYPO_MAX_DELETES && run.streakBefore >= OOPS_MIN_STREAK && now - run.lastAt <= REVIEW_PAUSE_MS) {
-      // One more character to fix, a bigger (still comic) fuss: «¡ups!», «¡uy, uy!», «¡ay, ay, ay!».
-      const size = run.n;
-      const ms = OOPS_MS + (size - 1) * 350;
-      Mascot.crownFlyOff(svg);
-      say(size === 1 ? 'pet.oops' : `pet.oops${size}`, ms);
-      Mascot.tilt(svg, size);
-      state.oopsSize = size;
-      state.oopsUntil = now + ms;
-      clearTimeout(oopsTimer);
-      oopsTimer = setTimeout(renderFace, ms + 20);
-    }
   }
   renderFace();
+}
+
+/** «¡ups!», «¡uy, uy!», «¡ay, ay, ay!»: one more character to fix, a bigger (still comic) fuss. */
+function oopsReaction(size, now) {
+  const ms = OOPS_MS + (size - 1) * 350;
+  if (size === 1) Mascot.crownFlyOff(svg);
+  say(size === 1 ? 'pet.oops' : `pet.oops${size}`, ms);
+  Mascot.tilt(svg, size);
+  state.oopsSize = size;
+  state.oopsUntil = now + ms;
+  clearTimeout(oopsTimer);
+  oopsTimer = setTimeout(renderFace, ms + 20);
+}
+
+/** One line in Tapomo's log about what the pet decided (key classes and counts only, never a key). */
+function trace(line) {
+  invoke('pet_trace', { line }).catch(() => {});
 }
 
 // Same thresholds as `Zone::of` in tapomo-core.
