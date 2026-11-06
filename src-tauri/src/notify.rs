@@ -39,6 +39,7 @@ fn clock(lang: &str, min: u32) -> String {
 
 /// The challenge's text as the Today view shows it (same `ch.*` keys as `ui/xp.js`). `learnt` holds the
 /// combinations of the shortcuts first used yesterday (`learnt` challenge only; may be empty).
+/// `early_goal` says the deadline in effect (`xp::challenges` applies the fair floor and «Dame más tiempo»).
 pub fn challenge_name(lang: &str, c: &core::Challenge, learnt: &[String]) -> String {
     let n = c.target.to_string();
     let plural = |base: &str| i18n::tr(lang, &format!("{base}_{}", if c.target == 1 { "one" } else { "other" }));
@@ -120,6 +121,22 @@ mod tests {
         assert_eq!(challenge_name("es", &ch("learnt", 1, None), &one), "Usa hoy Ctrl+Mayús+T, el atajo que aprendiste ayer");
         assert!(challenge_name("en", &ch("learnt", 1, None), &["Ctrl+C".into(), "Ctrl+V".into()]).ends_with("Ctrl+C, Ctrl+V"));
         assert_eq!(challenge_name("es", &ch("learnt", 1, None), &[]), "Usa hoy el atajo que aprendiste ayer");
+    }
+
+    #[test]
+    fn the_toast_says_the_deadline_in_effect() {
+        let c = xp::tests::mem();
+        for k in 1..=10 {
+            xp::tests::burst(&c, k, 25 * 60, 4_000); // early_goal joins a pool of 4, personal deadline 12:00
+        }
+        xp::settle(&c).unwrap();
+        let list = xp::state(&c).unwrap().challenges;
+        if !list.iter().any(|x| x.id == "early_goal") {
+            assert!(xp::swap(&c, list[0].id).unwrap());
+        }
+        assert!(xp::extend(&c).unwrap());
+        let t = toast_for(&c, "es", &xp::Settled { total: 0, new_challenges: vec!["early_goal"], full_house: false }).unwrap().unwrap();
+        assert!(t.body.contains("antes de las 18:00") || t.body.contains("antes de las 20:00"), "{}", t.body);
     }
 
     #[test]

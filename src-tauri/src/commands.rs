@@ -59,6 +59,25 @@ pub fn get_xp(state: State<AppState>) -> CmdResult<crate::xp::XpState> {
     state.with_db(crate::xp::state)
 }
 
+/// «Dame otro reto»: swaps today's challenge `id` (once a day). The tracker then settles, so a
+/// replacement that is already done pays at once; returns the new state either way.
+#[tauri::command]
+pub fn swap_challenge(state: State<AppState>, id: String) -> CmdResult<crate::xp::XpState> {
+    if state.with_db(|c| crate::xp::swap(c, &id))? {
+        let _ = state.tx.send(Msg::XpRefresh);
+    }
+    state.with_db(crate::xp::state)
+}
+
+/// «Dame más tiempo»: moves today's early_goal deadline (once a day). Returns the new state.
+#[tauri::command]
+pub fn extend_challenge(state: State<AppState>) -> CmdResult<crate::xp::XpState> {
+    if state.with_db(crate::xp::extend)? {
+        let _ = state.tx.send(Msg::XpRefresh);
+    }
+    state.with_db(crate::xp::state)
+}
+
 /// The level-up celebration (or the history message) has been shown up to `level`.
 #[tauri::command]
 pub fn ack_xp(state: State<AppState>, level: u32) -> CmdResult<()> {

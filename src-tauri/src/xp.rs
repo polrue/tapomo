@@ -6,7 +6,7 @@
 
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::Serialize;
-use tapomo_core::xp::{self, Challenge, DayBurst};
+use tapomo_core::xp::{self, Challenge, DayBurst, DayChallenges};
 
 use crate::db;
 
@@ -74,8 +74,40 @@ fn goal_on(days: &[(i64, u64)], day: i64, settings: &db::Settings, protectors_si
     s.met_today.then_some(s.streak_days)
 }
 
+/// The once-a-day buttons used on a day (`challenge_days`).
+#[derive(Default)]
+struct DayChoices {
+    /// «Dame otro reto»: `(swapped out, swapped in)`.
+    swap: Option<(String, String)>,
+    /// «Dame más tiempo»: the extended `early_goal` deadline.
+    extended: Option<u32>,
+}
+
+fn day_choices(conn: &Connection, day: i64) -> rusqlite::Result<DayChoices> {
+    conn.query_row("SELECT swapped_out, swapped_in, deadline_min FROM challenge_days WHERE day = ?1", [day], |r| {
+        let (out, inn): (Option<String>, Option<String>) = (r.get(0)?, r.get(1)?);
+        Ok(DayChoices { swap: out.zip(inn), extended: r.get(2)? })
+    })
+    .optional()
+    .map(Option::unwrap_or_default)
+}
+
+/// Minute of the local day right now.
+fn now_min(conn: &Connection) -> rusqlite::Result<u32> {
+    conn.query_row(
+        "SELECT CAST(strftime('%H', 'now', 'localtime') AS INTEGER) * 60 + CAST(strftime('%M', 'now', 'localtime') AS INTEGER)",
+        [],
+        |r| r.get(0),
+    )
+}
+
 /// Challenges of `day` with their progress.
 pub fn challenges(conn: &Connection, day: i64, settings: &db::Settings) -> rusqlite::Result<[Challenge; 3]> {
+    Ok(day_challenges(conn, day, settings)?.list)
+}
+
+/// Challenges of `day` with their progress, and what «Dame otro reto» would bring in.
+fn day_challenges(conn: &Connection, day: i64, settings: &db::Settings) -> rusqlite::Result<DayChallenges> {
     let from = day - xp::CALIBRATION_DAYS - xp::REPEAT_LOOKBACK; // the "no repeats" replay needs older history
     let bursts = day_bursts(conn, from, day)?;
     let goal_ms = u64::from(settings.daily_goal_min) * 60_000;
@@ -98,13 +130,63 @@ pub fn challenges(conn: &Connection, day: i64, settings: &db::Settings) -> rusql
     // choice is replayed from the bursts.
     let stored = db::get_raw(conn, &format!("ch_shown_{}", day - 1))?;
     let shown: Option<Vec<&str>> = stored.as_deref().map(|v| v.split(',').filter(|s| !s.is_empty()).collect());
-    let extras = xp::Extras { lessons: &lessons, learnt_yesterday, learnt_used_today, shown_yesterday: shown.as_deref() };
-    let list = xp::daily_challenges(&bursts, day, history_days(conn, day)?, goal_ms, &shortcuts, extras);
+    let choices = day_choices(conn, day)?;
+    let extras = xp::Extras {
+        lessons: &lessons,
+        learnt_yesterday,
+        learnt_used_today,
+        shown_yesterday: shown.as_deref(),
+        swap: choices.swap.as_ref().map(|(out, inn)| (out.as_str(), inn.as_str())),
+        extended_deadline: choices.extended,
+    };
+    let day_list = xp::day_challenges(&bursts, day, history_days(conn, day)?, goal_ms, &shortcuts, extras);
     let key = format!("ch_shown_{day}");
     if db::get_raw(conn, &key)?.is_none() {
-        db::set_raw(conn, &key, &list.map(|c| c.id).join(","))?;
+        db::set_raw(conn, &key, &day_list.list.map(|c| c.id).join(","))?;
     }
-    Ok(list)
+    Ok(day_list)
+}
+
+/// «Dame otro reto»: swaps today's not-done challenge `id` for the spare of the pool. Once a day in
+/// total; returns false when it can't (already used, done, unknown id or nothing to swap in).
+pub fn swap(conn: &Connection, id: &str) -> rusqlite::Result<bool> {
+    let today = db::today_day(conn)?;
+    let settings = db::get_settings(conn)?;
+    let before = day_challenges(conn, today, &settings)?;
+    let (Some(spare), Some(out)) = (before.spare, before.list.iter().find(|c| c.id == id && !c.done)) else { return Ok(false) };
+    conn.execute(
+        "INSERT INTO challenge_days(day, swapped_out, swapped_in) VALUES (?1, ?2, ?3)
+         ON CONFLICT(day) DO UPDATE SET swapped_out = excluded.swapped_out, swapped_in = excluded.swapped_in",
+        params![today, out.id, spare],
+    )?;
+    // Tomorrow's "no repeats" rule must see what was really shown in the end.
+    let after = day_challenges(conn, today, &settings)?;
+    db::set_raw(conn, &format!("ch_shown_{today}"), &after.list.map(|c| c.id).join(","))?;
+    Ok(true)
+}
+
+/// The deadline «Dame más tiempo» would give `c` now, when it is offered: `early_goal` not done,
+/// not extended yet today, and the new time is later than the current one.
+fn extension_for(c: &Challenge, extended: Option<u32>, now: u32) -> Option<u32> {
+    let to = xp::extended_deadline(now);
+    (c.id == "early_goal" && !c.done && extended.is_none() && c.deadline_min.is_some_and(|d| to > d)).then_some(to)
+}
+
+/// «Dame más tiempo»: moves today's `early_goal` deadline to 18:00 (20:00 after 16:00). Once a day,
+/// independent of the swap; returns false when it is not offered.
+pub fn extend(conn: &Connection) -> rusqlite::Result<bool> {
+    let today = db::today_day(conn)?;
+    let settings = db::get_settings(conn)?;
+    let extended = day_choices(conn, today)?.extended;
+    let now = now_min(conn)?;
+    let list = challenges(conn, today, &settings)?;
+    let Some(to) = list.iter().find_map(|c| extension_for(c, extended, now)) else { return Ok(false) };
+    conn.execute(
+        "INSERT INTO challenge_days(day, deadline_min) VALUES (?1, ?2)
+         ON CONFLICT(day) DO UPDATE SET deadline_min = excluded.deadline_min",
+        params![today, to],
+    )?;
+    Ok(true)
 }
 
 /// A catalogue shortcut first used the day before `day`, as the album would show it: for the
@@ -219,9 +301,14 @@ pub struct ChallengeOut {
     pub target: u32,
     pub progress: u32,
     pub done: bool,
-    /// `early_goal`: personal deadline, minutes since local midnight (absent for the others).
+    /// `early_goal`: deadline in effect (personal, fair or extended), minutes since local midnight
+    /// (absent for the others).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deadline_min: Option<u32>,
+    /// «Dame otro reto» is offered for it (not done, and the day's swap is still unused).
+    pub can_swap: bool,
+    /// «Dame más tiempo» is offered for it (`early_goal` only).
+    pub can_extend: bool,
     /// `learnt` only: the shortcut(s) first used yesterday; using any one of them today completes it.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub shortcuts: Vec<LearntShortcut>,
@@ -248,11 +335,24 @@ pub fn state(conn: &Connection) -> rusqlite::Result<XpState> {
     let today = db::today_day(conn)?;
     let today_xp: i64 = conn.query_row("SELECT COALESCE(SUM(amount), 0) FROM xp_events WHERE day = ?1 AND kind <> 'retro'", [today], |r| r.get(0))?;
     let settings = db::get_settings(conn)?;
-    let challenges = challenges(conn, today, &settings)?
+    let day_list = day_challenges(conn, today, &settings)?;
+    let extended = day_choices(conn, today)?.extended;
+    let now = now_min(conn)?;
+    let challenges = day_list
+        .list
         .into_iter()
         .map(|c| {
             let shortcuts = if c.id == "learnt" { learnt_shortcuts(conn, today, &settings)? } else { Vec::new() };
-            Ok(ChallengeOut { id: c.id, target: c.target, progress: c.progress, done: c.done, deadline_min: c.deadline_min, shortcuts })
+            Ok(ChallengeOut {
+                id: c.id,
+                target: c.target,
+                progress: c.progress,
+                done: c.done,
+                deadline_min: c.deadline_min,
+                can_swap: day_list.spare.is_some() && !c.done,
+                can_extend: extension_for(&c, extended, now).is_some(),
+                shortcuts,
+            })
         })
         .collect::<rusqlite::Result<_>>()?;
     let seen_level = db::get_raw(conn, "xp_seen_level")?.and_then(|v| v.parse().ok()).unwrap_or(1);
@@ -278,11 +378,11 @@ pub fn ack(conn: &Connection, level: u32) -> rusqlite::Result<()> {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use tapomo_core::Burst;
 
-    fn mem() -> Connection {
+    pub(crate) fn mem() -> Connection {
         static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
         let n = N.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let path = std::env::temp_dir().join(format!("tapomo-xp-{}-{n}.db", std::process::id()));
@@ -291,7 +391,7 @@ mod tests {
     }
 
     /// A burst `days_ago` local days back, at noon, `secs` long with `chars` characters.
-    fn burst(conn: &Connection, days_ago: i64, secs: u64, chars: u32) {
+    pub(crate) fn burst(conn: &Connection, days_ago: i64, secs: u64, chars: u32) {
         let start: i64 = conn
             .query_row("SELECT CAST(strftime('%s', 'now', 'localtime', 'start of day', ?1, '+12 hours', 'utc') AS INTEGER) * 1000", [format!("-{days_ago} days")], |r| r.get(0))
             .unwrap();
@@ -358,6 +458,35 @@ mod tests {
         assert_eq!(first.full_house, all, "{first:?}");
         let again = settle(&c).unwrap();
         assert!(again.new_challenges.is_empty() && !again.full_house, "a restart must not repeat it: {again:?}");
+    }
+
+    #[test]
+    fn another_challenge_and_more_time_are_once_a_day_and_persist() {
+        let c = mem();
+        for k in 1..=10 {
+            burst(&c, k, 25 * 60, 4_000); // goal met at 12:20 every day: early_goal joins a pool of 4
+        }
+        settle(&c).unwrap();
+        let st = state(&c).unwrap();
+        assert!(st.challenges.iter().all(|x| x.can_swap && !x.done), "nothing typed today yet");
+        // Swap out something other than early_goal, so early_goal is on the list afterwards.
+        let out = st.challenges.iter().find(|x| x.id != "early_goal").unwrap().id;
+        assert!(swap(&c, out).unwrap());
+        let after = state(&c).unwrap();
+        let ids: Vec<&str> = after.challenges.iter().map(|x| x.id).collect();
+        assert!(!ids.contains(&out) && ids.contains(&"early_goal"), "{ids:?}");
+        assert!(after.challenges.iter().all(|x| !x.can_swap), "once a day in total");
+        assert!(!swap(&c, ids[0]).unwrap());
+        assert_eq!(db::get_raw(&c, &format!("ch_shown_{}", db::today_day(&c).unwrap())).unwrap().unwrap(), ids.join(","));
+        // More time: 18:00 or 20:00, once, and it does not touch the swap.
+        let early = after.challenges.iter().find(|x| x.id == "early_goal").unwrap();
+        assert_eq!((early.deadline_min, early.can_extend), (Some(12 * 60), true));
+        assert!(extend(&c).unwrap());
+        let ext = state(&c).unwrap();
+        let early = ext.challenges.iter().find(|x| x.id == "early_goal").unwrap();
+        assert!(matches!(early.deadline_min, Some(1080) | Some(1200)) && !early.can_extend, "{:?}", early.deadline_min);
+        assert!(!extend(&c).unwrap());
+        assert_eq!(ext.challenges.iter().map(|x| x.id).collect::<Vec<_>>(), ids, "the swap survives");
     }
 
     #[test]

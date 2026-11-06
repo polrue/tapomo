@@ -196,6 +196,21 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
              COMMIT;",
         )?;
     }
+    if version < 11 {
+        // The two once-a-day challenge buttons, per local day: «Dame otro reto» (which id went out
+        // and which came in) and «Dame más tiempo» (the extended early_goal deadline). Additive only.
+        conn.execute_batch(
+            "BEGIN;
+             CREATE TABLE challenge_days (
+                 day INTEGER PRIMARY KEY,
+                 swapped_out TEXT,
+                 swapped_in TEXT,
+                 deadline_min INTEGER
+             );
+             PRAGMA user_version = 11;
+             COMMIT;",
+        )?;
+    }
     Ok(())
 }
 
