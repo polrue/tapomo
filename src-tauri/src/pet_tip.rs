@@ -238,6 +238,8 @@ pub fn candidates(f: &Facts, lang: &str) -> Vec<Candidate> {
     for key in ["tip.generic_1", "tip.generic_2", "tip.generic_3"] {
         c.push((key, vec![], 1));
     }
+    // A bit more often than the generic ones: many people never find the right-click menu.
+    c.push(("tip.right_click", vec![], 2));
     c
 }
 
