@@ -98,6 +98,11 @@ pub struct Extras<'a> {
     pub learnt_used_today: bool,
     /// The ids shown yesterday, when the app stored them (exact). `None` replays the choice instead.
     pub shown_yesterday: Option<&'a [&'a str]>,
+    /// «Dame otro reto» used today: `(id swapped out, id that came in)`, as stored. The stored
+    /// replacement is kept while it is still in today's pool; otherwise the pool's spare comes in.
+    pub swap: Option<(&'a str, &'a str)>,
+    /// «Dame más tiempo» used today: the `early_goal` deadline it gave (see [`extended_deadline`]).
+    pub extended_deadline: Option<u32>,
 }
 
 /// A challenge of the day and how far today's bursts have got.
@@ -118,9 +123,16 @@ pub struct Challenge {
 pub const LONG_BURST_MS: u64 = 60_000;
 /// A burst must last this long to count for `beat_avg`: a 3-second sprint is not a pace.
 pub const BEAT_AVG_MIN_MS: u64 = 20_000;
-/// `early_goal`: earliest and latest personal deadline (minutes since midnight): 09:00 and 22:00.
-pub const EARLY_DEADLINE_MIN: u32 = 9 * 60;
+/// `early_goal`: earliest and latest personal deadline (minutes since midnight): 12:00 and 22:00.
+pub const EARLY_DEADLINE_MIN: u32 = 12 * 60;
 pub const EARLY_DEADLINE_MAX: u32 = 22 * 60;
+/// `early_goal`: the deadline is never sooner than this after the first key of the day (minutes),
+/// so a day that starts late still gets its time.
+pub const FIRST_KEY_MARGIN_MIN: u32 = 3 * 60;
+/// «Dame más tiempo»: the new deadline, 18:00, or 20:00 when asked after 16:00.
+pub const EXTENDED_DEADLINE: u32 = 18 * 60;
+pub const EXTENDED_DEADLINE_LATE: u32 = 20 * 60;
+pub const EXTEND_LATE_AFTER: u32 = 16 * 60;
 /// `early_goal` needs at least this many calibration days on which the goal was met.
 pub const EARLY_GOAL_MIN_DAYS: usize = 3;
 /// Days back from which the "no repeats from yesterday" rule is replayed, so it stays consistent.
@@ -213,12 +225,14 @@ fn step_clamp(v: u32, step: u32, lo: u32, hi: u32) -> u32 {
     (v / step * step).clamp(lo, hi)
 }
 
-/// The picks of one day: id and target of each challenge, whether they are the welcome trio, and
-/// the `early_goal` deadline. Pure and only dependent on days before `day`.
+/// The picks of one day: id and target of each challenge, whether they are the welcome trio, the
+/// personal `early_goal` deadline (whenever it is in the pool) and the rest of the pool in order,
+/// for «Dame otro reto». Pure and only dependent on days before `day`.
 struct Picks {
     items: [(&'static str, u32); 3],
     welcome: bool,
     deadline: Option<u32>,
+    rest: Vec<(&'static str, u32)>,
 }
 
 /// Chooses the three challenges of `day`. Ids in `avoid` (yesterday's) go last, so they only come
@@ -227,7 +241,7 @@ struct Picks {
 fn choose(bursts: &[DayBurst], day: i64, history_days: usize, goal_ms: u64, shortcuts: &[(i64, u64)], lessons: &[(i64, u64)], learnt_yesterday: bool, avoid: &[&str]) -> Picks {
     let h = history(bursts, day, goal_ms);
     if history_days < WELCOME_DAYS || h.active_days == 0 {
-        return Picks { items: [("bursts", 3), ("chars", 1_000), ("clean", 100)], welcome: true, deadline: None };
+        return Picks { items: [("bursts", 3), ("chars", 1_000), ("clean", 100)], welcome: true, deadline: None, rest: Vec::new() };
     }
     let shortcut_avg = shortcuts.iter().filter(|(d, _)| *d < day && *d >= day - CALIBRATION_DAYS).map(|(_, n)| *n as f64).sum::<f64>() / h.active_days as f64;
     let mut pool: Vec<(&'static str, u32)> = vec![
@@ -265,7 +279,27 @@ fn choose(bursts: &[DayBurst], day: i64, history_days: usize, goal_ms: u64, shor
     // Yesterday's ids go to the back (stable), so they are only used when nothing else is left.
     pool.sort_by_key(|(id, _)| avoid.contains(id));
     let items = [pool[0], pool[1], pool[2]];
-    Picks { items, welcome: false, deadline: items.iter().any(|(id, _)| *id == "early_goal").then_some(deadline).flatten() }
+    Picks { items, welcome: false, deadline, rest: pool.split_off(3) }
+}
+
+/// The `early_goal` deadline of a day: the personal one, but never before 12:00 nor less than
+/// [`FIRST_KEY_MARGIN_MIN`] after the first key of the day (rounded up to the hour), at most 22:00.
+pub fn fair_deadline(personal: u32, first_key_min: Option<u32>) -> u32 {
+    let after_first = first_key_min.map_or(0, |m| (m + FIRST_KEY_MARGIN_MIN).div_ceil(60) * 60);
+    personal.max(EARLY_DEADLINE_MIN).max(after_first).min(EARLY_DEADLINE_MAX)
+}
+
+/// The deadline «Dame más tiempo» gives when asked at `now_min` (minutes since local midnight).
+pub fn extended_deadline(now_min: u32) -> u32 {
+    if now_min > EXTEND_LATE_AFTER { EXTENDED_DEADLINE_LATE } else { EXTENDED_DEADLINE }
+}
+
+/// Today's three challenges and what «Dame otro reto» would bring in (`None` when the pool has
+/// nothing else, on welcome days, or once the swap has been used today).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DayChallenges {
+    pub list: [Challenge; 3],
+    pub spare: Option<&'static str>,
 }
 
 /// The three challenges of `today`, with their progress.
@@ -280,6 +314,14 @@ fn choose(bursts: &[DayBurst], day: i64, history_days: usize, goal_ms: u64, shor
 /// [`REPEAT_LOOKBACK`] days back (the "shortcut learnt yesterday" of past days is unknown there),
 /// unless the app passes what it really showed (`extras.shown_yesterday`, exact).
 pub fn daily_challenges(bursts: &[DayBurst], today: i64, history_days: usize, goal_ms: u64, shortcuts: &[(i64, u64)], extras: Extras) -> [Challenge; 3] {
+    day_challenges(bursts, today, history_days, goal_ms, shortcuts, extras).list
+}
+
+/// [`daily_challenges`] plus the spare for «Dame otro reto». A swap (`extras.swap`) puts the
+/// replacement in the place of the swapped-out challenge; it is the next one of the same seeded
+/// pool (yesterday's ids still last), so it is fixed for the day and its progress is computed like
+/// any other pick's.
+pub fn day_challenges(bursts: &[DayBurst], today: i64, history_days: usize, goal_ms: u64, shortcuts: &[(i64, u64)], extras: Extras) -> DayChallenges {
     let mut prev: Vec<&str> = Vec::new();
     if let Some(shown) = extras.shown_yesterday {
         // The welcome trio is exempt from the rule.
@@ -293,17 +335,28 @@ pub fn daily_challenges(bursts: &[DayBurst], today: i64, history_days: usize, go
         }
     }
     let picks = choose(bursts, today, history_days, goal_ms, shortcuts, extras.lessons, extras.learnt_yesterday, &prev);
+    let mut items = picks.items;
+    let mut spare = picks.rest.first().map(|(id, _)| *id);
+    if let Some((out, wanted)) = extras.swap {
+        if let Some(i) = items.iter().position(|(id, _)| *id == out) {
+            if let Some(r) = picks.rest.iter().find(|(id, _)| *id == wanted).or(picks.rest.first()) {
+                items[i] = *r;
+            }
+        }
+        spare = None; // once a day
+    }
     let today_bursts: Vec<&DayBurst> = bursts.iter().filter(|b| b.day == today).collect();
-    picks.items.map(|(id, target)| {
+    let first_key = today_bursts.iter().map(|b| b.start_min).min();
+    let list = items.map(|(id, target)| {
         let mut deadline_min = None;
         let progress = match id {
             "long_bursts" => today_bursts.iter().filter(|b| b.duration_ms >= LONG_BURST_MS).count() as u32,
             "beat_avg" => u32::from(today_bursts.iter().any(|b| b.duration_ms >= BEAT_AVG_MIN_MS && b.wpm() > f64::from(target))),
             "clean" => today_bursts.iter().map(|b| b.best_streak).max().unwrap_or(0),
             "early_goal" => {
-                // Minutes typed in bursts that started before the personal deadline.
-                deadline_min = picks.deadline;
-                let limit = picks.deadline.unwrap_or(0);
+                // Minutes typed in bursts that started before the deadline (fair, or extended).
+                let limit = picks.deadline.map_or(0, |d| fair_deadline(d, first_key).max(extras.extended_deadline.unwrap_or(0)));
+                deadline_min = Some(limit);
                 let ms: u64 = today_bursts.iter().filter(|b| b.start_min < limit).map(|b| b.duration_ms).sum();
                 if goal_ms > 0 && ms >= goal_ms { target } else { (ms / 60_000) as u32 }
             }
@@ -319,7 +372,8 @@ pub fn daily_challenges(bursts: &[DayBurst], today: i64, history_days: usize, go
         let goal = if matches!(id, "beat_avg" | "learnt") { 1 } else { target };
         let done = if id == "early_goal" { progress >= target && target > 0 } else { progress >= goal };
         Challenge { id, target, progress: progress.min(goal), done, deadline_min }
-    })
+    });
+    DayChallenges { list, spare }
 }
 
 #[cfg(test)]
@@ -443,7 +497,7 @@ mod tests {
     fn lesson_and_learnt_challenges_need_the_habit() {
         let bursts: Vec<DayBurst> = (1..=10).map(|k| b(TODAY - k, 600, 90, 451, 500, 1)).collect();
         let lessons = [(TODAY - 3, 1), (TODAY - 1, 2), (TODAY, 1)];
-        let extras = Extras { lessons: &lessons, learnt_yesterday: true, learnt_used_today: false, shown_yesterday: None };
+        let extras = Extras { lessons: &lessons, learnt_yesterday: true, learnt_used_today: false, ..Extras::default() };
         let mut seen = std::collections::HashSet::new();
         for d in TODAY..TODAY + 1 {
             for c in daily_challenges(&bursts, d, 10, 0, &[], extras) {
@@ -505,10 +559,12 @@ mod tests {
 
     #[test]
     fn early_goal_deadline_follows_the_typist() {
-        // Morning typist: 20 min burst at 08:10 reaches a 10 min goal at 08:20 -> 09:00 (the floor clamp).
-        assert_eq!(deadline_of(&habit(10, 8 * 60 + 10, 1200), 10), Some(9 * 60));
-        // 10:00 start, goal reached at 10:20 -> 10:00.
-        assert_eq!(deadline_of(&habit(10, 10 * 60, 1200), 20), Some(10 * 60));
+        // Morning typist: 20 min burst at 08:10 reaches a 10 min goal at 08:20 -> 12:00 (the floor).
+        assert_eq!(deadline_of(&habit(10, 8 * 60 + 10, 1200), 10), Some(12 * 60));
+        // 10:00 start, goal reached at 10:20 -> 10:00, floored to 12:00.
+        assert_eq!(deadline_of(&habit(10, 10 * 60, 1200), 20), Some(12 * 60));
+        // Late morning: reached at 13:20 -> 13:00.
+        assert_eq!(deadline_of(&habit(10, 13 * 60, 1200), 20), Some(13 * 60));
         // Afternoon typist: goal reached at 18:40 -> 18:00.
         assert_eq!(deadline_of(&habit(10, 18 * 60 + 30, 1200), 10), Some(18 * 60));
         // Night owl: reached at 23:30 -> clamped to 22:00.
@@ -536,29 +592,91 @@ mod tests {
         assert_eq!(deadline_of(&bursts, 10), None);
         let mut bursts = habit(6, 600, 1200);
         bursts.extend((7..=10).map(|k| b(TODAY - k, 600, 60, 100, 50, 1)));
-        assert_eq!(deadline_of(&bursts, 10), Some(10 * 60));
+        assert_eq!(deadline_of(&bursts, 10), Some(12 * 60));
     }
 
     #[test]
     fn early_goal_only_counts_bursts_started_before_the_deadline() {
-        let past = habit(10, 10 * 60, 1200); // goal 10 min, deadline 10:00... reached 10:10
-        let find = |today_bursts: &[DayBurst]| {
-            (TODAY..TODAY + 40).find_map(|d| {
-                let mut v: Vec<DayBurst> = past.iter().map(|x| DayBurst { day: x.day + d - TODAY, ..*x }).collect();
-                v.extend(today_bursts.iter().map(|x| DayBurst { day: d, ..*x }));
-                early(&v, d, 10)
-            })
-        };
-        assert_eq!(find(&[]).unwrap().deadline_min, Some(600));
-        // 6 min at 09:50 (counts) + 9 min at 10:00 (starts at the deadline: does not count).
-        let c = find(&[b(0, 590, 360, 100, 50, 1), b(0, 600, 540, 100, 50, 1)]).unwrap();
-        assert_eq!((c.target, c.progress, c.done), (10, 6, false));
+        let past = habit(10, 10 * 60, 1200); // goal 10 min, reached 10:10: personal 10:00, floored to 12:00
+        assert_eq!(find_early(&past, &[], None).unwrap().deadline_min, Some(12 * 60));
+        // First key at 09:50: 12:50 rounds up to 13:00. 6 min at 09:50 count, 9 min at 13:00 do not.
+        let c = find_early(&past, &[b(0, 590, 360, 100, 50, 1), b(0, 13 * 60, 540, 100, 50, 1)], None).unwrap();
+        assert_eq!((c.target, c.progress, c.done, c.deadline_min), (10, 6, false, Some(13 * 60)));
         // Add 4 more minutes before the deadline: done, with the exact goal reached.
-        let c = find(&[b(0, 590, 360, 100, 50, 1), b(0, 595, 240, 100, 50, 1)]).unwrap();
+        let c = find_early(&past, &[b(0, 590, 360, 100, 50, 1), b(0, 595, 240, 100, 50, 1)], None).unwrap();
         assert_eq!((c.progress, c.done), (10, true));
         // A big burst after the deadline can never complete it.
-        let c = find(&[b(0, 700, 3600, 100, 50, 1)]).unwrap();
-        assert_eq!((c.progress, c.done), (0, false));
+        let c = find_early(&past, &[b(0, 540, 60, 100, 50, 1), b(0, 13 * 60, 3600, 100, 50, 1)], None).unwrap();
+        assert_eq!((c.progress, c.done), (1, false));
+    }
+
+    /// The first day from TODAY on whose picks include `early_goal`, with `past` habits and these bursts today.
+    fn find_early(past: &[DayBurst], today_bursts: &[DayBurst], extended: Option<u32>) -> Option<Challenge> {
+        (TODAY..TODAY + 40).find_map(|d| {
+            let mut v: Vec<DayBurst> = past.iter().map(|x| DayBurst { day: x.day + d - TODAY, ..*x }).collect();
+            v.extend(today_bursts.iter().map(|x| DayBurst { day: d, ..*x }));
+            let extras = Extras { extended_deadline: extended, ..Extras::default() };
+            daily_challenges(&v, d, 10, 10 * 60_000, &[], extras).into_iter().find(|c| c.id == "early_goal")
+        })
+    }
+
+    #[test]
+    fn the_deadline_is_never_before_noon_nor_three_hours_after_the_first_key() {
+        assert_eq!(fair_deadline(9 * 60, None), 12 * 60);
+        assert_eq!(fair_deadline(18 * 60, None), 18 * 60);
+        // Pol's day: personal 11:00, first key 09:30 -> 12:30, rounded up to 13:00.
+        assert_eq!(fair_deadline(11 * 60, Some(9 * 60 + 30)), 13 * 60);
+        assert_eq!(fair_deadline(12 * 60, Some(10 * 60)), 13 * 60, "exactly 3 h stays on the hour");
+        assert_eq!(fair_deadline(18 * 60, Some(8 * 60)), 18 * 60, "a later personal deadline wins");
+        assert_eq!(fair_deadline(12 * 60, Some(20 * 60)), 22 * 60, "still capped at 22:00");
+        // In the challenge: a first key at 11:15 moves a 12:00 deadline to 15:00 (14:15 rounded up).
+        let past = habit(10, 10 * 60, 1200);
+        let c = find_early(&past, &[b(0, 11 * 60 + 15, 60, 100, 50, 1)], None).unwrap();
+        assert_eq!(c.deadline_min, Some(15 * 60));
+    }
+
+    #[test]
+    fn more_time_moves_the_deadline_to_18_or_20() {
+        assert_eq!(extended_deadline(9 * 60), 18 * 60);
+        assert_eq!(extended_deadline(16 * 60), 18 * 60);
+        assert_eq!(extended_deadline(16 * 60 + 1), 20 * 60);
+        assert_eq!(extended_deadline(21 * 60), 20 * 60);
+        // First key 09:00 (deadline 12:00), 10 min more at 14:00: lost, unless extended.
+        let past = habit(10, 10 * 60, 1200);
+        let today = [b(0, 9 * 60, 60, 100, 50, 1), b(0, 14 * 60, 600, 100, 50, 1)];
+        let c = find_early(&past, &today, None).unwrap();
+        assert_eq!((c.deadline_min, c.progress, c.done), (Some(12 * 60), 1, false));
+        let c = find_early(&past, &today, Some(18 * 60)).unwrap();
+        assert_eq!((c.deadline_min, c.progress, c.done), (Some(18 * 60), 10, true));
+        // An extension never shortens a later deadline.
+        let late = habit(10, 19 * 60, 1200);
+        assert_eq!(find_early(&late, &[], Some(18 * 60)).unwrap().deadline_min, Some(19 * 60));
+    }
+
+    #[test]
+    fn another_challenge_comes_from_the_pool_and_is_fixed_for_the_day() {
+        // Pool of 7, yesterday's 3 known: the spare is the fourth of the others, never yesterday's.
+        let sc: Vec<(i64, u64)> = (-40..=40).map(|k| (TODAY + k, 20)).collect();
+        let ls: Vec<(i64, u64)> = (-40..=40).map(|k| (TODAY + k, 1)).collect();
+        let yesterday = ["long_bursts", "beat_avg", "clean"];
+        let base = Extras { lessons: &ls, shown_yesterday: Some(&yesterday), ..Extras::default() };
+        let day = |extras: Extras| day_challenges(&month(), TODAY, 30, 2 * 60_000, &sc, extras);
+        let before = day(base);
+        let spare = before.spare.expect("a pool of 7 has a spare");
+        assert!(!before.list.iter().any(|c| c.id == spare) && !yesterday.contains(&spare), "{spare}");
+        assert_eq!(day(base), before, "the spare is deterministic");
+        // Swapping the middle one puts the spare in its place; the others stay; no second swap.
+        let out = before.list[1].id;
+        let after = day(Extras { swap: Some((out, spare)), ..base });
+        assert_eq!(after.list.map(|c| c.id), [before.list[0].id, spare, before.list[2].id]);
+        assert_eq!(after.spare, None);
+        assert_eq!(day(Extras { swap: Some((out, spare)), ..base }), after, "fixed across reopenings");
+        // A stored replacement that is no longer in the pool falls back to the spare.
+        assert_eq!(day(Extras { swap: Some((out, "gone")), ..base }).list, after.list);
+        // Welcome days and a pool of exactly three have nothing to swap in.
+        let one: Vec<DayBurst> = (1..=10).map(|k| b(TODAY - k, 600, 90, 451, 500, 1)).collect();
+        assert_eq!(day_challenges(&one, TODAY, 10, 0, &[], Extras::default()).spare, None);
+        assert_eq!(day_challenges(&[], TODAY, 0, 0, &[], Extras::default()).spare, None);
     }
 
     /// Replays `days` consecutive days like the app does: each day gets what the previous one
