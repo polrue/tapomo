@@ -114,6 +114,33 @@ const Progress = (() => {
     learnt: ['ch.go.album', (c) => Album.reveal((c.shortcuts || []).map((x) => x.id))],
   };
 
+  /** «Dame más tiempo» moves the deadline to 18:00, or 20:00 after 16:00 (as `xp::extended_deadline`). */
+  const moreTimeTo = (now) => (now.getHours() * 60 + now.getMinutes() > 16 * 60 ? 20 * 60 : 18 * 60);
+
+  function actButton(cls, label, title, onClick) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = cls;
+    b.textContent = label;
+    if (title) b.title = title;
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  /** «Dame otro reto» / «Dame más tiempo»: the command returns the new state. The row stays open
+   *  (after a swap, the one that took its place). */
+  function choose(cmd, args, id) {
+    const at = st.challenges.findIndex((c) => c.id === id);
+    invoke(cmd, args)
+      .then((next) => {
+        st = next;
+        openChallenge = st.challenges[at]?.id ?? null;
+        renderLevel();
+        renderChallenges();
+      })
+      .catch(showError);
+  }
+
   /** Opens Settings (switching page if needed), scrolls to a field and highlights it briefly. */
   function goToSetting(id) {
     SectionNav.jump('settings');
@@ -170,15 +197,14 @@ const Progress = (() => {
       const p = document.createElement('p');
       p.textContent = howText(c);
       how.append(p);
+      const acts = document.createElement('div');
+      acts.className = 'ch-acts';
       const go = GO[c.id];
-      if (go) {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'ch-go';
-        b.textContent = t(go[0]);
-        b.addEventListener('click', () => go[1](c));
-        how.append(b);
-      }
+      if (go) acts.append(actButton('ch-go', t(go[0]), '', () => go[1](c)));
+      // The two once-a-day buttons (the backend says when each is offered).
+      if (c.can_extend) acts.append(actButton('ch-go ch-alt', t('ch.more_time'), t('ch.more_time.hint', { time: clock(moreTimeTo(now)) }), () => choose('extend_challenge', {}, c.id)));
+      if (c.can_swap) acts.append(actButton('ch-go ch-alt', t('ch.swap'), t('ch.swap.hint'), () => choose('swap_challenge', { id: c.id }, c.id)));
+      if (acts.childElementCount) how.append(acts);
       head.addEventListener('click', () => {
         openChallenge = openChallenge === c.id ? null : c.id;
         list.querySelectorAll('.ch-head').forEach((h) => {
