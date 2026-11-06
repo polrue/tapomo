@@ -141,7 +141,7 @@ function onShortcut(kind) {
 // reviewing or rewording, which is not a mistake. Only key classes are known here, never keys.
 const TYPO_MS = 1500; // a delete this soon after the last typed character is a typo being fixed
 const TYPO_MAX_DELETES = 3; // a longer run of deletes is rewording
-const OOPS_MIN_STREAK = 30; // the streak (characters) that must be lost for "¡ups!"
+const OOPS_MIN_STREAK = 10; // the streak (characters, about two words) that must be lost for "¡ups!"
 // The burst pause (settings `pause_ms`, 2000 ms by default) is not sent to this window; a delete after
 // this long without typing counts as reviewing.
 const REVIEW_PAUSE_MS = 2000;
@@ -196,7 +196,8 @@ function onKey(cls) {
     if (!delRun || now - delRun.lastAt > REVIEW_PAUSE_MS) {
       const sincePause = lastTypedAt ? now - lastTypedAt : Infinity;
       // After a pause (or any time while reviewing) a delete is review, not a slip of the fingers.
-      if (sincePause >= REVIEW_PAUSE_MS || review) touchReview();
+      // (The very first delete since Tapomo started has nothing to compare with: neither review nor typo.)
+      if ((lastTypedAt && sincePause >= REVIEW_PAUSE_MS) || review) touchReview();
       delRun = { n: 0, streakBefore, typo: !review && sincePause <= TYPO_MS, lastAt: now };
     }
     delRun.n += cls === 'word_delete' ? TYPO_MAX_DELETES + 1 : 1; // Ctrl+Backspace is always rewording
