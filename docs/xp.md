@@ -54,13 +54,18 @@ Un día normal da unos **200 XP**: algo más de la mitad viene de escribir y el 
   - Sin borrar: el 80 % de tu mediana diaria de racha sin borrar, redondeado a 50, entre 100 y 1.500.
   - Objetivo antes de la hora límite: solo si cumpliste el objetivo al menos la mitad de tus días activos **y** en al menos 3 días de los últimos 14 se puede saber a qué hora lo alcanzaste.
     - **Hora de alcance** de un día: se ordenan sus ráfagas por hora de inicio y se acumula su duración; es el inicio de la ráfaga que cruza el objetivo más la parte de ella que hizo falta (en minutos).
-    - **Hora límite** = la hora (redondeada hacia abajo: 18:40 → 18:00) de la mediana de esas horas de alcance, entre 09:00 y 22:00.
+    - **Hora límite personal** = la hora (redondeada hacia abajo: 18:40 → 18:00) de la mediana de esas horas de alcance, entre 12:00 y 22:00.
+    - **Hora límite del día** (más justa, desde 2026-11-06: no todos los trabajos son de escribir a primera hora) = la personal, pero nunca antes de 3 h después de la primera tecla del día (redondeado hacia arriba a la hora: primera tecla 09:30 → 13:00), y como mucho 22:00. Antes de la primera tecla se muestra la personal; la primera ráfaga puede retrasarla.
     - **Progreso** = minutos escritos hoy en ráfagas que empiezan antes de la hora límite; se completa al llegar al objetivo (en minutos). Se muestra «{m} de {objetivo} min». Como el cálculo solo mira esas ráfagas, una vez pasada la hora no se puede completar ni cobrar.
-    - Pasada la hora sin completarlo, la tarjeta lo muestra apagado con «Se acabó el tiempo» en lugar de los XP. No hay segunda oportunidad (y, como siempre, no se avisa de nada más).
+    - Pasada la hora sin completarlo, la tarjeta lo muestra apagado con «Se acabó el tiempo» en lugar de los XP (y, como siempre, no se avisa de nada más). Queda «Dame más tiempo» (abajo).
   - 3 programas distintos: solo si sueles escribir en 1,5 o más programas al día.
   - Bienvenida: 3 ráfagas, 1.000 caracteres y 100 sin borrar.
   - La elección depende solo de los días anteriores, así que no cambia durante el día.
   - **Sin repetir:** un reto que salió ayer no sale hoy mientras el repertorio tenga otros suficientes (el trío de bienvenida queda fuera de la regla). Los retos de ayer se leen de lo que la app guardó (`ch_shown_<día>` en `settings`); si no hay nada guardado, se recalculan con la misma función pura repitiendo la elección desde 7 días atrás.
+- **Botones de una vez al día** (2026-11-06), en el reto desplegado y solo si no está hecho; los dos son independientes:
+  - **«Dame otro reto»**: cambia UNO de los tres retos (también un `early_goal` caducado) por el siguiente del mismo repertorio barajado del día (mismas reglas de elegibilidad, los de ayer al final), así que el sustituto es fijo para ese día. Una vez usado desaparece de los tres. Su progreso se calcula igual que el de un reto elegido normalmente y da los mismos XP. Sin repertorio de sobra (bienvenida, o solo 3 posibles) no aparece. `ch_shown_<día>` pasa a guardar la lista final, para que mañana se evite lo que de verdad salió.
+  - **«Dame más tiempo»** (solo `early_goal`, también caducado): mueve la hora límite a las 18:00, o a las 20:00 si se pide pasadas las 16:00. Nunca la adelanta (si ya era más tarde, no aparece). El progreso sigue la misma regla con la nueva hora, y el texto y las notificaciones dicen la nueva hora.
+  - Se guardan por día local en la tabla `challenge_days` (migración 11: `day`, `swapped_out`, `swapped_in`, `deadline_min`), así que sobreviven a reinicios. Nada sale del PC.
 - **Pulsar un reto** lo despliega con una explicación corta con tus cifras reales (uno abierto a la vez; cada fila es un botón, con `aria-expanded`). Algunos añaden un botón: objetivo diario → Ajustes y el campo «Objetivo diario» (con un resalte breve), lección → Lecciones, atajos → sección de atajos.
 
 ## Logros (insignias)

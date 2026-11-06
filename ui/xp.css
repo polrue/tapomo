@@ -32,8 +32,12 @@
 .ch-how[hidden] { display: none; }
 .ch-how p { margin: 0 0 8px; }
 .ch-go { font-size: 0.85rem; padding: 4px 12px; }
-/* Out of time: no second chance, so it fades and drops the XP chip. */
-.ch[data-expired] { opacity: .65; }
+.ch-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+/* «Dame otro reto» / «Dame más tiempo»: secondary to the challenge's own button. */
+.ch-alt { background: none; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--line); }
+.ch-alt:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+/* Out of time: it fades and drops the XP chip (the explanation stays readable for «Dame más tiempo»). */
+.ch[data-expired] > .ch-head { opacity: .65; }
 .ch[data-expired] .ch-text { text-decoration: line-through; text-decoration-color: var(--muted-fill); }
 .ch[data-expired] .ch-meta { color: var(--muted); font-weight: 700; }
 .ch[data-expired] .ch-stamp { border-style: solid; opacity: .6; }
