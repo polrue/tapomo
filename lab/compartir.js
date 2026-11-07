@@ -152,12 +152,13 @@
   }
 
   // ------------------------------------------------------------------ the card
+  // A level card with a reward shows Tapomo bare, wearing only what it just won (with a full
+  // outfit the new item gets lost). Its own skin stays, unless the reward is a skin.
   const lookFor = (d) => {
     const base = E.current();
     if (!d.reward) return base;
-    const slot = R.REWARDS.find((r) => r.id === d.reward)?.slot;
-    const keep = base.acc.filter((k) => R.REWARDS.find((r) => r.id === k)?.slot !== slot);
-    return { skin: base.skin, acc: [...keep, d.reward] };
+    const r = R.REWARDS.find((x) => x.id === d.reward);
+    return r?.kind === 'skin' ? { skin: d.reward, acc: [] } : { skin: base.skin, acc: [d.reward] };
   };
   const darkNow = () => (opt.theme === 'auto' ? matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light' : opt.theme === 'dark');
   function statsBox(d, cls = 'sh-stats') {
