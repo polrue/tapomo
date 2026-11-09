@@ -628,6 +628,26 @@ const Lessons = (() => {
     const input = $('ls-input');
     input.value = '';
     input.focus();
+    fitWindow();
+  }
+
+  // The text, keyboard and hands should be in view without scrolling: a window too small for
+  // them grows once the exercise is laid out (as far as the screen allows; it never shrinks).
+  const LESSON_MIN_W = 900;
+  function fitWindow() {
+    window.scrollTo(0, 0);
+    // After the sticky header has settled back to its full size (200 ms transition).
+    setTimeout(async () => {
+      if ($('ls-run').hidden) return;
+      const kb = $('ls-kb');
+      let bottom = kb.getBoundingClientRect().bottom;
+      for (const n of kb.querySelectorAll('*')) bottom = Math.max(bottom, n.getBoundingClientRect().bottom);
+      const need = Math.ceil(bottom + window.scrollY + 16);
+      if (need <= window.innerHeight && window.innerWidth >= LESSON_MIN_W) return;
+      await invoke('fit_window', { width: LESSON_MIN_W, height: need }).catch(() => {});
+      // A small screen may still not hold it all: then keep the keyboard in view.
+      setTimeout(() => { if (need > window.innerHeight) window.scrollTo(0, need - window.innerHeight); }, 120);
+    }, 260);
   }
 
   /** «Reiniciar»: the same exercise and text from zero; the attempt is dropped (nothing saved, no XP). */

@@ -115,6 +115,7 @@ fn main() {
             commands::open_logs_dir,
             commands::get_pet_tip,
             commands::pet_trace,
+            commands::fit_window,
             commands::is_store_build,
             updater::check_update,
             updater::install_update,

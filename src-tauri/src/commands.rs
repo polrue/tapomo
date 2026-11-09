@@ -471,6 +471,40 @@ pub fn pet_trace(line: String) {
     log::info!("pet: {}", line.chars().take(160).collect::<String>());
 }
 
+/// A lesson needs room for its text, keyboard and hands: grows the main window to at least
+/// `width` × `height` logical pixels, within the screen's work area. Never shrinks it and leaves
+/// a maximised or full-screen window alone; moves it back on screen if it now runs past an edge.
+#[tauri::command]
+pub fn fit_window(window: tauri::WebviewWindow, width: f64, height: f64) -> CmdResult<()> {
+    let e = |e: tauri::Error| e.to_string();
+    if window.is_maximized().map_err(e)? || window.is_fullscreen().map_err(e)? {
+        return Ok(());
+    }
+    let Some(monitor) = window.current_monitor().map_err(e)? else { return Ok(()) };
+    let area = *monitor.work_area();
+    let scale = window.scale_factor().map_err(e)?;
+    let inner = window.inner_size().map_err(e)?;
+    let outer = window.outer_size().map_err(e)?;
+    // Title bar and borders, which the work area must also hold.
+    let fw = outer.width.saturating_sub(inner.width);
+    let fh = outer.height.saturating_sub(inner.height);
+    let w = ((width * scale).round() as u32).max(inner.width).min(area.size.width.saturating_sub(fw));
+    let h = ((height * scale).round() as u32).max(inner.height).min(area.size.height.saturating_sub(fh));
+    if w <= inner.width && h <= inner.height {
+        return Ok(());
+    }
+    window.set_size(tauri::PhysicalSize::new(w, h)).map_err(e)?;
+    let pos = window.outer_position().map_err(e)?;
+    let (ax, ay) = (area.position.x, area.position.y);
+    let x = pos.x.min(ax + area.size.width as i32 - (w + fw) as i32).max(ax);
+    let y = pos.y.min(ay + area.size.height as i32 - (h + fh) as i32).max(ay);
+    if (x, y) != (pos.x, pos.y) {
+        window.set_position(tauri::PhysicalPosition::new(x, y)).map_err(e)?;
+    }
+    log::info!("lessons: window grown to {w}×{h} px");
+    Ok(())
+}
+
 /// Opens the folder holding the log files in the file manager.
 #[tauri::command]
 pub fn open_logs_dir(app: AppHandle) -> CmdResult<()> {
