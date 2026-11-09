@@ -882,6 +882,7 @@ const Lessons = (() => {
     });
     $('ls-text').addEventListener('click', () => input.focus());
     $('ls-restart').addEventListener('click', restart);
+    $('ls-exit').addEventListener('click', () => renderMap());
     const modes = $('ls-modes');
     modes.addEventListener('click', (e) => {
       const b = e.target.closest('[data-mode]');
