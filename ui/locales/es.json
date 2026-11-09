@@ -729,7 +729,7 @@
   "lessons.hands_tip": "Mostrar u ocultar las manos bajo el teclado",
   "lessons.restart": "Reiniciar",
   "lessons.restart_tip": "Empezar de nuevo este ejercicio (Ctrl+Intro). Este intento no se guarda.",
-  "lessons.exit": "← Volver",
+  "lessons.exit": "← Todas las lecciones",
   "lessons.exit_tip": "Volver a todas las lecciones (Esc). Este intento no se guarda.",
   "notify.challenge.title": "¡Reto cumplido!",
   "notify.challenge.body": "{name} · +{xp} XP",
