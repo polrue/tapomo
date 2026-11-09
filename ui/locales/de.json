@@ -729,6 +729,8 @@
   "lessons.hands_tip": "Hände unter der Tastatur ein- oder ausblenden",
   "lessons.restart": "Neu starten",
   "lessons.restart_tip": "Diese Übung von vorn beginnen (Strg+Eingabe). Dieser Versuch wird nicht gespeichert.",
+  "lessons.exit": "← Zurück",
+  "lessons.exit_tip": "Zurück zu allen Lektionen (Esc). Dieser Versuch wird nicht gespeichert.",
   "notify.challenge.title": "Challenge geschafft!",
   "notify.challenge.body": "{name} · +{xp} XP",
   "notify.all.title": "Tages-Challenges geschafft!",

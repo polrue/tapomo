@@ -729,6 +729,8 @@
   "lessons.hands_tip": "Afficher ou masquer les mains sous le clavier",
   "lessons.restart": "Recommencer",
   "lessons.restart_tip": "Recommencer cet exercice (Ctrl+Entrée). Cet essai n'est pas enregistré.",
+  "lessons.exit": "← Retour",
+  "lessons.exit_tip": "Revenir à toutes les leçons (Échap). Cet essai n'est pas enregistré.",
   "notify.challenge.title": "Défi accompli !",
   "notify.challenge.body": "{name} · +{xp} XP",
   "notify.all.title": "Défis du jour terminés !",

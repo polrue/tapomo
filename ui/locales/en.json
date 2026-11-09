@@ -729,6 +729,8 @@
   "lessons.hands_tip": "Show or hide the hands under the keyboard",
   "lessons.restart": "Restart",
   "lessons.restart_tip": "Start this exercise again (Ctrl+Enter). This attempt isn't saved.",
+  "lessons.exit": "← Back",
+  "lessons.exit_tip": "Back to all lessons (Esc). This attempt isn't saved.",
   "notify.challenge.title": "Challenge complete!",
   "notify.challenge.body": "{name} · +{xp} XP",
   "notify.all.title": "Daily challenges complete!",
