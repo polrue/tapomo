@@ -15,6 +15,10 @@
 .ls-lesson:disabled { opacity: .45; cursor: default; }
 .ls-star { color: var(--line); font-size: 1rem; }
 .ls-star.on { color: #ffb81c; }
+/* Way out of an exercise: top left, where a back link is looked for, in the accent colour. */
+.ls-exit { display: inline-flex; align-items: center; margin: 4px 0 0 -8px; padding: 6px 10px; border: 0; border-radius: 999px; background: transparent; color: var(--accent-strong); font-weight: 800; font-size: .95rem; cursor: pointer; }
+.ls-exit:hover, .ls-exit:focus-visible { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent-strong); }
+.ls-exit + .ls-run-head { margin-top: 4px; }
 .ls-run-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; align-items: baseline; margin-top: 12px; }
 .ls-run-head h3 { margin: 0; }
 .ls-live { color: var(--muted); font-variant-numeric: tabular-nums; }

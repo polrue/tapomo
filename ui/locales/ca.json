@@ -729,7 +729,7 @@
   "lessons.hands_tip": "Mostrar o amagar les mans sota el teclat",
   "lessons.restart": "Reiniciar",
   "lessons.restart_tip": "Tornar a començar aquest exercici (Ctrl+Intro). Aquest intent no es desa.",
-  "lessons.exit": "← Tornar",
+  "lessons.exit": "← Totes les lliçons",
   "lessons.exit_tip": "Tornar a totes les lliçons (Esc). Aquest intent no es desa.",
   "notify.challenge.title": "Repte complert!",
   "notify.challenge.body": "{name} · +{xp} XP",
