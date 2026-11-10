@@ -390,6 +390,12 @@ pub fn is_update(stored: Option<&str>, running: &str, has_data: bool) -> bool {
 pub fn check_update(app: &AppHandle, conn: &rusqlite::Connection) {
     let running = app.package_info().version.to_string();
     let stored = db::get_raw(conn, "last_seen_version").ok().flatten();
+    // Testing aid: TAPOMO_UPDATE_MOMENT=1 replays the moment without a new version.
+    if std::env::var_os("TAPOMO_UPDATE_MOMENT").is_some() {
+        if let Some(m) = app.try_state::<UpdateMoment>() {
+            *m.0.lock().unwrap_or_else(|e| e.into_inner()) = Some(running.clone());
+        }
+    }
     if stored.as_deref() == Some(running.as_str()) {
         return;
     }
