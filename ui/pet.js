@@ -102,6 +102,7 @@ function say(key, ms, big = false) {
 }
 
 function sayText(text, ms, big = false, tip = false) {
+  if (PetUpdate.waiting) return; // a stone doesn't talk
   const el = $('bubble');
   clearTimeout(bubbleTimer);
   el.textContent = text;
@@ -126,7 +127,7 @@ const SHORTCUT_ICON = { clipboard: '📋', undo: '↩️', save: '💾', windows
 let lastShortcutAt = 0;
 function onShortcut(kind) {
   state.lastKeyAt = Date.now();
-  if (state.paused || state.asleep || Date.now() - lastShortcutAt < 700) return;
+  if (state.paused || state.asleep || PetUpdate.waiting || Date.now() - lastShortcutAt < 700) return;
   lastShortcutAt = Date.now();
   Mascot.squish(svg);
   if (Mascot.reduced()) return;
@@ -173,6 +174,12 @@ function touchReview() {
 function onKey(cls) {
   const now = Date.now();
   state.lastKeyAt = now;
+  if (PetUpdate.waiting) {
+    // Still stone after an update: each key makes it wobble, and a few keys in it bursts.
+    if (++stoneKeys >= STONE_KEYS) PetUpdate.wake();
+    else PetUpdate.nudge();
+    return;
+  }
   if (state.asleep) {
     state.asleep = false;
     if (!state.paused) {
@@ -431,7 +438,7 @@ function onGoal() {
 }
 
 function goToSleep() {
-  if (state.asleep || state.paused) return;
+  if (state.asleep || state.paused || PetUpdate.busy) return;
   state.asleep = true;
   state.mode = 'idle';
   state.display = 0;
@@ -455,7 +462,7 @@ async function applyLook(settings) {
 
 /** A burst discarded as keyboard mashing: no scolding, a laugh. */
 function onMash() {
-  if (state.paused) return;
+  if (state.paused || PetUpdate.waiting) return;
   Mascot.setFace(svg, { eyes: 'closed', mouth: 'big', cheeks: true });
   Mascot.tilt(svg);
   say('pet.mash', 2600);
@@ -620,7 +627,9 @@ function bindDrag() {
       Mascot.setHeld(svg, false);
       invoke('pet_drag_end').catch(console.error);
     } else if (wasClick) {
-      if (updateNotice) {
+      if (PetUpdate.waiting) {
+        PetUpdate.wake();
+      } else if (updateNotice) {
         // The «¡Me he actualizado!» bubble is showing: a click on Tapomo opens the news.
         dismissUpdate();
         invoke('pet_open_main').catch(console.error);
@@ -700,6 +709,7 @@ function onPetState(p) {
     const up = comeUp();
     setTimeout(() => {
       if (updateVersion) return playUpdate();
+      if (PetUpdate.waiting) return; // still stone: no greeting, no jump
       say('pet.here', 2500);
       Mascot.jump(svg, { big: false });
     }, up);
@@ -708,8 +718,11 @@ function onPetState(p) {
 
 // ------------------------------------------------------------ after an update
 
-// Rust hands over the new version once (`pet_update_moment`) the first time Tapomo runs on it. It plays
-// as soon as the pet is on screen (if it is hidden, when it next shows up).
+// Rust hands over the new version once (`pet_update_moment`) the first time Tapomo runs on it. Tapomo
+// turns to stone as soon as it is on screen (if it is hidden, when it next shows up) and bursts once the
+// user is around: STONE_KEYS keys or a click on it.
+const STONE_KEYS = 5;
+let stoneKeys = 0;
 let updateVersion = null;
 let updateNotice = false; // the news bubble is up: a click opens the main window
 let updateTimer = null;

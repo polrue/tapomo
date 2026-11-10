@@ -1,5 +1,6 @@
 // Floating Tapomo's «after an update» moment (approved in the lab's «Reinicio» study, lab/reinicio.js).
-// The first time Tapomo shows up on a new version it turns to stone and the stone bursts, either as
+// The first time Tapomo shows up on a new version it turns to stone and waits; when the user is around
+// (a few keys or a click on it) the stone bursts, either as
 // A · Estallido (cracks, tremble, shards flying with spin and gravity, dust, squash-pop) or as
 // D · ¡Pof! (a comic star and a dust cloud), picked at random. The clothes go on AFTER the burst, one by
 // one; the only trace of the old «Tapomo dorado» is a brief shine (never a gold colour). Then a bubble
@@ -90,7 +91,7 @@ const PetUpdate = (() => {
   })();
 
   // ------------------------------------------------------------------ runtime helpers
-  const st = { gen: 0, busy: false, shown: 'a' };
+  const st = { gen: 0, busy: false, waiting: false, shown: 'a' };
   const speed = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--speed')) || 1;
   const dur = (ms) => ms / speed();
   const later = (ms, fn) => setTimeout(fn, dur(ms));
@@ -300,6 +301,7 @@ const PetUpdate = (() => {
   /** Puts everything back as it was: no stone, no shine, the clothes on, no pending timers. */
   function clean() {
     st.gen++;
+    st.waiting = false;
     shake().getAnimations().forEach((a) => a.cancel());
     shake().style.opacity = '';
     shake().style.transformBox = '';
@@ -329,14 +331,11 @@ const PetUpdate = (() => {
   const ALL = SHARDS.map((_, i) => i);
   const V = {
     a: {
-      play(g) {
-        buildShell();
-        undress();
-        Mascot.setFace(svg, { eyes: 'closed', mouth: 'small' });
-        shellIn();
-        at(g, 380, () => { growCracks(ALL, 520, 45); crumbs(5); });
-        at(g, 950, () => tremble(380));
-        at(g, 1330, () => {
+      burst(g) {
+        growCracks(ALL, 520, 45);
+        crumbs(5);
+        at(g, 570, () => tremble(380));
+        at(g, 950, () => {
           reveal();
           fadeCracks();
           svg.querySelectorAll('.rn-shard').forEach((s, i) => {
@@ -353,19 +352,17 @@ const PetUpdate = (() => {
           squashPop();
           Mascot.setFace(svg, { eyes: 'wide', mouth: 'o' });
         });
-        at(g, 1900, () => { Mascot.setFace(svg, { eyes: 'sparkle', mouth: 'big', cheeks: true }); glint(); });
-        const end = dressOn(g, 'pop', 280, 2550);
+        at(g, 1520, () => { Mascot.setFace(svg, { eyes: 'sparkle', mouth: 'big', cheeks: true }); glint(); });
+        const end = dressOn(g, 'pop', 280, 2170);
         at(g, end, () => { host.renderFace(); talkEnd(g); });
       },
     },
     d: {
-      play(g) {
-        const sh = buildShell();
-        undress();
-        Mascot.setFace(svg, { eyes: 'closed', mouth: 'small' });
-        shellIn();
-        at(g, 420, () => { growCracks(ALL, 360, 25); both([{ transform: 'none' }, { transform: 'scale(1.05,1.06)', offset: 0.8 }, { transform: 'scale(1.03)' }], 480, { easing: 'ease-in', fill: 'forwards' }); });
-        at(g, 900, () => {
+      burst(g) {
+        const sh = shellOf();
+        growCracks(ALL, 360, 25);
+        both([{ transform: 'none' }, { transform: 'scale(1.05,1.06)', offset: 0.8 }, { transform: 'scale(1.03)' }], 480, { easing: 'ease-in', fill: 'forwards' });
+        at(g, 480, () => {
           shake().getAnimations().forEach((a) => a.cancel());
           sh.getAnimations().forEach((a) => a.cancel());
           const cloud = rootOverlay([[80, 92, 36], [50, 64, 22], [110, 64, 22], [80, 50, 20], [44, 92, 22], [116, 92, 22], [50, 122, 22], [110, 122, 22], [80, 132, 20], [30, 74, 13], [132, 76, 14], [28, 118, 13], [134, 116, 13]]
@@ -388,8 +385,8 @@ const PetUpdate = (() => {
           screenShake(1.6);
           Mascot.setFace(svg, { eyes: 'sparkle', mouth: 'big', cheeks: true });
         });
-        at(g, 1750, () => glint());
-        const end = dressOn(g, 'pof', 300, 2450);
+        at(g, 1330, () => glint());
+        const end = dressOn(g, 'pof', 300, 2030);
         at(g, end, () => { host.renderFace(); talkEnd(g); });
       },
     },
@@ -397,21 +394,36 @@ const PetUpdate = (() => {
 
   const PRE = { a: 'pet.update.pre_a', d: 'pet.update.pre_d' };
 
-  /** Plays the moment; `h` = { renderFace(), pre(key), news() } (pet.js). */
+  /** Turns Tapomo to stone and leaves it there: it bursts on `wake()`, i.e. when the user is actually
+   *  around (a few keys or a click), so the moment isn't wasted on an empty desk at Windows start-up.
+   *  `h` = { renderFace(), pre(key), news() } (pet.js). */
   function play(h) {
     host = h;
     clean();
-    const g = st.gen;
     if (Mascot.reduced()) {
       // «Reducir movimiento»: no stone, no motion; just the bubble.
       host.news();
       return;
     }
     st.busy = true;
+    st.waiting = true;
     shake().style.transformBox = 'view-box';
     shake().style.transformOrigin = '80px 140px';
     st.shown = Math.random() < 0.5 ? 'a' : 'd';
-    V[st.shown].play(g);
+    buildShell();
+    undress();
+    Mascot.setFace(svg, { eyes: 'closed', mouth: 'small' });
+    shellIn();
   }
-  return { play, get busy() { return st.busy; } };
+  /** A small wobble of the stone: a key went in, it's about to give. */
+  function nudge() {
+    if (st.waiting && !Mascot.reduced()) tremble(140, 0.9);
+  }
+  /** The user is here: the stone bursts. */
+  function wake() {
+    if (!st.waiting) return;
+    st.waiting = false;
+    V[st.shown].burst(st.gen);
+  }
+  return { play, nudge, wake, get busy() { return st.busy; }, get waiting() { return st.waiting; } };
 })();
