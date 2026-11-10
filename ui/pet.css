@@ -132,3 +132,9 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .stage .mascot, .ground, .ground.shrink { transition: none; }
 }
+
+/* «¡Me he actualizado a la 1.1.0! Mira las novedades» (pet-update.js): a click on Tapomo opens the news. */
+.bubble.up-hi { font-size: 13px; line-height: 1.3; }
+.bubble.up-hi u { text-decoration-thickness: 1.5px; text-underline-offset: 2px; color: #b04a26; }
+/* The cracks of the stone grow from the centre (pathLength="1"). */
+.rn-crack { stroke-dasharray: 1; stroke-dashoffset: 1; }
