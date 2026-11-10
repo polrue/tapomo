@@ -368,6 +368,62 @@ pub fn pet_hint(state: tauri::State<AppState>) -> bool {
     true
 }
 
+// ------------------------------------------------------------ after an update
+
+/// The version to celebrate (set at startup when this run is the first one on a new version); the pet
+/// page takes it once with `pet_update_moment`.
+#[derive(Default)]
+pub struct UpdateMoment(pub Mutex<Option<String>>);
+
+/// Whether the pet plays its «after update» animation. `stored` is the last version that ran (empty or
+/// missing for versions up to 1.0.2, which never stored it), `has_data` whether the database already
+/// holds usage: with no stored version, data means an update from an older release, no data a fresh install.
+pub fn is_update(stored: Option<&str>, running: &str, has_data: bool) -> bool {
+    match stored.map(str::trim).filter(|v| !v.is_empty()) {
+        Some(v) => v != running,
+        None => has_data,
+    }
+}
+
+/// Startup: compares the running version with `last_seen_version`, remembers the running one and, if this
+/// is the first run after an update, keeps it pending for the pet.
+pub fn check_update(app: &AppHandle, conn: &rusqlite::Connection) {
+    let running = app.package_info().version.to_string();
+    let stored = db::get_raw(conn, "last_seen_version").ok().flatten();
+    if stored.as_deref() == Some(running.as_str()) {
+        return;
+    }
+    let has_data = conn.query_row("SELECT EXISTS(SELECT 1 FROM bursts) OR EXISTS(SELECT 1 FROM xp_events)", [], |r| r.get::<_, bool>(0)).unwrap_or(false);
+    if is_update(stored.as_deref(), &running, has_data) {
+        if let Some(m) = app.try_state::<UpdateMoment>() {
+            *m.0.lock().unwrap_or_else(|e| e.into_inner()) = Some(running.clone());
+        }
+    }
+    let _ = db::set_raw(conn, "last_seen_version", &running);
+}
+
+/// The pet page asks on load: `Some(version)` exactly once after an update, `None` otherwise.
+#[tauri::command]
+pub fn pet_update_moment(moment: tauri::State<UpdateMoment>) -> Option<String> {
+    moment.0.lock().ok()?.take()
+}
+
+#[cfg(test)]
+mod update_tests {
+    use super::is_update;
+
+    #[test]
+    fn plays_only_on_the_first_run_after_an_update() {
+        assert!(!is_update(Some("1.1.0"), "1.1.0", true), "same version: nothing");
+        assert!(is_update(Some("1.0.2"), "1.1.0", true), "stored and different: update");
+        assert!(is_update(Some("1.0.2"), "1.1.0", false), "stored wins over the data check");
+        assert!(is_update(None, "1.1.0", true), "never stored but with usage: coming from <= 1.0.2");
+        assert!(is_update(Some("  "), "1.1.0", true), "blank counts as never stored");
+        assert!(!is_update(None, "1.1.0", false), "fresh install: nothing");
+        assert!(!is_update(Some(""), "1.1.0", false));
+    }
+}
+
 /// Right-click: native context menu on the pet window.
 #[tauri::command]
 pub fn pet_menu(app: AppHandle, state: tauri::State<AppState>) -> Result<(), String> {
