@@ -156,7 +156,7 @@ struct History {
     early_deadline: Option<u32>,
 }
 
-fn history(bursts: &[DayBurst], today: i64, goal_ms: u64) -> History {
+fn history(bursts: &[DayBurst], today: i64, plan: &crate::GoalPlan) -> History {
     use std::collections::{BTreeMap, HashSet};
     #[derive(Default)]
     struct Day {
@@ -164,6 +164,8 @@ fn history(bursts: &[DayBurst], today: i64, goal_ms: u64) -> History {
         long: u32,
         apps: HashSet<u32>,
         ms: u64,
+        /// The goal of that day (0 = off): past days keep the goal they had.
+        goal_ms: u64,
         /// `(start_min, duration_ms)` of each burst.
         spans: Vec<(u32, u64)>,
     }
@@ -171,6 +173,7 @@ fn history(bursts: &[DayBurst], today: i64, goal_ms: u64) -> History {
     let (mut intervals, mut ms_total) = (0.0, 0.0);
     for b in bursts.iter().filter(|b| b.day < today && b.day >= today - CALIBRATION_DAYS) {
         let d = days.entry(b.day).or_default();
+        d.goal_ms = plan.at(b.day);
         d.clean = d.clean.max(b.best_streak);
         d.long += u32::from(b.duration_ms >= LONG_BURST_MS);
         d.apps.insert(b.app_id);
@@ -183,7 +186,7 @@ fn history(bursts: &[DayBurst], today: i64, goal_ms: u64) -> History {
     let per_day = |f: &dyn Fn(&Day) -> f64| if n == 0 { 0.0 } else { days.values().map(f).sum::<f64>() / n as f64 };
     let mut cleans: Vec<u32> = days.values().map(|d| d.clean).collect();
     cleans.sort_unstable();
-    let mut reached: Vec<u32> = if goal_ms == 0 { Vec::new() } else { days.values().filter_map(|d| goal_reached_at(&mut d.spans.clone(), goal_ms)).collect() };
+    let mut reached: Vec<u32> = days.values().filter(|d| d.goal_ms > 0).filter_map(|d| goal_reached_at(&mut d.spans.clone(), d.goal_ms)).collect();
     reached.sort_unstable();
     let early_deadline = (reached.len() >= EARLY_GOAL_MIN_DAYS)
         .then(|| (reached[reached.len() / 2] / 60 * 60).clamp(EARLY_DEADLINE_MIN, EARLY_DEADLINE_MAX));
@@ -193,7 +196,7 @@ fn history(bursts: &[DayBurst], today: i64, goal_ms: u64) -> History {
         median_clean: cleans.get(n / 2).copied().unwrap_or(0),
         long_per_day: per_day(&|d| f64::from(d.long)),
         apps_per_day: per_day(&|d| d.apps.len() as f64),
-        goal_met_share: if goal_ms == 0 { 0.0 } else { per_day(&|d| f64::from(u8::from(d.ms >= goal_ms))) },
+        goal_met_share: if plan.at(today) == 0 { 0.0 } else { per_day(&|d| f64::from(u8::from(d.goal_ms > 0 && d.ms >= d.goal_ms))) },
         early_deadline,
     }
 }
@@ -238,8 +241,9 @@ struct Picks {
 /// Chooses the three challenges of `day`. Ids in `avoid` (yesterday's) go last, so they only come
 /// back when the pool has fewer than three other ids.
 #[allow(clippy::too_many_arguments)] // a private helper fed straight from `daily_challenges`
-fn choose(bursts: &[DayBurst], day: i64, history_days: usize, goal_ms: u64, shortcuts: &[(i64, u64)], lessons: &[(i64, u64)], learnt_yesterday: bool, avoid: &[&str]) -> Picks {
-    let h = history(bursts, day, goal_ms);
+fn choose(bursts: &[DayBurst], day: i64, history_days: usize, plan: &crate::GoalPlan, shortcuts: &[(i64, u64)], lessons: &[(i64, u64)], learnt_yesterday: bool, avoid: &[&str]) -> Picks {
+    let goal_ms = plan.at(day);
+    let h = history(bursts, day, plan);
     if history_days < WELCOME_DAYS || h.active_days == 0 {
         return Picks { items: [("bursts", 3), ("chars", 1_000), ("clean", 100)], welcome: true, deadline: None, rest: Vec::new() };
     }
@@ -306,22 +310,25 @@ pub struct DayChallenges {
 ///
 /// `bursts` holds the last [`CALIBRATION_DAYS`] + [`REPEAT_LOOKBACK`] days and today; `history_days` is the
 /// number of distinct days with bursts before today (all time). The choice only depends on days
-/// before today, so it stays fixed during the day. `goal_ms == 0` means the daily goal is off.
+/// before today, so it stays fixed during the day. `goal` is one goal in ms for every day, or a
+/// [`crate::GoalPlan`]: past days are then calibrated with the goal each one had (0 = off).
 /// `shortcuts` holds `(day, count)` pairs, empty when shortcut counting is off.
 ///
 /// A challenge shown yesterday is not picked again while the pool has enough others (the welcome
 /// trio is exempt). Yesterday's picks are recomputed with the same pure choice, replayed from
 /// [`REPEAT_LOOKBACK`] days back (the "shortcut learnt yesterday" of past days is unknown there),
 /// unless the app passes what it really showed (`extras.shown_yesterday`, exact).
-pub fn daily_challenges(bursts: &[DayBurst], today: i64, history_days: usize, goal_ms: u64, shortcuts: &[(i64, u64)], extras: Extras) -> [Challenge; 3] {
-    day_challenges(bursts, today, history_days, goal_ms, shortcuts, extras).list
+pub fn daily_challenges<G: Into<crate::GoalPlan>>(bursts: &[DayBurst], today: i64, history_days: usize, goal: G, shortcuts: &[(i64, u64)], extras: Extras) -> [Challenge; 3] {
+    day_challenges(bursts, today, history_days, goal, shortcuts, extras).list
 }
 
 /// [`daily_challenges`] plus the spare for «Dame otro reto». A swap (`extras.swap`) puts the
 /// replacement in the place of the swapped-out challenge; it is the next one of the same seeded
 /// pool (yesterday's ids still last), so it is fixed for the day and its progress is computed like
 /// any other pick's.
-pub fn day_challenges(bursts: &[DayBurst], today: i64, history_days: usize, goal_ms: u64, shortcuts: &[(i64, u64)], extras: Extras) -> DayChallenges {
+pub fn day_challenges<G: Into<crate::GoalPlan>>(bursts: &[DayBurst], today: i64, history_days: usize, goal: G, shortcuts: &[(i64, u64)], extras: Extras) -> DayChallenges {
+    let plan: crate::GoalPlan = goal.into();
+    let goal_ms = plan.at(today);
     let mut prev: Vec<&str> = Vec::new();
     if let Some(shown) = extras.shown_yesterday {
         // The welcome trio is exempt from the rule.
@@ -330,11 +337,11 @@ pub fn day_challenges(bursts: &[DayBurst], today: i64, history_days: usize, goal
         for d in today - REPEAT_LOOKBACK..today {
             // Days with bursts from `d` up to yesterday were not yet history on day `d`.
             let later: std::collections::HashSet<i64> = bursts.iter().filter(|b| b.day >= d && b.day < today).map(|b| b.day).collect();
-            let p = choose(bursts, d, history_days.saturating_sub(later.len()), goal_ms, shortcuts, extras.lessons, false, &prev);
+            let p = choose(bursts, d, history_days.saturating_sub(later.len()), &plan, shortcuts, extras.lessons, false, &prev);
             prev = if p.welcome { Vec::new() } else { p.items.iter().map(|(id, _)| *id).collect() };
         }
     }
-    let picks = choose(bursts, today, history_days, goal_ms, shortcuts, extras.lessons, extras.learnt_yesterday, &prev);
+    let picks = choose(bursts, today, history_days, &plan, shortcuts, extras.lessons, extras.learnt_yesterday, &prev);
     let mut items = picks.items;
     let mut spare = picks.rest.first().map(|(id, _)| *id);
     if let Some((out, wanted)) = extras.swap {

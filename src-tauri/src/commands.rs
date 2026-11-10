@@ -400,7 +400,7 @@ fn changed_settings(old: &Settings, new: &Settings) -> Vec<&'static str> {
         ("check_updates", old.check_updates != new.check_updates),
         ("auto_update", old.auto_update != new.auto_update),
         ("welcome_done", old.welcome_done != new.welcome_done),
-        ("daily_goal_min", old.daily_goal_min != new.daily_goal_min),
+        ("daily_goal_min", old.daily_goal_min != new.daily_goal_min || old.goal_auto != new.goal_auto),
         ("weekend_rest", old.weekend_rest != new.weekend_rest),
         ("skin", old.skin != new.skin),
         ("accessories", old.accessories != new.accessories),

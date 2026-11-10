@@ -576,8 +576,10 @@ impl Tracker {
     fn refresh_goal(&mut self) {
         self.goal_refreshed = Instant::now();
         let read = || -> rusqlite::Result<(u64, i64, u64)> {
-            let goal_ms = u64::from(db::get_settings(&self.conn)?.daily_goal_min) * 60_000;
-            Ok((goal_ms, db::today_day(&self.conn)?, db::today_active_ms(&self.conn)?))
+            db::get_settings(&self.conn)?; // moves the automatic goal at the start of a week
+            let day = db::today_day(&self.conn)?;
+            let goal_ms = db::goal_plan(&self.conn)?.at(day);
+            Ok((goal_ms, day, db::today_active_ms(&self.conn)?))
         };
         match read() {
             Ok((goal_ms, day, stored)) => {

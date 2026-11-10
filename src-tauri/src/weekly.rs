@@ -68,13 +68,8 @@ pub fn letter(conn: &Connection, week: i64) -> rusqlite::Result<Letter> {
         )
         .optional()?;
     let before: Option<f64> = conn.query_row("SELECT MAX(peak_wpm) FROM bursts WHERE start_ms < ?1", [from], |r| r.get(0))?;
-    let settings = db::get_settings(conn)?;
-    let goal_ms = u64::from(settings.daily_goal_min) * 60_000;
-    let goal_days = if goal_ms == 0 {
-        0
-    } else {
-        db::daily_active(conn)?.iter().filter(|(d, ms)| *d >= week && *d < week + 7 && *ms >= goal_ms).count() as u32
-    };
+    let plan = db::goal_plan(conn)?;
+    let goal_days = db::daily_active(conn)?.iter().filter(|(d, ms)| *d >= week && *d < week + 7 && plan.at(*d) > 0 && *ms >= plan.at(*d)).count() as u32;
     let count = |sql: &str| -> rusqlite::Result<u32> { conn.query_row(sql, params![week, week + 7], |r| r.get(0)) };
     let mut stmt = conn.prepare("SELECT id FROM badges WHERE ts >= ?1 AND ts < ?2 AND retro = 0 ORDER BY ts")?;
     let badges = stmt.query_map(params![from, to], |r| r.get(0))?.collect::<rusqlite::Result<Vec<String>>>()?;

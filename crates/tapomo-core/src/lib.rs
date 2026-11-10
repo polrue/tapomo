@@ -9,10 +9,13 @@
 //! a file rename) are discarded so they don't pollute the stats.
 
 pub mod badges;
+pub mod goal;
 pub mod league;
 pub mod lessons;
 pub mod shortcuts;
 pub mod xp;
+
+pub use goal::GoalPlan;
 
 /// What kind of key was pressed. The keyboard hook maps every key to one of these.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -478,7 +481,7 @@ pub fn weekday(day: i64) -> u8 {
 }
 
 /// The Monday of the week `day` belongs to; it identifies the week.
-fn week_start(day: i64) -> i64 {
+pub(crate) fn week_start(day: i64) -> i64 {
     day - i64::from(weekday(day))
 }
 
@@ -506,23 +509,30 @@ pub const MAX_PROTECTORS: u8 = 2;
 /// a missed day is covered if there is cover left (the streak neither grows nor breaks),
 /// otherwise the streak restarts. With `weekend_rest`, Saturdays and Sundays only count when
 /// met and are never misses. Today never breaks anything: while it is unmet it is simply still
-/// in progress. `goal_ms == 0` means the goal is off.
+/// in progress. A goal of 0 means it is off. `goal` is one goal for every day or a [`GoalPlan`]: each
+/// day is then judged with the goal of that day, so a change never rewrites the past (a day on which
+/// the goal was off is neither met nor a miss).
 ///
 /// Cover: before `protectors_since` (and always when it is `None`) it is the weekly comodín, one
 /// free miss per ISO week that does not carry over. From `protectors_since` on it is the streak
 /// protectors: one in the bank on that day, one more for every full week (Monday to Sunday)
 /// with the streak alive and no protector spent, never more than [`MAX_PROTECTORS`]. Past
 /// streaks keep the rule they were made under.
-pub fn goal_status(days: &[(i64, u64)], today: i64, goal_ms: u64, weekend_rest: bool, protectors_since: Option<i64>) -> GoalStatus {
+pub fn goal_status<G: Into<GoalPlan>>(days: &[(i64, u64)], today: i64, goal: G, weekend_rest: bool, protectors_since: Option<i64>) -> GoalStatus {
+    goal_status_plan(days, today, &goal.into(), weekend_rest, protectors_since)
+}
+
+/// [`goal_status`] with a plan already in hand.
+pub fn goal_status_plan(days: &[(i64, u64)], today: i64, plan: &GoalPlan, weekend_rest: bool, protectors_since: Option<i64>) -> GoalStatus {
     let mut by_day: std::collections::HashMap<i64, u64> = std::collections::HashMap::new();
     for &(d, ms) in days.iter().filter(|(d, _)| *d <= today) {
         *by_day.entry(d).or_insert(0) += ms;
     }
     let today_ms = by_day.get(&today).copied().unwrap_or(0);
-    if goal_ms == 0 {
+    if plan.at(today) == 0 {
         return GoalStatus { today_ms, ..GoalStatus::default() };
     }
-    let met = |d: i64| by_day.get(&d).is_some_and(|&ms| ms >= goal_ms);
+    let met = |d: i64| by_day.get(&d).is_some_and(|&ms| plan.at(d) > 0 && ms >= plan.at(d));
     let since = protectors_since.unwrap_or(i64::MAX);
 
     let mut streak = 0u32;
@@ -547,8 +557,8 @@ pub fn goal_status(days: &[(i64, u64)], today: i64, goal_ms: u64, weekend_rest: 
             if met(d) {
                 streak += 1;
                 last_covered = false;
-            } else if weekend_rest && weekday(d) >= 5 {
-                // a rest day: neither a miss nor a met day
+            } else if (weekend_rest && weekday(d) >= 5) || plan.at(d) == 0 {
+                // a rest day, or the goal was off that day: neither a miss nor a met day
             } else if d < since && spent.insert(week_start(d)) {
                 last_covered = true;
             } else if d >= since && bank > 0 {

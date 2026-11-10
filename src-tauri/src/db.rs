@@ -211,6 +211,20 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
              COMMIT;",
         )?;
     }
+    if version < 12 {
+        // Automatic daily goal: new installs (nothing typed, no lesson done) start in auto mode at
+        // 10 min; whoever has history keeps their manual goal and may switch. Additive only.
+        conn.execute_batch(
+            "BEGIN;
+             INSERT OR IGNORE INTO settings(key, value)
+                 SELECT 'goal_auto', '1' WHERE NOT EXISTS (SELECT 1 FROM bursts) AND NOT EXISTS (SELECT 1 FROM lesson_results);
+             INSERT OR IGNORE INTO settings(key, value)
+                 SELECT 'daily_goal_min', '10' WHERE NOT EXISTS (SELECT 1 FROM bursts) AND NOT EXISTS (SELECT 1 FROM lesson_results);
+             INSERT OR IGNORE INTO settings(key, value) VALUES ('goal_auto', '0');
+             PRAGMA user_version = 12;
+             COMMIT;",
+        )?;
+    }
     Ok(())
 }
 
@@ -235,8 +249,12 @@ pub struct Settings {
     pub auto_update: bool,
     /// The first-run welcome has been seen or skipped.
     pub welcome_done: bool,
-    /// Daily goal in active minutes: 0 (off), 10, 20 or 30.
+    /// Daily goal in active minutes: 0 (off), 5, 10, 20 or 30 (15 and 25 too in auto mode).
+    /// In auto mode it is the goal in force now; the app moves it, writing it here is ignored.
     pub daily_goal_min: u32,
+    /// «Automático»: the goal follows how the weeks go (see [`auto_goal_tick`]).
+    #[serde(default)]
+    pub goal_auto: bool,
     /// Saturdays and Sundays never break the day streak.
     pub weekend_rest: bool,
     /// What Tapomo wears: skin id, accessory ids and drawing style (`bold` or `subtle`). The ids
@@ -268,11 +286,90 @@ fn default_hair() -> String {
 }
 
 /// Goal choices offered in the settings; anything else falls back to the default.
-pub const GOAL_CHOICES: [u32; 4] = [0, 10, 20, 30];
+pub const GOAL_CHOICES: [u32; 5] = [0, 5, 10, 20, 30];
 pub const DEFAULT_GOAL_MIN: u32 = 20;
 
-fn valid_goal(min: u32) -> u32 {
-    if GOAL_CHOICES.contains(&min) { min } else { DEFAULT_GOAL_MIN }
+/// In auto mode any step of 5 between the limits is valid (15 and 25 too).
+fn valid_goal(min: u32, auto: bool) -> u32 {
+    let auto_ok = auto && min.is_multiple_of(tapomo_core::goal::AUTO_STEP_MIN) && (tapomo_core::goal::AUTO_MIN..=tapomo_core::goal::AUTO_MAX).contains(&min);
+    if GOAL_CHOICES.contains(&min) || auto_ok { min } else if auto { tapomo_core::goal::AUTO_START_MIN } else { DEFAULT_GOAL_MIN }
+}
+
+fn goal_min_raw(conn: &Connection) -> rusqlite::Result<u32> {
+    let auto = get_raw(conn, "goal_auto")?.is_some_and(|v| v == "1");
+    Ok(valid_goal(get_raw(conn, "daily_goal_min")?.and_then(|v| v.parse().ok()).unwrap_or(DEFAULT_GOAL_MIN), auto))
+}
+
+// The goal history lives in the setting `goal_history`: `from_day:minutes` pairs, comma separated,
+// e.g. `0:20,20400:10`. Days before the first pair use the first pair's value; with no history the
+// goal is the current one for every day.
+
+fn goal_entries(conn: &Connection) -> rusqlite::Result<Vec<(i64, u32)>> {
+    Ok(get_raw(conn, "goal_history")?
+        .map(|v| v.split(',').filter_map(|p| p.split_once(':')).filter_map(|(d, m)| Some((d.parse().ok()?, m.parse().ok()?))).collect())
+        .unwrap_or_default())
+}
+
+/// Records that the goal is `new_min` from `from_day` on (`old_min` was in force until then). The
+/// past keeps the goal it had. A no-op when nothing changes.
+pub fn record_goal(conn: &Connection, from_day: i64, old_min: u32, new_min: u32) -> rusqlite::Result<()> {
+    let mut e = goal_entries(conn)?;
+    if e.is_empty() {
+        e.push((0, old_min));
+    }
+    match e.last_mut() {
+        Some(last) if last.1 == new_min => return Ok(()),
+        Some(last) if last.0 == from_day => last.1 = new_min,
+        _ => e.push((from_day, new_min)),
+    }
+    set_raw(conn, "goal_history", &e.iter().map(|(d, m)| format!("{d}:{m}")).collect::<Vec<_>>().join(","))
+}
+
+/// The goal in force on each day. Without a history it is today's goal for every day.
+pub fn goal_plan(conn: &Connection) -> rusqlite::Result<tapomo_core::GoalPlan> {
+    let e = goal_entries(conn)?;
+    Ok(if e.is_empty() {
+        tapomo_core::GoalPlan::flat(u64::from(goal_min_raw(conn)?) * 60_000)
+    } else {
+        tapomo_core::GoalPlan::new(e.into_iter().map(|(d, m)| (d, u64::from(m) * 60_000)).collect())
+    })
+}
+
+/// Auto mode: once a week, at the first read in a new Monday-based week, looks at the week before
+/// and moves the goal one step up or down (or leaves it). The change counts from that week's Monday.
+/// Called from [`get_settings`], so every consumer sees the new goal at the same moment.
+fn auto_goal_tick(conn: &Connection) -> rusqlite::Result<()> {
+    if get_raw(conn, "goal_auto")?.is_none_or(|v| v != "1") {
+        return Ok(());
+    }
+    let week = tapomo_core::goal::week_of(today_day(conn)?);
+    match get_raw(conn, "goal_auto_week")?.and_then(|v| v.parse::<i64>().ok()) {
+        None => return set_raw(conn, "goal_auto_week", &week.to_string()),
+        Some(w) if w >= week => return Ok(()),
+        Some(_) => {}
+    }
+    let current = goal_min_raw(conn)?;
+    let rest = get_raw(conn, "weekend_rest")?.is_some_and(|v| v == "1");
+    let next = tapomo_core::goal::next_auto_goal(&daily_active(conn)?, &goal_plan(conn)?, week - 7, rest, current);
+    set_raw(conn, "goal_auto_week", &week.to_string())?;
+    if next != current {
+        record_goal(conn, week, current, next)?;
+        set_raw(conn, "daily_goal_min", &next.to_string())?;
+        set_raw(conn, "goal_auto_delta", &format!("{week}:{}", i64::from(next) - i64::from(current)))?;
+    }
+    Ok(())
+}
+
+/// The change of the auto goal this week, in minutes (+5 / −5), for the line on the Hoy card.
+fn goal_change_this_week(conn: &Connection, today: i64) -> rusqlite::Result<Option<i32>> {
+    if get_raw(conn, "goal_auto")?.is_none_or(|v| v != "1") {
+        return Ok(None);
+    }
+    let week = tapomo_core::goal::week_of(today);
+    Ok(get_raw(conn, "goal_auto_delta")?
+        .and_then(|v| v.split_once(':').and_then(|(w, d)| Some((w.parse::<i64>().ok()?, d.parse::<i32>().ok()?))))
+        .filter(|(w, d)| *w == week && *d != 0)
+        .map(|(_, d)| d))
 }
 
 pub fn get_raw(conn: &Connection, key: &str) -> rusqlite::Result<Option<String>> {
@@ -289,6 +386,7 @@ pub fn set_raw(conn: &Connection, key: &str, value: &str) -> rusqlite::Result<()
 }
 
 pub fn get_settings(conn: &Connection) -> rusqlite::Result<Settings> {
+    auto_goal_tick(conn)?;
     let flag = |key: &str, default: bool| -> rusqlite::Result<bool> {
         Ok(get_raw(conn, key)?.map_or(default, |v| v == "1"))
     };
@@ -303,7 +401,8 @@ pub fn get_settings(conn: &Connection) -> rusqlite::Result<Settings> {
         check_updates: flag("check_updates", true)?,
         auto_update: flag("auto_update", false)?,
         welcome_done: flag("welcome_done", false)?,
-        daily_goal_min: valid_goal(get_raw(conn, "daily_goal_min")?.and_then(|v| v.parse().ok()).unwrap_or(DEFAULT_GOAL_MIN)),
+        daily_goal_min: goal_min_raw(conn)?,
+        goal_auto: flag("goal_auto", false)?,
         weekend_rest: flag("weekend_rest", false)?,
         skin: get_raw(conn, "skin")?.unwrap_or_else(|| "clasico".into()),
         accessories: get_raw(conn, "accessories")?
@@ -320,6 +419,33 @@ pub fn get_settings(conn: &Connection) -> rusqlite::Result<Settings> {
     })
 }
 
+/// Saves the goal choice. In auto mode the app owns the minutes (the form's value is ignored);
+/// switching auto on keeps the current goal (10 if it was off) and starts counting weeks now. Any
+/// change of minutes is written to the history from today on, so the past is never rewritten.
+fn set_goal_settings(conn: &Connection, s: &Settings) -> rusqlite::Result<()> {
+    let old_auto = get_raw(conn, "goal_auto")?.is_some_and(|v| v == "1");
+    let old_min = goal_min_raw(conn)?;
+    let mut min = valid_goal(s.daily_goal_min, s.goal_auto);
+    if s.goal_auto {
+        if old_auto {
+            min = old_min;
+        } else if min == 0 || old_min == 0 {
+            min = tapomo_core::goal::AUTO_START_MIN;
+        } else {
+            min = old_min.clamp(tapomo_core::goal::AUTO_MIN, tapomo_core::goal::AUTO_MAX) / tapomo_core::goal::AUTO_STEP_MIN * tapomo_core::goal::AUTO_STEP_MIN;
+        }
+    }
+    let today = today_day(conn)?;
+    if min != old_min {
+        record_goal(conn, today, old_min, min)?;
+    }
+    if s.goal_auto && !old_auto {
+        set_raw(conn, "goal_auto_week", &tapomo_core::goal::week_of(today).to_string())?;
+    }
+    set_raw(conn, "goal_auto", if s.goal_auto { "1" } else { "0" })?;
+    set_raw(conn, "daily_goal_min", &min.to_string())
+}
+
 pub fn set_settings(conn: &Connection, s: &Settings) -> rusqlite::Result<()> {
     let b = |v: bool| if v { "1" } else { "0" };
     set_raw(conn, "pause_ms", &s.pause_ms.clamp(1_000, 5_000).to_string())?;
@@ -331,7 +457,7 @@ pub fn set_settings(conn: &Connection, s: &Settings) -> rusqlite::Result<()> {
     set_raw(conn, "check_updates", b(s.check_updates))?;
     set_raw(conn, "auto_update", b(s.auto_update))?;
     set_raw(conn, "welcome_done", b(s.welcome_done))?;
-    set_raw(conn, "daily_goal_min", &valid_goal(s.daily_goal_min).to_string())?;
+    set_goal_settings(conn, s)?;
     set_raw(conn, "weekend_rest", b(s.weekend_rest))?;
     let id = |v: &str| v.chars().filter(|c| c.is_ascii_alphanumeric() || *c == '_').take(32).collect::<String>();
     set_raw(conn, "skin", &id(&s.skin))?;
@@ -580,6 +706,10 @@ pub struct DailyGoal {
     pub freeze_saved_streak_recently: bool,
     /// Streak protectors in the bank (0..=2).
     pub protectors: u8,
+    /// Automatic goal mode.
+    pub auto: bool,
+    /// Auto mode: how many minutes the goal moved this week (+5 / −5), else `None`.
+    pub changed: Option<i32>,
 }
 
 /// The day the streak protectors replaced the weekly comodín (set by migration 9).
@@ -594,15 +724,18 @@ pub fn daily_goal(conn: &Connection, open_ms: u64) -> rusqlite::Result<DailyGoal
     let mut days = daily_active(conn)?;
     days.push((today, open_ms));
     let since = protectors_since(conn)?;
-    let status = tapomo_core::goal_status(&days, today, u64::from(settings.daily_goal_min) * 60_000, settings.weekend_rest, since);
+    let plan = goal_plan(conn)?;
+    let status = tapomo_core::goal_status_plan(&days, today, &plan, settings.weekend_rest, since);
     Ok(DailyGoal {
-        goal_min: settings.daily_goal_min,
+        goal_min: (plan.at(today) / 60_000) as u32,
         today_ms: status.today_ms,
         met_today: status.met_today,
         streak_days: status.streak_days,
         freeze_used_this_week: status.freeze_used_this_week,
         freeze_saved_streak_recently: status.freeze_saved_streak_recently,
         protectors: status.protectors,
+        auto: settings.goal_auto,
+        changed: goal_change_this_week(conn, today)?,
     })
 }
 
@@ -828,5 +961,92 @@ mod tests {
         let chars: i64 = c.query_row("SELECT SUM(chars) FROM bursts", [], |r| r.get(0)).unwrap();
         assert_eq!(chars, 300);
         assert_eq!(speed_summary(&c).unwrap().all_time, Some(70.0));
+    }
+
+    fn lesson_day(c: &Connection, day: i64, min: i64) {
+        c.execute(
+            "INSERT INTO lesson_results(lesson_id, layout, ts, day, duration_ms, wpm, accuracy, stars) VALUES ('x', 'qwerty', 0, ?1, ?2, 10, 1, 1)",
+            params![day, min * 60_000],
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn a_fresh_install_starts_in_auto_at_ten_and_an_old_one_stays_manual() {
+        let c = mem();
+        let s = get_settings(&c).unwrap();
+        assert!(s.goal_auto);
+        assert_eq!(s.daily_goal_min, 10);
+        // An install with history (the migration saw bursts) keeps its manual goal.
+        let path = std::env::temp_dir().join(format!("tapomo-db-old-{}.db", std::process::id()));
+        let _ = std::fs::remove_file(&path);
+        let old = Connection::open(&path).unwrap();
+        old.execute_batch("PRAGMA user_version = 0;").unwrap();
+        drop(old);
+        let c = open(&path).unwrap();
+        c.execute("DELETE FROM settings WHERE key IN ('goal_auto', 'daily_goal_min')", []).unwrap();
+        c.execute("INSERT INTO apps(exe) VALUES ('a.exe')", []).unwrap();
+        c.execute("INSERT INTO bursts(app_id, start_ms, end_ms, chars, backspaces, word_deletes, best_streak) VALUES (1, 1, 2, 5, 0, 0, 5)", []).unwrap();
+        c.execute_batch("PRAGMA user_version = 11").unwrap();
+        migrate(&c).unwrap();
+        let s = get_settings(&c).unwrap();
+        assert!(!s.goal_auto);
+        assert_eq!(s.daily_goal_min, 20);
+    }
+
+    #[test]
+    fn a_manual_change_never_rewrites_the_past() {
+        let c = mem();
+        let mut s = get_settings(&c).unwrap();
+        s.goal_auto = false;
+        s.daily_goal_min = 20;
+        set_settings(&c, &s).unwrap();
+        let today = today_day(&c).unwrap();
+        s.daily_goal_min = 30;
+        set_settings(&c, &s).unwrap();
+        let plan = goal_plan(&c).unwrap();
+        assert_eq!((plan.at(today - 3), plan.at(today)), (10 * 60_000, 30 * 60_000), "{plan:?}");
+        // Saving the same settings again records nothing.
+        let before = get_raw(&c, "goal_history").unwrap();
+        set_settings(&c, &s).unwrap();
+        assert_eq!(get_raw(&c, "goal_history").unwrap(), before);
+    }
+
+    #[test]
+    fn auto_moves_once_in_the_first_read_of_a_new_week() {
+        let c = mem();
+        get_settings(&c).unwrap(); // fresh: auto, 10 min; the week marker is set
+        let week = tapomo_core::goal::week_of(today_day(&c).unwrap());
+        // Pretend the marker is from last week, and last week had 4 days of 12 min (all met).
+        set_raw(&c, "goal_auto_week", &(week - 7).to_string()).unwrap();
+        for k in 0..4 {
+            lesson_day(&c, week - 7 + k, 12);
+        }
+        let s = get_settings(&c).unwrap();
+        assert_eq!(s.daily_goal_min, 15);
+        assert_eq!(goal_plan(&c).unwrap().at(week - 3), 10 * 60_000, "last week keeps its goal");
+        assert_eq!(goal_plan(&c).unwrap().at(week), 15 * 60_000);
+        assert_eq!(daily_goal(&c, 0).unwrap().changed, Some(5));
+        // A second read in the same week changes nothing.
+        assert_eq!(get_settings(&c).unwrap().daily_goal_min, 15);
+        assert_eq!(get_raw(&c, "goal_auto_week").unwrap(), Some(week.to_string()));
+    }
+
+    #[test]
+    fn switching_auto_off_and_on_keeps_the_history_and_ignores_the_form_minutes() {
+        let c = mem();
+        let mut s = get_settings(&c).unwrap();
+        s.daily_goal_min = 30; // ignored in auto
+        set_settings(&c, &s).unwrap();
+        assert_eq!(get_settings(&c).unwrap().daily_goal_min, 10);
+        s.goal_auto = false;
+        s.daily_goal_min = 5;
+        set_settings(&c, &s).unwrap();
+        assert_eq!(get_settings(&c).unwrap().daily_goal_min, 5);
+        s.goal_auto = true;
+        set_settings(&c, &s).unwrap();
+        let g = get_settings(&c).unwrap();
+        assert!(g.goal_auto);
+        assert_eq!(g.daily_goal_min, 5);
     }
 }
