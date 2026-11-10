@@ -33,6 +33,16 @@ Un día normal da unos **200 XP**: algo más de la mitad viene de escribir y el 
 - La racha baja de +5 (máx. 50) a +2 (máx. 20). Con +50, romper la racha costaba más que un día entero de escritura de un usuario ligero, y eso se siente como un castigo.
 - Escribir ya tiene tope.
 
+## Objetivo diario
+
+El objetivo son **minutos activos escribiendo** (la suma de las ráfagas; las lecciones cuentan mientras el ajuste «Las lecciones cuentan para el objetivo» esté activado, que es lo normal). Opciones: **Automático (recomendado)**, 5, 10, 20, 30 minutos o sin objetivo.
+
+- **Quién empieza en automático** (desde 2026-11-10, pensado para quien escribe despacio y para niños): las instalaciones nuevas, es decir, sin ninguna ráfaga ni lección al migrar. Quien ya tenía historial conserva su objetivo manual y puede cambiar a automático cuando quiera (se queda con el objetivo que tenía, o con 10 si estaba desactivado).
+- **Automático**: empieza en **10 min** y se reevalúa **una vez por semana**, en la primera lectura de una semana nueva (semanas de lunes a domingo), mirando la semana anterior. **Días activos** = días con algún minuto de objetivo. Con al menos **3 días activos**: si el **80 % o más** de ellos cumplió el objetivo de ese día, sube **+5 min** (máximo 30); si **menos del 50 %**, baja **−5 min** (mínimo 5); en medio, se queda igual. Con menos de 3 días activos no cambia. Los valores van de 5 en 5, así que 15 y 25 son válidos en automático. Con «Descansar los fines de semana», sábado y domingo no cuentan: ni son días activos ni son fallos.
+- **El pasado no se reescribe.** Cada cambio de objetivo (los del automático y los manuales de Ajustes) se anota en un historial `goal_history` (ajuste en la base de datos: pares `día:minutos`, p. ej. `0:20,20400:10`). Cada día se juzga con **el objetivo que tenía ese día**; los días anteriores a la primera anotación usan el valor de la primera, y sin historial todo funciona como siempre. Así subir el objetivo no rompe una racha pasada, ni una «semana entera», ni la calibración de los retos. Un cambio automático rige desde el lunes de esa semana; uno manual, desde hoy.
+- Lo usan la racha y los protectores (`goal_status`), los logros de racha y de semana completa, la carta semanal y la calibración de los retos (la «hora de alcance» y la proporción de días cumplidos de los últimos 14 días usan el objetivo de cada día). Código: `GoalPlan` y `next_auto_goal` en `crates/tapomo-core/src/goal.rs`.
+- **Interfaz**: en Ajustes, «Automático (recomendado)» va primero y el texto de ayuda explica la regla (sin la frase de las lecciones si no cuentan). En automático, la semana en que el objetivo cambia, la tarjeta de Hoy dice «Esta semana tu objetivo sube/baja a {m} min»; el resto del tiempo no añade nada.
+
 ## Retos del día
 
 - Hay **3 cada día**, elegidos de un repertorio y **calibrados con tu propia media de los últimos 14 días**, nunca con cifras absolutas. Así son alcanzables tanto si escribes a 25 ppm como a 90.

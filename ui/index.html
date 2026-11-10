@@ -402,13 +402,15 @@
       <div class="row">
         <span class="lbl"><label for="s-goal" data-i18n="settings.goal"></label><button type="button" class="info" data-tip="tip.goal" data-i18n-aria="tip.more">i</button></span>
         <select id="s-goal">
-          <option value="0" data-i18n="settings.goal.0"></option>
+          <option value="auto" data-i18n="settings.goal.auto"></option>
+          <option value="5" data-i18n="settings.goal.5"></option>
           <option value="10" data-i18n="settings.goal.10"></option>
           <option value="20" data-i18n="settings.goal.20"></option>
           <option value="30" data-i18n="settings.goal.30"></option>
+          <option value="0" data-i18n="settings.goal.0"></option>
         </select>
       </div>
-      <p class="hint" data-i18n="settings.goal.hint"></p>
+      <p class="hint" id="s-goal-hint"></p>
       <label class="check"><input id="s-lessons-goal" type="checkbox"><span data-i18n="settings.lessons_in_goal"></span></label>
       <label class="check"><input id="s-weekend" type="checkbox"><span data-i18n="settings.weekend_rest"></span></label>
       <p class="hint" data-i18n="settings.weekend_rest.hint"></p>

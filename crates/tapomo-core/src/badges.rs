@@ -132,21 +132,24 @@ pub fn record_count<I: IntoIterator<Item = f64>>(values: I) -> u32 {
 }
 
 /// Longest day streak ever, replaying [`crate::goal_status`] rules day by day (comodín, then protectors).
-pub fn best_day_streak(days: &[(i64, u64)], today: i64, goal_ms: u64, weekend_rest: bool, protectors_since: Option<i64>) -> u32 {
-    if goal_ms == 0 {
+/// Each day is judged with the goal of that day (see [`crate::GoalPlan`]), so raising the goal later never shortens it.
+pub fn best_day_streak<G: Into<crate::GoalPlan>>(days: &[(i64, u64)], today: i64, goal: G, weekend_rest: bool, protectors_since: Option<i64>) -> u32 {
+    let plan: crate::GoalPlan = goal.into();
+    if plan.is_off() {
         return 0;
     }
-    let mut met: Vec<i64> = days.iter().filter(|(d, ms)| *d <= today && *ms >= goal_ms).map(|(d, _)| *d).collect();
+    let mut met: Vec<i64> = days.iter().filter(|(d, ms)| *d <= today && plan.at(*d) > 0 && *ms >= plan.at(*d)).map(|(d, _)| *d).collect();
     met.sort_unstable();
     met.dedup();
     // The streak can only peak on a met day; checking each met day as "today" finds the maximum.
-    met.iter().map(|&d| crate::goal_status(days, d, goal_ms, weekend_rest, protectors_since).streak_days).max().unwrap_or(0)
+    met.iter().map(|&d| crate::goal_status_plan(days, d, &plan, weekend_rest, protectors_since).streak_days).max().unwrap_or(0)
 }
 
 /// Some ISO week with the goal met on all its required days (all 7, or Monday–Friday with weekend rest).
-pub fn full_goal_week(days: &[(i64, u64)], goal_ms: u64, weekend_rest: bool) -> bool {
+pub fn full_goal_week<G: Into<crate::GoalPlan>>(days: &[(i64, u64)], goal: G, weekend_rest: bool) -> bool {
     use std::collections::{HashMap, HashSet};
-    if goal_ms == 0 {
+    let plan: crate::GoalPlan = goal.into();
+    if plan.is_off() {
         return false;
     }
     let mut by_day: HashMap<i64, u64> = HashMap::new();
@@ -155,7 +158,7 @@ pub fn full_goal_week(days: &[(i64, u64)], goal_ms: u64, weekend_rest: bool) -> 
     }
     let mut weeks: HashMap<i64, HashSet<u8>> = HashMap::new();
     for (&d, &ms) in &by_day {
-        if ms >= goal_ms {
+        if plan.at(d) > 0 && ms >= plan.at(d) {
             weeks.entry(d - i64::from(crate::weekday(d))).or_default().insert(crate::weekday(d));
         }
     }
@@ -217,6 +220,26 @@ mod tests {
         days.extend([met(MON - 5), met(MON - 4)]);
         assert_eq!(best_day_streak(&days, MON, 20 * MIN, false, None), 8);
         assert_eq!(best_day_streak(&days, MON, 0, false, None), 0);
+    }
+
+    #[test]
+    fn a_raised_goal_does_not_break_a_past_streak() {
+        let met = |d: i64| (d, 12 * MIN);
+        let days: Vec<(i64, u64)> = (0..10).map(|k| met(MON - 12 + k)).collect();
+        // Goal 10 until day MON-3, then raised to 20: the 10 days of 12 min were all met.
+        let plan = crate::GoalPlan::new(vec![(0, 10 * MIN), (MON - 2, 20 * MIN)]);
+        assert_eq!(best_day_streak(&days, MON, &plan, false, None), 10);
+        // Judged with today's goal alone, the same history would be wrongly empty.
+        assert_eq!(best_day_streak(&days, MON, 20 * MIN, false, None), 0);
+        assert_eq!(crate::goal_status_plan(&days, MON - 3, &plan, false, None).streak_days, 10);
+    }
+
+    #[test]
+    fn a_raised_goal_keeps_a_past_full_week() {
+        let workweek: Vec<(i64, u64)> = (0..5).map(|k| (MON + k, 12 * MIN)).collect();
+        let plan = crate::GoalPlan::new(vec![(0, 10 * MIN), (MON + 7, 20 * MIN)]);
+        assert!(full_goal_week(&workweek, &plan, true));
+        assert!(!full_goal_week(&workweek, 20 * MIN, true));
     }
 
     #[test]
