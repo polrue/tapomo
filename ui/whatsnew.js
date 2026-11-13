@@ -69,12 +69,20 @@ const WhatsNew = (() => {
     tx.className = 'wn-tx';
     const b = document.createElement('b');
     const showOwned = l.rewards && owned.length;
-    b.textContent = showOwned ? t('wn.owned', { items: Progress.joinNames(owned) }) : t(`${key(v)}.${l.key}.t`);
+    b.textContent = showOwned ? t(owned.length === 1 ? 'wn.owned1' : 'wn.owned', { n: owned.length }) : t(`${key(v)}.${l.key}.t`);
     tx.append(b);
     if (showOwned) {
       const row = document.createElement('span');
       row.className = 'wn-thumbs';
-      for (const id of owned) row.append(Progress.thumb({ skin: 'clasico', acc: [id] }, true));
+      for (const id of owned) {
+        const th = Progress.thumb({ skin: 'clasico', acc: [id] }, true);
+        const name = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        name.textContent = t(`item.${id}`); // the names live in the tooltip: five in the title wrapped to three lines
+        th.prepend(name);
+        row.append(th);
+      }
+      // «Probar el gorro» sits with the thumbnails it refers to, not among the card's actions.
+      if (owned.includes('helice')) row.append($('wn-cap'));
       tx.append(row);
     } else {
       const d = document.createElement('span');
