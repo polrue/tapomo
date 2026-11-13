@@ -68,9 +68,8 @@ fn award(conn: &Connection, day: i64, kind: &str, amount: u32) -> rusqlite::Resu
 }
 
 /// The goal status of `day`: met, and the day streak it makes.
-fn goal_on(days: &[(i64, u64)], day: i64, settings: &db::Settings, protectors_since: Option<i64>) -> Option<u32> {
-    let goal_ms = u64::from(settings.daily_goal_min) * 60_000;
-    let s = tapomo_core::goal_status(days, day, goal_ms, settings.weekend_rest, protectors_since);
+fn goal_on(days: &[(i64, u64)], day: i64, plan: &tapomo_core::GoalPlan, settings: &db::Settings, protectors_since: Option<i64>) -> Option<u32> {
+    let s = tapomo_core::goal_status_plan(days, day, plan, settings.weekend_rest, protectors_since);
     s.met_today.then_some(s.streak_days)
 }
 
@@ -110,7 +109,7 @@ pub fn challenges(conn: &Connection, day: i64, settings: &db::Settings) -> rusql
 fn day_challenges(conn: &Connection, day: i64, settings: &db::Settings) -> rusqlite::Result<DayChallenges> {
     let from = day - xp::CALIBRATION_DAYS - xp::REPEAT_LOOKBACK; // the "no repeats" replay needs older history
     let bursts = day_bursts(conn, from, day)?;
-    let goal_ms = u64::from(settings.daily_goal_min) * 60_000;
+    let plan = db::goal_plan(conn)?;
     let shortcuts = if settings.count_shortcuts { crate::shortcuts::daily(conn)? } else { Vec::new() };
     let mut stmt = conn.prepare("SELECT day, COUNT(*) FROM lesson_results WHERE day >= ?1 AND day <= ?2 GROUP BY day")?;
     let lessons = stmt
@@ -139,7 +138,7 @@ fn day_challenges(conn: &Connection, day: i64, settings: &db::Settings) -> rusql
         swap: choices.swap.as_ref().map(|(out, inn)| (out.as_str(), inn.as_str())),
         extended_deadline: choices.extended,
     };
-    let day_list = xp::day_challenges(&bursts, day, history_days(conn, day)?, goal_ms, &shortcuts, extras);
+    let day_list = xp::day_challenges(&bursts, day, history_days(conn, day)?, &plan, &shortcuts, extras);
     let key = format!("ch_shown_{day}");
     if db::get_raw(conn, &key)?.is_none() {
         db::set_raw(conn, &key, &day_list.list.map(|c| c.id).join(","))?;
@@ -241,13 +240,14 @@ pub fn settle(conn: &Connection) -> rusqlite::Result<Settled> {
     let days = db::daily_active(conn)?;
     let chars = daily_chars(conn)?;
     let protectors = db::protectors_since(conn)?;
+    let plan = db::goal_plan(conn)?;
     let since = match db::get_raw(conn, "xp_since_day")?.and_then(|v| v.parse::<i64>().ok()) {
         Some(d) => d,
         None => {
             let retro: u32 = chars
                 .iter()
                 .filter(|(d, _)| **d < today)
-                .map(|(&d, &c)| xp::typing_xp(c) + goal_on(&days, d, &settings, protectors).map_or(0, |s| xp::GOAL_XP + xp::streak_xp(s)))
+                .map(|(&d, &c)| xp::typing_xp(c) + goal_on(&days, d, &plan, &settings, protectors).map_or(0, |s| xp::GOAL_XP + xp::streak_xp(s)))
                 .sum();
             award(conn, today, "retro", retro)?;
             db::set_raw(conn, "xp_since_day", &today.to_string())?;
@@ -262,7 +262,7 @@ pub fn settle(conn: &Connection) -> rusqlite::Result<Settled> {
         let used = shortcuts.iter().filter(|(d, _)| *d == day).map(|(_, n)| *n).sum();
         award(conn, day, "shortcuts", tapomo_core::shortcuts::shortcut_xp(used))?;
         award(conn, day, "typing", xp::typing_xp(chars.get(&day).copied().unwrap_or(0)))?;
-        if let Some(streak) = goal_on(&days, day, &settings, protectors) {
+        if let Some(streak) = goal_on(&days, day, &plan, &settings, protectors) {
             award(conn, day, "goal", xp::GOAL_XP)?;
             award(conn, day, "streak", xp::streak_xp(streak))?;
         }

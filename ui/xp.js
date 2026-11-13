@@ -613,6 +613,41 @@ const Progress = (() => {
     else showToast(ids, retro);
   }
 
+  // ------------------------------------------------------- «premios nuevos» (1.1.0)
+  // Existing users already own the early rewards added in 1.1.0 (unlocked by level). Tell them once; level 1 has
+  // nothing to announce, so the flag is simply set. Logic: Wardrobe.newRewardsFor / newRewardsSeen; this is only the UI.
+
+  const newRwOpen = () => !$('newrw-dialog').hidden;
+  function closeNewRewards() {
+    $('newrw-dialog').hidden = true;
+    document.querySelectorAll('.top, main').forEach((n) => (n.inert = false));
+  }
+
+  /** Shows the notice once, when nothing else is on screen; otherwise it waits for the next refresh. */
+  function maybeNewRewards() {
+    if (!st || Wardrobe.newRewardsSeen()) return;
+    const ids = Wardrobe.newRewardsFor(st.level);
+    if (!ids.length) { Wardrobe.markNewRewardsSeen(); return; }
+    if (document.hidden || newRwOpen() || fullDialogOpen() || toastOpen() || !$('welcome').hidden || !$('update-dialog').hidden) return;
+    const list = $('newrw-list');
+    list.replaceChildren();
+    for (const id of ids) {
+      const li = document.createElement('li');
+      li.append(thumb({ skin: 'clasico', acc: [id] }, true), document.createTextNode(itemName(id)));
+      list.append(li);
+    }
+    Wardrobe.markNewRewardsSeen();
+    $('newrw-dialog').hidden = false;
+    document.querySelectorAll('.top, main').forEach((n) => (n.inert = true));
+    $('newrw-see').focus();
+  }
+
+  function bindNewRewards() {
+    $('newrw-later').addEventListener('click', closeNewRewards);
+    $('newrw-see').addEventListener('click', () => { closeNewRewards(); SectionNav.jump('wardrobe'); });
+    $('newrw-dialog').addEventListener('keydown', (e) => { if (e.key === 'Escape') closeNewRewards(); });
+  }
+
   // ------------------------------------------------------------------- api
 
   async function refresh(r = range) {
@@ -624,6 +659,7 @@ const Progress = (() => {
     renderChallenges();
     paintWardrobe();
     maybeReveal();
+    maybeNewRewards();
   }
 
   /** `tapomo://xp`: XP changed; a level-up opens the reveal, a finished challenge gets its stamp. */
@@ -641,6 +677,7 @@ const Progress = (() => {
   }
 
   function bind() {
+    bindNewRewards();
     $('lv-ch-toggle').addEventListener('click', () => {
       allOpen = !allOpen;
       $('lv-ch-toggle').setAttribute('aria-expanded', String(allOpen));

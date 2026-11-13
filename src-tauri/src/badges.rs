@@ -39,7 +39,7 @@ pub fn add_beating_burst(conn: &Connection) -> rusqlite::Result<()> {
 
 fn facts(conn: &Connection) -> rusqlite::Result<Facts> {
     let settings = db::get_settings(conn)?;
-    let goal_ms = u64::from(settings.daily_goal_min) * 60_000;
+    let plan = db::goal_plan(conn)?;
     let today = db::today_day(conn)?;
     let days = db::daily_active(conn)?;
     let column = |sql: &str| -> rusqlite::Result<Vec<f64>> {
@@ -57,10 +57,10 @@ fn facts(conn: &Connection) -> rusqlite::Result<Facts> {
         peak_records: badges::record_count(column("SELECT peak_wpm FROM bursts WHERE peak_wpm IS NOT NULL ORDER BY start_ms")?),
         crown_records: badges::record_count(column("SELECT best_streak FROM bursts ORDER BY start_ms")?),
         beating_bursts: beating_bursts(conn)?,
-        best_day_streak: badges::best_day_streak(&days, today, goal_ms, settings.weekend_rest, db::protectors_since(conn)?),
+        best_day_streak: badges::best_day_streak(&days, today, &plan, settings.weekend_rest, db::protectors_since(conn)?),
         early_bird: exists(format!("SELECT 1 FROM bursts WHERE {HOUR} < 8"))?,
         night_owl: exists(format!("SELECT 1 FROM bursts WHERE {HOUR} >= 23"))?,
-        full_goal_week: badges::full_goal_week(&days, goal_ms, settings.weekend_rest),
+        full_goal_week: badges::full_goal_week(&days, &plan, settings.weekend_rest),
         full_houses: conn.query_row("SELECT COUNT(*) FROM xp_events WHERE kind = 'full'", [], |r| r.get(0))?,
         shortcuts: conn.query_row("SELECT COALESCE(SUM(count), 0) FROM shortcut_days", [], |r| r.get::<_, i64>(0))?.max(0) as u64,
         best_day_shortcuts: conn
