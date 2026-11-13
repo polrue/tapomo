@@ -537,17 +537,17 @@
     </div>
   </div>
 
-  <!-- One-off «premios nuevos» notice (1.1.0), built by xp.js. May move inside a «Novedades» card later. -->
-  <div id="newrw-dialog" class="welcome" hidden>
-    <div class="welcome-card newrw-card" role="dialog" aria-modal="true" aria-labelledby="newrw-title" aria-describedby="newrw-text" tabindex="-1">
-      <div class="welcome-body">
-        <h2 id="newrw-title" data-i18n="newrw.title"></h2>
-        <p id="newrw-text" data-i18n="newrw.text"></p>
-        <ul id="newrw-list" class="newrw-list"></ul>
-      </div>
-      <div class="welcome-nav">
-        <button type="button" class="ghost" id="newrw-later" data-i18n="newrw.later"></button>
-        <button type="button" id="newrw-see" data-i18n="newrw.see"></button>
+  <!-- «Novedades» card, once after an update (1.1.0). Built by whatsnew.js. -->
+  <div id="whatsnew-dialog" class="welcome" hidden>
+    <div class="welcome-card wn-card" role="dialog" aria-modal="true" aria-labelledby="wn-title" tabindex="-1">
+      <button type="button" class="wn-x" id="wn-x" data-i18n-aria="wn.close"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+      <div class="wn-hero" id="wn-hero" aria-hidden="true"></div>
+      <h2 id="wn-title"></h2>
+      <ul class="wn-list" id="wn-list"></ul>
+      <div class="wn-nav">
+        <button type="button" id="wn-ok" data-i18n="wn.ok"></button>
+        <a id="wn-all" class="wn-link" href="#" target="_blank" rel="noopener" data-i18n="wn.all"></a>
+        <button type="button" class="wn-link" id="wn-cap" data-i18n="wn.cap" hidden></button>
       </div>
     </div>
   </div>
@@ -658,6 +658,7 @@
   <script src="nav.js"></script>
   <script src="weekly.js"></script>
   <script src="league.js"></script>
+  <script src="whatsnew.js"></script>
   <script src="xp.js"></script>
   <script src="app.js"></script>
 </body>

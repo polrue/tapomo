@@ -321,7 +321,32 @@
 .ch-ask-btns button { font-size: 0.88rem; padding: 6px 14px; }
 .ch-ask-no { background: none; color: var(--muted); border: 1px solid var(--line); }
 
-/* «Premios nuevos» notice (1.1.0): the rewards as small previews with their names. */
-.newrw-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; text-align: left; }
-.newrw-list li { display: flex; align-items: center; gap: 12px; font-weight: 700; }
-.newrw-list svg { flex: none; width: 52px; height: 52px; border-radius: 12px; background: var(--chip, var(--cell-empty)); }
+/* «Novedades» card (whatsnew.js): a small centred card on the welcome overlay. */
+.wn-card { --wn-link: #b04a26; width: min(400px, 100%); padding: 10px 22px 18px; }
+@media (prefers-color-scheme: dark) { .wn-card { --wn-link: #ffb497; } }
+.wn-hero { width: 96px; height: 96px; margin: 8px auto 4px; }
+.wn-hero svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.wn-card h2 { margin: 0; font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.01em; }
+.wn-x {
+  position: absolute; top: 8px; right: 8px; width: 36px; height: 36px; padding: 0; border-radius: 999px;
+  display: grid; place-items: center; background: none; color: var(--muted);
+}
+.wn-x:hover { background: var(--cell-empty); color: var(--ink); }
+.wn-x svg { width: 16px; height: 16px; }
+.wn-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; text-align: left; }
+.wn-list li { display: flex; gap: 12px; align-items: flex-start; }
+.wn-ic { flex: none; width: 34px; height: 34px; display: grid; place-items: center; font-size: 1.2rem; border-radius: 10px; background: var(--cell-empty); }
+.wn-tx { display: grid; line-height: 1.3; }
+.wn-tx b { font-size: .98rem; }
+.wn-tx > span { color: var(--muted); font-size: .88rem; }
+.wn-tx > .wn-thumbs { display: flex; gap: 6px; margin-top: 4px; }
+.wn-thumbs svg { flex: none; width: 38px; height: 38px; border-radius: 10px; background: var(--chip, var(--cell-empty)); }
+.wn-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; margin-top: 16px; }
+.wn-nav #wn-ok { min-height: 44px; padding: 8px 22px; border-radius: 999px; font-weight: 800; }
+.wn-link {
+  background: none; color: var(--wn-link); font: inherit; font-weight: 700; font-size: .9rem; padding: 6px 8px;
+  border: 0; border-radius: 8px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.wn-link:hover { background: none; color: var(--ink); }
+.wn-card button:focus-visible, .wn-card a:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.wn-card [hidden] { display: none; }

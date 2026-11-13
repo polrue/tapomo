@@ -751,6 +751,7 @@ const UpdateDialog = (() => {
     el('update-dialog').hidden = true;
     document.querySelectorAll('.top, main').forEach((n) => (n.inert = false));
     if (opener && opener.isConnected) opener.focus({ preventScroll: true });
+    WhatsNew.maybeShow();
   }
 
   function onKey(e) {
@@ -968,12 +969,14 @@ async function init() {
   // A window that stays open for days asks again once the cache is 6 h old.
   setInterval(checkForUpdate, 60 * 60 * 1000);
   // The level reveal waits for the welcome to close.
-  if (!settings.welcome_done) Welcome.open(() => saveSettings({ welcome_done: true }).then(() => { Progress.maybeReveal(); Badges.maybeReveal(); League.maybeReveal(); }));
+  if (!settings.welcome_done) Welcome.open(() => saveSettings({ welcome_done: true }).then(() => { WhatsNew.maybeShow(); Progress.maybeReveal(); Badges.maybeReveal(); League.maybeReveal(); }));
   renderExclusions().catch(showError);
   refreshAll();
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) { refreshAll(); refreshPetState(); } });
+  // «Novedades» (once after an update): waits for a visible window and for any other dialog to close.
+  WhatsNew.init();
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { refreshAll(); refreshPetState(); WhatsNew.maybeShow(); } });
   // XP changes while the window is closed are revealed when it opens (refreshAll -> Progress.refresh).
-  window.addEventListener('focus', refreshPetState);
+  window.addEventListener('focus', () => { refreshPetState(); WhatsNew.maybeShow(); });
 }
 
 init().catch(showError);
