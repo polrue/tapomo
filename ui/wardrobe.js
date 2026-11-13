@@ -614,7 +614,7 @@
   };
   // [level, item id]: one reward per level (0.8.0), so ITEMS/itemsAt/nextReward keep working per level.
   const PACKS = [
-    [2, 'tirita'], [3, 'pecas'], [4, 'gafassol'], [5, 'helice'], [7, 'lacito'], [10, 'fresa'], [12, 'tiritaestrellas'], [13, 'bigote'], [16, 'flequillo'], [17, 'helicementa'], [19, 'bufanda'], [21, 'gorra'], [22, 'cejas'], [23, 'gafas'],
+    [2, 'tirita'], [3, 'pecas'], [4, 'gafassol'], [5, 'helice'], [7, 'lacito'], [10, 'fresa'], [13, 'bigote'], [16, 'flequillo'], [18, 'tiritaestrellas'], [19, 'bufanda'], [20, 'helicementa'], [21, 'gorra'], [22, 'cejas'], [23, 'gafas'],
     [24, 'matcha'], [25, 'gamer'], [26, 'tupe'], [27, 'parche'], [28, 'auris'], [29, 'barba'], [30, 'gorrito'], [31, 'ninja'], [32, 'mango'],
     [33, 'melenita'], [34, 'pajarita'], [35, 'pesa'], [36, 'capa'], [37, 'hipster'], [38, 'superheroe'], [39, 'arandano'], [40, 'vikingo'],
     [41, 'chef'], [42, 'musculitos'], [43, 'flores'], [44, 'cicatriz'], [45, 'dino'], [46, 'sesamo'], [47, 'aureola'], [48, 'astronauta'],
