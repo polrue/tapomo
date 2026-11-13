@@ -302,6 +302,7 @@ function renderSettings() {
   $('s-updates').checked = settings.check_updates;
   $('s-auto-update').checked = settings.auto_update;
   $('s-auto-update').disabled = !settings.check_updates;
+  $('s-check-now').disabled = !settings.check_updates;
   $('paused-banner').hidden = !settings.paused;
   invoke('get_encrypted').then((on) => {
     $('crypt-status').textContent = t(on ? 'crypt.on' : 'crypt.off');
@@ -435,6 +436,7 @@ function bindControls() {
     checkForUpdate();
   });
   $('s-auto-update').addEventListener('change', () => saveSettings({ auto_update: $('s-auto-update').checked }));
+  $('s-check-now').addEventListener('click', () => checkNow());
   $('update-pill').addEventListener('click', () => UpdateDialog.open());
   $('welcome-again').addEventListener('click', () => Welcome.open());
   $('s-paused').addEventListener('change', async () => {
@@ -641,7 +643,7 @@ function glueInfo() {
 // ------------------------------------------------------- version & updates
 
 const RELEASE_PAGE = 'https://github.com/polrue/tapomo/releases/tag/v';
-const UPDATE_EVERY_MS = 24 * 60 * 60 * 1000;
+const UPDATE_EVERY_MS = 6 * 60 * 60 * 1000;
 const UPDATE_CACHE_KEY = 'tapomo.update';
 const NOTES_MAX = 300;
 let installed = null; // e.g. "0.2.3"
@@ -675,28 +677,43 @@ function renderVersion() {
 }
 
 /**
- * Asks the app (not the network from here) for a newer version: at most once per 24 h (the answer is
- * cached in localStorage), and none at all when the setting is off. Fails silently.
+ * Asks the app (not the network from here) for a newer version: on every start (`fresh`), then at most
+ * once per 6 h (the answer is cached in localStorage), and none at all when the setting is off.
+ * Fails silently; returns false when the check itself failed.
  */
-async function checkForUpdate() {
+async function checkForUpdate(fresh = false) {
   if (!settings || !settings.check_updates) {
     renderVersion();
-    return;
+    return true;
   }
   let cache = null;
   try { cache = JSON.parse(localStorage.getItem(UPDATE_CACHE_KEY)); } catch (_) { /* storage can be unavailable */ }
   const age = cache ? Date.now() - cache.at : Infinity;
-  if (cache && age >= 0 && age < UPDATE_EVERY_MS) {
+  if (!fresh && cache && age >= 0 && age < UPDATE_EVERY_MS) {
     latest = cache.latest || null;
     renderVersion();
-    return;
+    return true;
   }
   try {
     const info = await invoke('check_update');
     latest = info && parseSemver(info.version) ? { v: info.version, notes: info.notes || '' } : null;
     try { localStorage.setItem(UPDATE_CACHE_KEY, JSON.stringify({ at: Date.now(), latest })); } catch (_) { /* optional */ }
     renderVersion();
-  } catch (_) { /* offline or blocked: stay quiet */ }
+    return true;
+  } catch (_) { return false; /* offline or blocked: stay quiet */ }
+}
+
+/** «Buscar actualizaciones» in Settings: asks now, says what it found and offers the update. */
+async function checkNow() {
+  const btn = $('s-check-now');
+  const status = $('s-check-status');
+  btn.disabled = true;
+  status.textContent = t('settings.check_now.busy');
+  const ok = await checkForUpdate(true);
+  btn.disabled = false;
+  const newer = latest && installed && compareSemver(parseSemver(latest.v), parseSemver(installed)) > 0;
+  status.textContent = !ok ? t('settings.check_now.failed') : newer ? t('update.available', { v: latest.v }) : t('settings.check_now.latest', { v: installed || '' });
+  if (newer) UpdateDialog.open();
 }
 
 /** Friendly confirm for the update: release notes, "update now" (download + install) or "later". */
@@ -930,8 +947,8 @@ async function init() {
   renderVersion();
   // The Microsoft Store build is updated by the Store: no update settings.
   invoke('is_store_build').then((store) => document.body.classList.toggle('store-build', store)).catch(() => {});
-  checkForUpdate();
-  // A window that stays open for days asks again once the cache is a day old.
+  checkForUpdate(true);
+  // A window that stays open for days asks again once the cache is 6 h old.
   setInterval(checkForUpdate, 60 * 60 * 1000);
   // The level reveal waits for the welcome to close.
   if (!settings.welcome_done) Welcome.open(() => saveSettings({ welcome_done: true }).then(() => { Progress.maybeReveal(); Badges.maybeReveal(); League.maybeReveal(); }));

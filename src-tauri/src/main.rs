@@ -125,6 +125,7 @@ fn main() {
             pet::pet_drag_end,
             pet::pet_open_main,
             pet::pet_hint,
+            pet::pet_update_moment,
             pet::pet_menu,
             pet::get_pet_state,
             pet::pet_cancel_snooze,
@@ -188,6 +189,8 @@ fn main() {
             password::start();
             shared.show_pet.store(settings.show_pet, Ordering::Relaxed);
             let pet_pos = db::get_pet_pos(&conn).ok().flatten();
+            app.manage(pet::UpdateMoment::default());
+            pet::check_update(app.handle(), &conn);
             app.manage(AppState { db: Mutex::new(conn), tx, shared: shared.clone() });
             // After `manage`: the pet page asks for the settings as soon as it loads.
             pet::create(app.handle(), pet_pos)?;

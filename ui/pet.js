@@ -16,6 +16,7 @@ const CLICK_MS = 350; // a press shorter than this that barely moves is a click
 const CLICK_PX = 4;
 const DBLCLICK_MS = 250; // a second click within this opens the main window instead of showing a tip
 const HINT_MS = 3500;
+const UPDATE_BUBBLE_MS = 9000; // how long «¡Me he actualizado!» waits for a click
 const RECORD_JUMP_MS = 900; // length of the new-record jump; the crown appears right after it
 // When typing stops the bar eases down to 0 (exponential, tau 2.5 s, ~8 s in all), and the
 // zone, colour, face and effects follow the falling value.
@@ -54,6 +55,7 @@ let oopsTimer = null;
 
 /** Picks the face from sleep state, the "oops" flash and the streak (current / all-time best). */
 function renderFace() {
+  if (PetUpdate.busy) return; // the «after update» animation owns the face
   const sleeping = state.asleep || state.paused;
   Mascot.setSleeping(svg, sleeping);
   Mascot.setZone(svg, state.zone);
@@ -100,11 +102,13 @@ function say(key, ms, big = false) {
 }
 
 function sayText(text, ms, big = false, tip = false) {
+  if (PetUpdate.waiting) return; // a stone doesn't talk
   const el = $('bubble');
   clearTimeout(bubbleTimer);
   el.textContent = text;
   el.classList.toggle('big', big);
   el.classList.toggle('tip', tip);
+  el.classList.remove('up-hi');
   el.hidden = false;
   // Restart the pop animation so the newest bubble always "arrives".
   el.style.animation = 'none';
@@ -123,7 +127,7 @@ const SHORTCUT_ICON = { clipboard: '📋', undo: '↩️', save: '💾', windows
 let lastShortcutAt = 0;
 function onShortcut(kind) {
   state.lastKeyAt = Date.now();
-  if (state.paused || state.asleep || Date.now() - lastShortcutAt < 700) return;
+  if (state.paused || state.asleep || PetUpdate.waiting || Date.now() - lastShortcutAt < 700) return;
   lastShortcutAt = Date.now();
   Mascot.squish(svg);
   if (Mascot.reduced()) return;
@@ -170,6 +174,12 @@ function touchReview() {
 function onKey(cls) {
   const now = Date.now();
   state.lastKeyAt = now;
+  if (PetUpdate.waiting) {
+    // Still stone after an update: each key makes it wobble, and a few keys in it bursts.
+    if (++stoneKeys >= STONE_KEYS) PetUpdate.wake();
+    else PetUpdate.nudge();
+    return;
+  }
   if (state.asleep) {
     state.asleep = false;
     if (!state.paused) {
@@ -428,7 +438,7 @@ function onGoal() {
 }
 
 function goToSleep() {
-  if (state.asleep || state.paused) return;
+  if (state.asleep || state.paused || PetUpdate.busy) return;
   state.asleep = true;
   state.mode = 'idle';
   state.display = 0;
@@ -452,7 +462,7 @@ async function applyLook(settings) {
 
 /** A burst discarded as keyboard mashing: no scolding, a laugh. */
 function onMash() {
-  if (state.paused) return;
+  if (state.paused || PetUpdate.waiting) return;
   Mascot.setFace(svg, { eyes: 'closed', mouth: 'big', cheeks: true });
   Mascot.tilt(svg);
   say('pet.mash', 2600);
@@ -617,7 +627,13 @@ function bindDrag() {
       Mascot.setHeld(svg, false);
       invoke('pet_drag_end').catch(console.error);
     } else if (wasClick) {
-      if (clickTimer) {
+      if (PetUpdate.waiting) {
+        PetUpdate.wake();
+      } else if (updateNotice) {
+        // The «¡Me he actualizado!» bubble is showing: a click on Tapomo opens the news.
+        dismissUpdate();
+        invoke('pet_open_main').catch(console.error);
+      } else if (clickTimer) {
         clearTimeout(clickTimer);
         clickTimer = null;
         invoke('pet_open_main').catch(console.error);
@@ -692,10 +708,55 @@ function onPetState(p) {
   setTimeout(() => {
     const up = comeUp();
     setTimeout(() => {
+      if (updateVersion) return playUpdate();
+      if (PetUpdate.waiting) return; // still stone: no greeting, no jump
       say('pet.here', 2500);
       Mascot.jump(svg, { big: false });
     }, up);
   }, 200);
+}
+
+// ------------------------------------------------------------ after an update
+
+// Rust hands over the new version once (`pet_update_moment`) the first time Tapomo runs on it. Tapomo
+// turns to stone as soon as it is on screen (if it is hidden, when it next shows up) and bursts once the
+// user is around: STONE_KEYS keys or a click on it.
+const STONE_KEYS = 5;
+let stoneKeys = 0;
+let updateVersion = null;
+let updateNotice = false; // the news bubble is up: a click opens the main window
+let updateTimer = null;
+
+function dismissUpdate() {
+  updateNotice = false;
+  clearTimeout(updateTimer);
+  $('bubble').hidden = true;
+  $('bubble').classList.remove('up-hi');
+}
+
+function playUpdate() {
+  if (!updateVersion) return;
+  const v = updateVersion;
+  updateVersion = null;
+  PetUpdate.play({
+    renderFace,
+    pre: (key) => sayText(t(key), 1500, true),
+    news: () => {
+      const el = $('bubble');
+      clearTimeout(bubbleTimer);
+      const title = Object.assign(document.createElement('b'), { textContent: t('pet.update.title', { v }) });
+      const sub = Object.assign(document.createElement('u'), { textContent: t('pet.update.sub') });
+      el.replaceChildren(title, document.createElement('br'), sub);
+      el.classList.remove('big', 'tip');
+      el.classList.add('up-hi');
+      el.hidden = false;
+      el.style.animation = 'none';
+      void el.offsetWidth;
+      el.style.animation = '';
+      updateNotice = true;
+      updateTimer = setTimeout(dismissUpdate, UPDATE_BUBBLE_MS);
+    },
+  });
 }
 
 // ------------------------------------------------------------------ init
@@ -728,6 +789,12 @@ async function init() {
   await loadSettings();
   // Know whether we are already on screen, so only a real reappearance gets the greeting.
   wasVisible = !!(await invoke('get_pet_state').catch(() => ({ visible: true }))).visible;
+  updateVersion = await invoke('pet_update_moment').catch(() => null);
+  if (updateVersion && wasVisible) {
+    // The look is applied asynchronously: wait for the clothes before the stone covers them.
+    await invoke('get_settings').then(applyLook).catch(console.error);
+    playUpdate();
+  }
   setInterval(() => {
     if (Date.now() - state.lastKeyAt > SLEEP_AFTER_MS) goToSleep();
     if ((window.devicePixelRatio || 1) !== lastDpr) reportHit(); // moved to another monitor
