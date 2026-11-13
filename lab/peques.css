@@ -1,0 +1,25 @@
+/* Lab only: «Premios para peques» study (peques.js), on the lab's Tapomo. */
+.pq-wear, .pq-wear * { transform-box: view-box; }
+/* The cap hides the strawberry calyx and the Supermochi flame-hair, like any hat (rw-head-on). */
+.mascot.pq-gorro-on .rw-calyx, .mascot.pq-gorro-on .sm-tuft, #mascot.pq-gorro-on .sm-with-hair { display: none; }
+#mascot.pq-gorro-on .sm-no-hair { display: inline; }
+/* Fast spin: a soft blurred disc behind the blades. */
+.pq-blur { opacity: 0; transition: opacity calc(300ms / var(--speed)) ease-out; }
+.mascot.pq-fast .pq-blur { opacity: .38; }
+
+.pq-item { display: grid; gap: 4px; }
+.pq-item .seg > button:not(.seg-z) { margin-left: 10px; padding: 4px 12px; }
+table.pq-reparto caption { text-align: left; margin: 0 0 4px; }
+table.pq-reparto tr.new td { font-weight: 800; background: var(--chip-on); }
+.pq-new { font-size: 10px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: var(--pend-bg); color: var(--pend-fg); }
+
+/* «Objetivo diario» settings mockup, in the app's settings-card look. */
+.pq-settings { border-radius: 12px; padding: 10px 12px 12px; background: var(--chip); box-shadow: 0 0 0 1.5px var(--border) inset; display: grid; gap: 6px; }
+.pq-mock-h { margin: 0; font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.pq-field { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0; flex-wrap: wrap; }
+.pq-field-l { font-weight: 800; }
+.pq-field select { font: inherit; padding: 5px 8px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--card); color: var(--fg); min-height: 32px; }
+.pq-field-help { margin: 0; font-size: 12px; color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) { .pq-blur { transition: none !important; } }
+table.pq-reparto th:first-child, table.pq-reparto td.num { width: 3.5em; text-align: right; }

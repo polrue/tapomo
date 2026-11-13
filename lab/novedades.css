@@ -1,0 +1,104 @@
+/* Lab only: «Novedades» study (novedades.js). The mock uses the APP's tokens (ui/style.css), not the lab's.
+   Everything is scoped under .nv-ov so it cannot leak into the lab. */
+.nv-ov {
+  --nv-accent: #ff9e7a; --nv-accent-strong: #f0764a; --nv-accent-text: #b04a26;
+  --nv-ink: #23202b; --nv-bg: #fff8f3; --nv-card: #fff; --nv-muted: #6f6980; --nv-line: #f0e4dc; --nv-cell: #f6eee8;
+  --nv-scrim: rgba(35, 32, 43, .45); --nv-shadow: 0 18px 50px rgba(0, 0, 0, .3);
+  --nv-font: "Nunito", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Trebuchet MS", sans-serif;
+  color-scheme: light;
+  position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px;
+  background: rgba(20, 17, 26, .72); font: 16px/1.45 var(--nv-font); color: var(--nv-ink);
+}
+.nv-ov[data-theme="dark"] {
+  --nv-accent-text: #ffb497; --nv-ink: #f5eefb; --nv-bg: #1b1822; --nv-card: #26222f; --nv-muted: #a9a2b9; --nv-line: #38323f;
+  --nv-cell: #302b39; --nv-scrim: rgba(8, 6, 12, .62); --nv-shadow: 0 18px 50px rgba(0, 0, 0, .55); color-scheme: dark;
+}
+.nv-ov * { box-sizing: border-box; }
+.nv-bar { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.nv-tb { font: 700 13px var(--nv-font); color: #23202b; background: #fff; border: 0; border-radius: 999px; padding: 6px 14px; min-height: 32px; cursor: pointer; }
+.nv-tb[aria-pressed="true"] { background: var(--nv-accent); }
+.nv-tb:focus-visible, .nv-btn:focus-visible, .nv-x:focus-visible, .nv-link:focus-visible, .nv-card-pop:focus-visible { outline: 3px solid var(--nv-ink); outline-offset: 2px; }
+.nv-tb:focus-visible { outline-color: #fff; }
+
+/* ------------------------------------------------------------ mock main window */
+.nv-frame { flex: 1; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; }
+.nv-win {
+  position: relative; width: min(900px, 100%); height: min(640px, 100%); overflow: hidden; border-radius: 12px;
+  background: var(--nv-bg); color: var(--nv-ink); box-shadow: 0 10px 40px rgba(0, 0, 0, .5);
+}
+.nv-top { display: flex; align-items: center; gap: 16px; padding: 14px 24px 8px; }
+.nv-brand { display: flex; align-items: center; gap: 8px; flex: 1; }
+.nv-brand h1 { margin: 0; font-size: 1.7rem; letter-spacing: -.02em; }
+.nv-mw { width: 52px; height: 52px; } .nv-mw svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.nv-tabs { display: flex; gap: 4px; padding: 4px; background: var(--nv-card); border: 1px solid var(--nv-line); border-radius: 999px; }
+.nv-tabs span { font-weight: 700; color: var(--nv-muted); padding: 6px 14px; border-radius: 999px; }
+.nv-tabs .on { background: var(--nv-accent); color: #23202b; }
+.nv-icons { display: flex; gap: 4px; } .nv-icons svg { width: 30px; height: 30px; padding: 5px; fill: none; stroke: var(--nv-muted); stroke-width: 1.8; stroke-linejoin: round; }
+.nv-main { padding: 8px 24px 24px; }
+.nv-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+.nv-tile, .nv-card { background: var(--nv-card); border: 1px solid var(--nv-line); border-radius: 16px; padding: 14px 16px; }
+.nv-tile { display: flex; flex-direction: column; gap: 2px; }
+.nv-tile span { font-size: .8rem; font-weight: 700; color: var(--nv-muted); }
+.nv-tile strong { font-size: 1.6rem; line-height: 1.1; }
+.nv-tile.big { background: var(--nv-accent); border-color: var(--nv-accent); color: #23202b; } .nv-tile.big span { color: rgba(35, 32, 43, .75); }
+.nv-card { padding: 18px 20px; } .nv-card h2 { margin: 0 0 4px; font-size: 1.15rem; } .nv-card p { margin: 0 0 10px; color: var(--nv-muted); }
+.nv-goal { height: 12px; border-radius: 999px; background: var(--nv-cell); overflow: hidden; } .nv-goal i { display: block; width: 100%; height: 100%; background: var(--nv-accent); }
+.nv-note { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 5; background: var(--nv-ink); color: var(--nv-bg); padding: 8px 16px; border-radius: 999px; font-weight: 700; font-size: .9rem; }
+
+/* ------------------------------------------------------------ shared pieces */
+.nv-btn { font: inherit; font-weight: 800; color: #23202b; background: var(--nv-accent); border: 0; border-radius: 999px; min-height: 44px; padding: 8px 22px; cursor: pointer; transition: background-color 150ms, transform 120ms; }
+.nv-btn:hover { background: var(--nv-accent-strong); } .nv-btn:active { transform: scale(.97); }
+.nv-btn.nv-sm { min-height: 34px; padding: 4px 16px; }
+.nv-link { font: inherit; font-weight: 700; font-size: .9rem; color: var(--nv-accent-text); background: none; border: 0; padding: 6px 8px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; border-radius: 8px; }
+.nv-x { position: absolute; top: 8px; right: 8px; z-index: 2; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 999px; display: grid; place-items: center; background: transparent; color: var(--nv-muted); cursor: pointer; }
+.nv-x:hover { background: var(--nv-cell); color: var(--nv-ink); } .nv-x svg { width: 16px; height: 16px; }
+.nv-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; margin-top: 14px; }
+.nv-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; text-align: left; }
+.nv-list li { display: flex; gap: 12px; align-items: flex-start; }
+.nv-ic { flex: none; width: 34px; height: 34px; display: grid; place-items: center; font-size: 1.2rem; border-radius: 10px; background: var(--nv-cell); }
+.nv-tx { display: grid; line-height: 1.3; } .nv-tx b { font-size: .98rem; } .nv-tx span { color: var(--nv-muted); font-size: .88rem; }
+.nv-tight { margin: 8px 0; gap: 6px; } .nv-tight .nv-ic { width: 28px; height: 28px; font-size: 1rem; }
+.nv-minis { display: flex !important; gap: 6px; margin-top: 4px; } .nv-mini { width: 38px; height: 38px; overflow: visible; display: block; background: var(--nv-cell); border-radius: 10px; }
+.nv-minis .nv-mini { padding: 2px; }
+.nv-pic svg, .nv-hero svg { overflow: visible; display: block; }
+.st-ov, .st-ov * { transform-box: view-box; }
+
+/* ------------------------------------------------------------ A · Tarjeta */
+.nv-scrim { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; padding: 14px; background: var(--nv-scrim); animation: nv-fade 220ms ease-out; }
+.nv-card-pop { position: relative; background: var(--nv-card); color: var(--nv-ink); border: 1px solid var(--nv-line); border-radius: 24px; box-shadow: var(--nv-shadow); }
+.nv-card-pop h2, .nv-card-pop h3 { margin: 0; line-height: 1.2; }
+.nv-a { width: min(400px, 100%); max-height: 100%; overflow: auto; padding: 8px 22px 16px; text-align: center; animation: nv-pop 360ms cubic-bezier(.34, 1.4, .64, 1); }
+.nv-a h2 { font-size: 1.3rem; }
+.nv-hero { width: 84px; height: 84px; margin: 8px auto 6px; padding-top: 0; } .nv-hero svg { width: 100%; height: 100%; }
+.nv-a .nv-nav { flex-direction: row; }
+
+/* ------------------------------------------------------------ B · Franja */
+.nv-slot:empty { display: none; } .nv-slot { margin-bottom: 12px; }
+.nv-strip { background: color-mix(in srgb, var(--nv-accent) 22%, var(--nv-card)); border: 1px solid color-mix(in srgb, var(--nv-accent) 55%, var(--nv-line)); border-radius: 14px; padding: 6px 8px 6px 14px; animation: nv-drop 320ms cubic-bezier(.34, 1.3, .64, 1); }
+.nv-strip-row { display: flex; align-items: center; gap: 8px; } .nv-strip-row p { flex: 1; margin: 0; font-size: .92rem; }
+.nv-strip .nv-x { position: static; flex: none; }
+.nv-strip-body { padding: 2px 4px 8px; } .nv-strip-body .nv-list { grid-template-columns: 1fr 1fr; gap: 8px 16px; } .nv-strip-body .nv-link { padding-left: 0; }
+
+/* ------------------------------------------------------------ C · Paso a paso */
+.nv-c { position: absolute; right: 16px; bottom: 16px; width: min(320px, calc(100% - 32px)); padding: 12px 18px 14px; z-index: 3; animation: nv-slide 340ms cubic-bezier(.34, 1.3, .64, 1); }
+.nv-c-head { display: flex; align-items: center; gap: 10px; padding-right: 30px; }
+.nv-eyebrow { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--nv-accent-text); }
+.nv-dots { display: flex; gap: 5px; margin-left: auto; } .nv-dots i { width: 7px; height: 7px; border-radius: 999px; background: var(--nv-line); transition: width 200ms, background-color 200ms; } .nv-dots i.on { width: 18px; background: var(--nv-accent); }
+.nv-c-step { display: grid; justify-items: center; text-align: center; gap: 4px; padding-top: 8px; min-height: 148px; } .nv-c-step h3 { font-size: 1.05rem; } .nv-c-step p { margin: 0; color: var(--nv-muted); font-size: .9rem; }
+.nv-c-step.nv-in { animation: nv-step 260ms ease-out; }
+.nv-c .nv-pic { width: 74px; height: 74px; margin-bottom: 2px; display: grid; place-items: center; } .nv-c .nv-pic > svg { width: 100%; height: 100%; }
+.nv-c .nv-pic-cap { width: auto; } .nv-c .nv-pic-cap .nv-minis { margin-top: 0; } .nv-c .nv-mini { width: 56px; height: 56px; }
+.nv-ring, .nv-parcel { position: relative; width: 74px; height: 74px; } .nv-ring svg, .nv-parcel svg { width: 100%; height: 100%; }
+.nv-ring b { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; font-size: 1.2rem; line-height: 1; } .nv-ring small { display: block; font-size: .62rem; font-weight: 700; color: var(--nv-muted); }
+.nv-parcel { animation: nv-bob 1.8s ease-in-out infinite; }
+.nv-c .nv-nav { margin-top: 6px; }
+
+@keyframes nv-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes nv-pop { from { opacity: 0; transform: translateY(14px) scale(.94); } to { opacity: 1; transform: none; } }
+@keyframes nv-drop { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+@keyframes nv-slide { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes nv-step { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
+@keyframes nv-bob { 50% { transform: translateY(-4px); } }
+.nv-rm *, .nv-rm { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { .nv-ov *, .nv-ov { animation: none !important; transition: none !important; } }
+@media (max-width: 700px) { .nv-tabs { display: none; } .nv-strip-body .nv-list { grid-template-columns: 1fr; } }
