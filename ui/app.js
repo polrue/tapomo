@@ -100,7 +100,9 @@ async function renderGoal() {
   $('goal-progress').setAttribute('aria-valuemax', String(g.goal_min));
   $('goal-progress').setAttribute('aria-valuenow', String(Math.min(minutes, g.goal_min)));
   $('goal-progress').setAttribute('aria-valuetext', t('goal.progress_aria', { m: fmt(minutes), goal: fmt(g.goal_min) }));
-  $('goal-sub').textContent = t(g.met_today ? 'goal.done' : 'goal.sub');
+  // Auto mode, the week the goal moved: say so (nothing new the rest of the time).
+  const moved = g.auto && g.changed ? t(g.changed > 0 ? 'goal.auto_up' : 'goal.auto_down', { m: fmt(g.goal_min) }) : '';
+  $('goal-sub').textContent = moved || t(g.met_today ? 'goal.done' : 'goal.sub');
   const streak = document.querySelector('.goal-streak');
   streak.toggleAttribute('data-zero', g.streak_days === 0);
   $('goal-days').textContent = g.streak_days > 0 ? tn('goal.streak', g.streak_days, { n: fmt(g.streak_days) }) : t('goal.streak_start');
@@ -283,6 +285,13 @@ async function renderExclusions() {
   }
 }
 
+/** Hint under the goal field: the automatic mode explains itself; the lessons sentence only applies when they count. */
+function renderGoalHint() {
+  $('s-goal-hint').textContent = !settings.goal_auto
+    ? t('settings.goal.hint')
+    : t(settings.lessons_in_goal ? 'settings.goal.hint_auto' : 'settings.goal.hint_auto_nolessons');
+}
+
 function renderSettings() {
   $('s-pause').value = settings.pause_ms / 1000;
   $('s-pause-out').textContent = `${fmt(settings.pause_ms / 1000, 1)} s`;
@@ -291,7 +300,8 @@ function renderSettings() {
   $('s-fullscreen').checked = settings.ignore_fullscreen;
   $('s-paused').checked = settings.paused;
   $('s-pet').checked = settings.show_pet;
-  $('s-goal').value = String(settings.daily_goal_min);
+  $('s-goal').value = settings.goal_auto ? 'auto' : String(settings.daily_goal_min);
+  renderGoalHint();
   $('s-weekend').checked = settings.weekend_rest;
   $('s-shortcuts').checked = settings.count_shortcuts;
   $('s-corrections').checked = settings.count_corrections;
@@ -421,11 +431,18 @@ function bindControls() {
   $('s-language').addEventListener('change', onLanguageChange);
   $('s-autostart').addEventListener('change', () => saveSettings({ autostart: $('s-autostart').checked }));
   $('s-fullscreen').addEventListener('change', () => saveSettings({ ignore_fullscreen: $('s-fullscreen').checked }));
-  $('s-goal').addEventListener('change', () => saveSettings({ daily_goal_min: Number($('s-goal').value) }).then(() => renderGoal()).catch(showError));
+  $('s-goal').addEventListener('change', async () => {
+    const v = $('s-goal').value;
+    // Automatic: the app owns the minutes, so only the mode is sent; the real goal is read back.
+    await saveSettings(v === 'auto' ? { goal_auto: true } : { goal_auto: false, daily_goal_min: Number(v) });
+    settings = await invoke('get_settings');
+    renderSettings();
+    await renderGoal();
+  });
   $('s-weekend').addEventListener('change', () => saveSettings({ weekend_rest: $('s-weekend').checked }).then(() => renderGoal()).catch(showError));
   $('s-pet').addEventListener('change', () => saveSettings({ show_pet: $('s-pet').checked }));
   $('s-sc-tips').addEventListener('change', () => saveSettings({ shortcut_tips: $('s-sc-tips').checked }).then(() => Album.refreshTip()).catch(showError));
-  $('s-lessons-goal').addEventListener('change', () => saveSettings({ lessons_in_goal: $('s-lessons-goal').checked }).then(() => renderGoal()).catch(showError));
+  $('s-lessons-goal').addEventListener('change', () => saveSettings({ lessons_in_goal: $('s-lessons-goal').checked }).then(() => { renderGoalHint(); return renderGoal(); }).catch(showError));
   // Choosing here also settles the one-time question in the challenges area.
   $('s-notify').addEventListener('change', () => saveSettings({ notify_challenges: $('s-notify').checked, notify_asked: true }).then(() => Progress.relabel()).catch(showError));
   $('s-corrections').addEventListener('change', () => saveSettings({ count_corrections: $('s-corrections').checked }).then(() => { renderSettings(); Corrections.refresh(); }).catch(showError));

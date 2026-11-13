@@ -320,3 +320,8 @@
 .ch-ask-btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .ch-ask-btns button { font-size: 0.88rem; padding: 6px 14px; }
 .ch-ask-no { background: none; color: var(--muted); border: 1px solid var(--line); }
+
+/* «Premios nuevos» notice (1.1.0): the rewards as small previews with their names. */
+.newrw-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; text-align: left; }
+.newrw-list li { display: flex; align-items: center; gap: 12px; font-weight: 700; }
+.newrw-list svg { flex: none; width: 52px; height: 52px; border-radius: 12px; background: var(--chip, var(--cell-empty)); }
