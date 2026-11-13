@@ -119,7 +119,7 @@ XP **acumulada** para llegar al nivel *n*: `47 × (n − 1)^1.8`.
   - Un usuario normal llega al nivel 50 en un año.
   - No hay tope: se puede seguir subiendo después del 50.
 - **Premios:**
-  - Hay un premio en los niveles 2, 3, 4, 5, 7, 10, 12, 13, 16, 17 y 19, y luego en cada nivel del 21 al 50; el último es el skin dorado del 50.
+  - Hay un premio en los niveles 2, 3, 4, 5, 7, 10, 13, 16, 18, 19 y 20, y luego en cada nivel del 21 al 50; el último es el skin dorado del 50.
   - En la primera semana, un usuario normal recibe como mucho un premio, y uno intenso, dos.
 
 Desde la 1.1.0 los primeros niveles dan premios a los peques (tirita, pecas, gorro con hélice; más tirita de estrellas y gorro menta). Quien ya había pasado esos niveles los recibe solo y lo ve en la tarjeta «Novedades de la 1.1.0» (`ui/whatsnew.js`, una sola vez tras actualizar; ahí aparece «Ya son tuyos: …» con sus miniaturas y un enlace «Probar el gorro»). Que ya se haya contado se guarda en `tapomo.seen_new_rewards_1_1` (`localStorage`).
@@ -136,11 +136,11 @@ Cada nivel con premio desbloquea **un solo premio** (antes eran packs de dos o t
 | 5 | 570 | Gorro con hélice |
 | 7 | 1.182 | Lacito |
 | 10 | 2.453 | Skin fresa |
-| 12 | 3.521 | Tirita de estrellas |
 | 13 | 4.117 | Bigote postizo |
 | 16 | 6.153 | Flequillo |
-| 17 | 6.911 | Gorro con hélice menta |
+| 18 | 7.707 | Tirita de estrellas |
 | 19 | 8.543 | Bufanda |
+| 20 | 9.416 | Gorro con hélice menta |
 | 21 | 10.326 | Gorra al revés |
 | 22 | 11.274 | Cejas pobladas |
 | 23 | 12.259 | Gafas redondas |
