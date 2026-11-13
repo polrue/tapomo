@@ -341,12 +341,18 @@
 .wn-tx > span { color: var(--muted); font-size: .88rem; }
 .wn-tx > .wn-thumbs { display: flex; gap: 6px; margin-top: 4px; }
 .wn-thumbs svg { flex: none; width: 38px; height: 38px; border-radius: 10px; background: var(--chip, var(--cell-empty)); }
-.wn-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; margin-top: 16px; }
-.wn-nav #wn-ok { min-height: 44px; padding: 8px 22px; border-radius: 999px; font-weight: 800; }
+.wn-nav { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 18px; }
+.wn-nav #wn-ok { min-height: 44px; min-width: 160px; padding: 8px 26px; border-radius: 999px; font-weight: 800; }
 .wn-link {
-  background: none; color: var(--wn-link); font: inherit; font-weight: 700; font-size: .9rem; padding: 6px 8px;
-  border: 0; border-radius: 8px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+  color: var(--muted); font-weight: 700; font-size: .85rem; padding: 6px 8px; border-radius: 8px;
+  text-decoration: none; cursor: pointer;
 }
-.wn-link:hover { background: none; color: var(--ink); }
-.wn-card button:focus-visible, .wn-card a:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.wn-link:hover { color: var(--wn-link); text-decoration: underline; text-underline-offset: 3px; }
+.wn-thumbs { align-items: center; flex-wrap: wrap; }
+.wn-cap {
+  margin-left: 4px; padding: 6px 12px; border: 1.5px solid var(--wn-link); border-radius: 999px;
+  background: none; color: var(--wn-link); font: inherit; font-size: .82rem; font-weight: 800; cursor: pointer;
+}
+.wn-cap:hover { background: var(--wn-link); color: var(--card, #fff); }
+.wn-card button:focus-visible, .wn-card a:focus-visible { outline: 2px solid var(--wn-link); outline-offset: 3px; }
 .wn-card [hidden] { display: none; }
