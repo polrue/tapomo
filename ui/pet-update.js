@@ -1,6 +1,6 @@
 // Floating Tapomo's «after an update» moment (approved in the lab's «Reinicio» study, lab/reinicio.js).
 // The first time Tapomo shows up on a new version it turns to stone and waits; when the user is around
-// (a few keys or a click on it) the stone bursts, either as
+// (10 keys or 3 clicks, each one cracking it a bit more) the stone bursts, either as
 // A · Estallido (cracks, tremble, shards flying with spin and gravity, dust, squash-pop) or as
 // D · ¡Pof! (a comic star and a dust cloud), picked at random. The clothes go on AFTER the burst, one by
 // one; the only trace of the old «Tapomo dorado» is a brief shine (never a gold colour). Then a bubble
@@ -91,7 +91,7 @@ const PetUpdate = (() => {
   })();
 
   // ------------------------------------------------------------------ runtime helpers
-  const st = { gen: 0, busy: false, waiting: false, shown: 'a' };
+  const st = { gen: 0, busy: false, waiting: false, shown: 'a', damage: 0, cracked: new Set() };
   const speed = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--speed')) || 1;
   const dur = (ms) => ms / speed();
   const later = (ms, fn) => setTimeout(fn, dur(ms));
@@ -283,9 +283,15 @@ const PetUpdate = (() => {
     later(600, () => g.remove());
   }
   const cracksOf = (ids) => ids.map((i) => svg.querySelector(`.rn-crack[data-i="${i}"]`));
+  /** Draws the cracks not drawn yet (the user's hits may have opened some already); they stay drawn. */
   function growCracks(ids, ms, step = 40) {
-    cracksOf(ids).forEach((c, k) => anim(c, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], ms, { easing: 'ease-out', delay: dur(k * step) }));
+    const fresh = ids.filter((i) => !st.cracked.has(i));
+    fresh.forEach((i) => st.cracked.add(i));
+    cracksOf(fresh).forEach((c, k) => anim(c, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], ms, { easing: 'ease-out', delay: dur(k * step) }));
   }
+  /** A click on the stone: it rocks and squashes a little, and a crumb falls. */
+  const knock = () => both([{ transform: 'none' }, { transform: 'translateY(1px) scale(1.04,.95) rotate(-2.5deg)', offset: 0.3 },
+    { transform: 'rotate(1.8deg)', offset: 0.65 }, { transform: 'none' }], 260, { easing: 'ease-out' });
   /** Both the body and the shell over it, with the same keyframes (so the stone moves as one piece). */
   function both(frames, ms, opts) { [shake(), shellOf()].forEach((n) => anim(n, frames, ms, { fill: 'none', ...opts })); }
   const tremble = (ms, a = 1.6) => both([{ transform: 'none' }, { transform: `translateX(${-a}px)` }, { transform: `translateX(${a}px) rotate(1deg)` }, { transform: `translateX(${-a}px) rotate(-1deg)` },
@@ -407,6 +413,8 @@ const PetUpdate = (() => {
     }
     st.busy = true;
     st.waiting = true;
+    st.damage = 0;
+    st.cracked = new Set();
     shake().style.transformBox = 'view-box';
     shake().style.transformOrigin = '80px 140px';
     st.shown = Math.random() < 0.5 ? 'a' : 'd';
@@ -415,9 +423,17 @@ const PetUpdate = (() => {
     Mascot.setFace(svg, { eyes: 'closed', mouth: 'small' });
     shellIn();
   }
-  /** A small wobble of the stone: a key went in, it's about to give. */
-  function nudge() {
-    if (st.waiting && !Mascot.reduced()) tremble(140, 0.9);
+  // Pol (2026-11-13): 10 keys or 3 clicks break it (mixed too), and every hit opens the crack a bit more.
+  const HIT = { key: 1 / 10, click: 1 / 3 };
+  // Cracks open spreading around the stone, not one beside the other; the burst draws the last ones.
+  const ORDER = [0, 4, 2, 6, 1, 5, 3, 7];
+  /** The user hit the stone (`kind` = 'key' | 'click'): a bit more crack and a little move, or the burst. */
+  function hit(kind) {
+    if (!st.waiting) return;
+    st.damage += HIT[kind] || 0;
+    if (st.damage >= 0.999) return wake();
+    growCracks(ORDER.slice(0, Math.max(1, Math.round(st.damage * (ORDER.length - 2)))), 240, 35);
+    if (kind === 'click') { knock(); crumbs(1); } else tremble(140, 0.9);
   }
   /** The user is here: the stone bursts. */
   function wake() {
@@ -425,5 +441,5 @@ const PetUpdate = (() => {
     st.waiting = false;
     V[st.shown].burst(st.gen);
   }
-  return { play, nudge, wake, get busy() { return st.busy; }, get waiting() { return st.waiting; } };
+  return { play, hit, wake, get busy() { return st.busy; }, get waiting() { return st.waiting; } };
 })();

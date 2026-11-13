@@ -175,9 +175,8 @@ function onKey(cls) {
   const now = Date.now();
   state.lastKeyAt = now;
   if (PetUpdate.waiting) {
-    // Still stone after an update: each key makes it wobble, and a few keys in it bursts.
-    if (++stoneKeys >= STONE_KEYS) PetUpdate.wake();
-    else PetUpdate.nudge();
+    // Still stone after an update: each key cracks it a bit more (10 keys or 3 clicks break it).
+    PetUpdate.hit('key');
     return;
   }
   if (state.asleep) {
@@ -628,7 +627,7 @@ function bindDrag() {
       invoke('pet_drag_end').catch(console.error);
     } else if (wasClick) {
       if (PetUpdate.waiting) {
-        PetUpdate.wake();
+        PetUpdate.hit('click');
       } else if (updateNotice) {
         // The «¡Me he actualizado!» bubble is showing: a click on Tapomo opens the news.
         dismissUpdate();
@@ -720,9 +719,7 @@ function onPetState(p) {
 
 // Rust hands over the new version once (`pet_update_moment`) the first time Tapomo runs on it. Tapomo
 // turns to stone as soon as it is on screen (if it is hidden, when it next shows up) and bursts once the
-// user is around: STONE_KEYS keys or a click on it.
-const STONE_KEYS = 5;
-let stoneKeys = 0;
+// user is around: every key or click cracks it a bit more, and 10 keys or 3 clicks break it (PetUpdate.hit).
 let updateVersion = null;
 let updateNotice = false; // the news bubble is up: a click opens the main window
 let updateTimer = null;
