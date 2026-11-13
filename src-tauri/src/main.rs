@@ -126,6 +126,8 @@ fn main() {
             pet::pet_open_main,
             pet::pet_hint,
             pet::pet_update_moment,
+            pet::whats_new_pending,
+            pet::whats_new_done,
             pet::pet_menu,
             pet::get_pet_state,
             pet::pet_cancel_snooze,

@@ -375,6 +375,10 @@ pub fn pet_hint(state: tauri::State<AppState>) -> bool {
 #[derive(Default)]
 pub struct UpdateMoment(pub Mutex<Option<String>>);
 
+/// Setting holding the version whose «Novedades» card the main window still has to show. Persistent (unlike
+/// the pet's moment) because Tapomo often runs for hours or days with only the pet before the window opens.
+const WHATS_NEW_KEY: &str = "whats_new_pending";
+
 /// Whether the pet plays its «after update» animation. `stored` is the last version that ran (empty or
 /// missing for versions up to 1.0.2, which never stored it), `has_data` whether the database already
 /// holds usage: with no stored version, data means an update from an older release, no data a fresh install.
@@ -395,6 +399,8 @@ pub fn check_update(app: &AppHandle, conn: &rusqlite::Connection) {
         if let Some(m) = app.try_state::<UpdateMoment>() {
             *m.0.lock().unwrap_or_else(|e| e.into_inner()) = Some(running.clone());
         }
+        // "replay": the main window shows the newest «Novedades» card even on a build without its own entry.
+        let _ = db::set_raw(conn, WHATS_NEW_KEY, REPLAY);
     }
     if stored.as_deref() == Some(running.as_str()) {
         return;
@@ -404,8 +410,37 @@ pub fn check_update(app: &AppHandle, conn: &rusqlite::Connection) {
         if let Some(m) = app.try_state::<UpdateMoment>() {
             *m.0.lock().unwrap_or_else(|e| e.into_inner()) = Some(running.clone());
         }
+        let _ = db::set_raw(conn, WHATS_NEW_KEY, &running);
     }
     let _ = db::set_raw(conn, "last_seen_version", &running);
+}
+
+/// Pending value set by TAPOMO_UPDATE_MOMENT (testing aid), valid on any version.
+const REPLAY: &str = "replay";
+
+/// The stored pending version counts only while it is the running one (a skipped version has no card).
+pub fn pending_for(stored: Option<&str>, running: &str) -> Option<String> {
+    stored.map(str::trim).filter(|v| !v.is_empty() && (*v == running || *v == REPLAY)).map(str::to_owned)
+}
+
+/// The main window asks at startup: `Some(version)` while its «Novedades» card has not been shown yet.
+#[tauri::command]
+pub fn whats_new_pending(app: AppHandle, state: tauri::State<AppState>) -> Option<String> {
+    let conn = state.db.lock().ok()?;
+    let stored = db::get_raw(&conn, WHATS_NEW_KEY).ok().flatten();
+    let pending = pending_for(stored.as_deref(), &app.package_info().version.to_string());
+    if pending.is_none() && stored.as_deref().is_some_and(|v| !v.is_empty()) {
+        let _ = db::set_raw(&conn, WHATS_NEW_KEY, "");
+    }
+    pending
+}
+
+/// The card was shown: never again for this update.
+#[tauri::command]
+pub fn whats_new_done(state: tauri::State<AppState>) {
+    if let Ok(conn) = state.db.lock() {
+        let _ = db::set_raw(&conn, WHATS_NEW_KEY, "");
+    }
 }
 
 /// The pet page asks on load: `Some(version)` exactly once after an update, `None` otherwise.
@@ -427,6 +462,16 @@ mod update_tests {
         assert!(is_update(Some("  "), "1.1.0", true), "blank counts as never stored");
         assert!(!is_update(None, "1.1.0", false), "fresh install: nothing");
         assert!(!is_update(Some(""), "1.1.0", false));
+    }
+
+    #[test]
+    fn pending_only_for_the_running_version() {
+        use super::pending_for;
+        assert_eq!(pending_for(Some("1.1.0"), "1.1.0").as_deref(), Some("1.1.0"));
+        assert_eq!(pending_for(Some("1.0.2"), "1.1.0"), None, "stale: skipped a version");
+        assert_eq!(pending_for(Some(""), "1.1.0"), None, "cleared");
+        assert_eq!(pending_for(None, "1.1.0"), None);
+        assert_eq!(pending_for(Some("replay"), "1.0.2").as_deref(), Some("replay"), "testing aid on any version");
     }
 }
 

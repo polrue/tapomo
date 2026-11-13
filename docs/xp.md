@@ -122,7 +122,7 @@ XP **acumulada** para llegar al nivel *n*: `47 × (n − 1)^1.8`.
   - Hay un premio en los niveles 2, 3, 4, 5, 7, 10, 12, 13, 16, 17 y 19, y luego en cada nivel del 21 al 50; el último es el skin dorado del 50.
   - En la primera semana, un usuario normal recibe como mucho un premio, y uno intenso, dos.
 
-Desde la 1.1.0 los primeros niveles dan premios a los peques (tirita, pecas, gorro con hélice; más tirita de estrellas y gorro menta). Quien ya había pasado esos niveles los recibe solo y ve un aviso único (`tapomo.seen_new_rewards_1_1`, en `localStorage`).
+Desde la 1.1.0 los primeros niveles dan premios a los peques (tirita, pecas, gorro con hélice; más tirita de estrellas y gorro menta). Quien ya había pasado esos niveles los recibe solo y lo ve en la tarjeta «Novedades de la 1.1.0» (`ui/whatsnew.js`, una sola vez tras actualizar; ahí aparece «Ya son tuyos: …» con sus miniaturas y un enlace «Probar el gorro»). Que ya se haya contado se guarda en `tapomo.seen_new_rewards_1_1` (`localStorage`).
 
 Cada nivel con premio desbloquea **un solo premio** (antes eran packs de dos o tres cada 3 niveles): tierno, cañero, de broma, de fuerza o un disfraz. Se elige estilo, no se etiqueta para chicos o chicas.
 
