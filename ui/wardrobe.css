@@ -64,6 +64,13 @@ svg[data-zone="super"] .rw-supergold-sweep { animation: rw-gold-sweep calc(900ms
   .rw-supergold { transition: none; }
   svg[data-zone="super"] .rw-supergold-sweep { animation: none; }
 }
+/* Propeller caps: always spinning at one turn per second; wardrobe.js sets the playback rate by zone.
+   Blades are drawn around the local origin (0,0) of a squashed group, so the view-box origin is the hub. */
+.rw-prop-rot { transform-box: view-box; transform-origin: 0 0; animation: rw-prop-spin calc(1s / var(--speed, 1)) linear infinite; }
+@keyframes rw-prop-spin { to { transform: rotate(360deg); } }
+.rw-prop-blur { opacity: 0; transition: opacity calc(300ms / var(--speed, 1)) ease-out; }
+svg[data-zone="fire"] .rw-prop-blur, svg[data-zone="beating"] .rw-prop-blur, svg[data-zone="super"] .rw-prop-blur { opacity: .38; }
+@media (prefers-reduced-motion: reduce) { .rw-prop-rot { animation: none; } .rw-prop-blur { transition: none; } }
 /* Hairstyles: in Supermochi the golden flame-hair (mascot.js, setSuperHair) replaces the worn hairstyle. */
 .rw-hair { transition: opacity calc(200ms / var(--speed, 1)) ease; }
 svg[data-zone="super"] .rw-hair { opacity: 0; }
