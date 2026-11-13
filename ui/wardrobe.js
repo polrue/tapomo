@@ -5,7 +5,7 @@
 // mochi, never its shape or face. Styles live in wardrobe.css. Load after mascot.js.
 //
 // API: Wardrobe.ITEMS, REWARD_LEVELS, itemsAt, unlocked, nextReward, clashes, wear, set, get,
-//      decorate, preview, setSupporter, grandfather. Display names are NOT here: the app uses the i18n keys `item.<id>`.
+//      decorate, preview, setSupporter, grandfather, newRewardsFor, newRewardsSeen, markNewRewardsSeen. Display names are NOT here: the app uses the i18n keys `item.<id>`.
 (() => {
   'use strict';
   if (window.Wardrobe) return;
@@ -330,8 +330,8 @@
     }
     return s;
   })();
-  const bushy = (cx) => `<path transform="translate(${cx} 61)" d="M-12 3 Q-11 -5 -1 -6 Q10 -6.5 12.5 1 Q10.5 0 9 2.2 Q7 -.5 4.6 2 Q2.4 -.6 0 2 Q-2.6 -.4 -5 2.4 Q-7.6 .2 -9.4 3.4 Q-10.8 2 -12 3 Z" fill="#4a3426" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/>
-      <path transform="translate(${cx} 61)" d="M-7 -3 Q-1 -4.8 6 -3.4" fill="none" stroke="#8a6248" stroke-width="1.3" stroke-linecap="round"/>`;
+  const bushy = (cx) => `<path transform="translate(${cx} 61)" d="M-12 3 Q-11 -5 -1 -6 Q10 -6.5 12.5 1 Q10.5 0 9 2.2 Q7 -.5 4.6 2 Q2.4 -.6 0 2 Q-2.6 -.4 -5 2.4 Q-7.6 .2 -9.4 3.4 Q-10.8 2 -12 3 Z" fill="__HB__" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/>
+      <path transform="translate(${cx} 61)" d="M-7 -3 Q-1 -4.8 6 -3.4" fill="none" stroke="__HL__" stroke-width="1.3" stroke-linecap="round"/>`;
   // Hairstyles (slot pelo): drawn ON the head, over the top of the body and never over the eyes or
   // cheeks. Same drawing in both styles. Each one: soft fill, darker strands, a white shine.
   // `bangs` builds a row of rounded fringe locks from right to left: gaps at y `yg`, tips at `tips[i]`.
@@ -377,16 +377,63 @@
         <path d="M62 35.6 L68 34.8" fill="none" stroke="__HS__" stroke-width="2.4" opacity="__HO__"/>
       </g>`;
   // Hair colours: one palette per colour (base fill, darker strands, shine) shared by every hairstyle.
-  // The placeholders __HB__/__HD__/__HS__/__HO__ in the drawings are filled in at paint time.
+  // The placeholders __HB__/__HD__/__HS__/__HO__ in the drawings are filled in at paint time. __HL__ is a lighter
+  // tone for the highlight strokes of face hair (brows, moustache, beards), which must read on the peach body.
   const HAIR_PAL = {
-    negro: { base: '#423d4c', dark: '#211e28', shine: '#b9b3da', op: 0.85 },
-    castano: { base: '#7a4a33', dark: '#5a3322', shine: '#fff', op: 0.6 },
-    rubio: { base: '#f8e08e', dark: '#c99a3a', shine: '#fff', op: 0.9 },
+    negro: { base: '#423d4c', dark: '#211e28', shine: '#b9b3da', light: '#7d7794', op: 0.85 },
+    castano: { base: '#7a4a33', dark: '#5a3322', shine: '#fff', light: '#c08a66', op: 0.6 },
+    rubio: { base: '#f8e08e', dark: '#c99a3a', shine: '#fff', light: '#fff4c8', op: 0.9 },
   };
   const HAIR_COLORS = Object.keys(HAIR_PAL);
   const HAIR_DEFAULT = 'castano';
   const hairPal = (c) => HAIR_PAL[c] || HAIR_PAL[HAIR_DEFAULT];
-  const tintHair = (html, c) => { const p = hairPal(c); return html.replaceAll('__HB__', p.base).replaceAll('__HD__', p.dark).replaceAll('__HS__', p.shine).replaceAll('__HO__', String(p.op)); };
+  const tintHair = (html, c) => { const p = hairPal(c); return html.replaceAll('__HB__', p.base).replaceAll('__HD__', p.dark).replaceAll('__HS__', p.shine).replaceAll('__HL__', p.light).replaceAll('__HO__', String(p.op)); };
+  // Early rewards for the little ones (tirita, pecas, gorros con hélice). Drawings from the lab study «Premios para peques».
+  // Plaster: holes in a small grid on both pads, and a five-point star for the starry one.
+  const plasterHoles = (fill) => [-8.6, -6.4, 6.4, 8.6].flatMap((x) => [-1.4, 1.4].map((y) => `<circle cx="${x}" cy="${y}" r=".62" fill="${fill}"/>`)).join('');
+  const star5 = (x, y, r, fill) => {
+    let d = '';
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      const rr = i % 2 ? r * 0.48 : r;
+      d += `${i ? 'L' : 'M'}${(x + Math.cos(a) * rr).toFixed(2)} ${(y + Math.sin(a) * rr).toFixed(2)} `;
+    }
+    return `<path d="${d}Z" fill="${fill}" stroke="${INK}" stroke-width=".55" stroke-linejoin="round"/>`;
+  };
+  // Freckles: soft dots without outline, so they read as skin and not as stickers. Left cheek, mirrored for the right.
+  const FRECK_L = [[55, 94.4, 1.6], [60.8, 92.6, 1.4], [58.4, 98, 1.5], [64.8, 95.6, 1.3]];
+  const freckles = [...FRECK_L, ...FRECK_L.map(([x, y, r]) => [160 - x, y, r])]
+    .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#a8653e" opacity=".7"/>`).join('');
+  // Propeller cap: the dome is split into gores (clipped to its outline); the propeller is drawn top-down
+  // around (0,0), squashed to look seen from a little above, and spun by .rw-prop-rot (wardrobe.css, rate by zone in JS).
+  const gores = (cols) => {
+    const n = cols.length;
+    let g = `<rect x="20" y="0" width="120" height="70" fill="${cols[0]}"/>`;
+    for (let i = 0; i < n; i++) {
+      const x0 = 14 + (132 / n) * i;
+      const x1 = 14 + (132 / n) * (i + 1);
+      g += `<path d="M80 18 Q${(x0 + 80) / 2 - 6 * Math.sign(80 - x0)} 30 ${x0} 60 L${x1} 60 Q${(x1 + 80) / 2 - 6 * Math.sign(80 - x1)} 30 80 18 Z" fill="${cols[i]}"/>`;
+    }
+    return g;
+  };
+  const goreSeams = (n) => {
+    let g = '';
+    for (let i = 1; i < n; i++) {
+      const x = 14 + (132 / n) * i;
+      g += `<path d="M80 19.5 Q${(x + 80) / 2 - 6 * Math.sign(80 - x)} 30 ${x} 60" fill="none" stroke="${INK}" stroke-width="1.3" opacity=".45"/>`;
+    }
+    return g;
+  };
+  const blade = (rot, fill, len = 16, w = 6.6) => `<path transform="rotate(${rot})" d="M0 0 C${len * 0.25} ${-w} ${len * 0.9} ${-w * 0.95} ${len} ${-w * 0.2} C${len * 1.05} ${w * 0.5} ${len * 0.5} ${w * 0.7} 0 0 Z" fill="${fill}" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;
+  const propeller = (blades, hub) => `<g>
+      <path d="M78.7 21 V8 H81.3 V21 Z" fill="#c3c9d4" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/>
+      <g transform="translate(80 7.6) scale(1 .5)">
+        <ellipse class="rw-prop-blur" cx="0" cy="0" rx="17" ry="17" fill="#fff"/>
+        <g class="rw-prop-rot">${blades}</g>
+      </g>
+      <circle cx="80" cy="7.6" r="2.2" fill="${hub}" stroke="${INK}" stroke-width="1.4"/>
+    </g>`;
+  const plaster = (tf, body, shine) => `<g transform="${tf}" stroke-linejoin="round">${body}${shine}</g>`;
   const PROP_ART = {
     ...Object.fromEntries(Object.entries(HAIR_ART).map(([k, v]) => [k, { front: v }])),
     gorra: {
@@ -444,22 +491,22 @@
       </g>` },
     bigote: {
       front: `<g stroke-linejoin="round">
-        <path d="M80 92.6 C76.5 89.6 70.5 90.2 67 94 C64.6 96.8 61 97.2 59 94.4 C58.6 98.8 63 101.8 68.4 100.2 C72.8 99.2 77 98 80 96.4 C83 98 87.2 99.2 91.6 100.2 C97 101.8 101.4 98.8 101 94.4 C99 97.2 95.4 96.8 93 94 C89.5 90.2 83.5 89.6 80 92.6 Z" fill="#5a3a2a" stroke="${INK}" stroke-width="2"/>
-        <path d="M70 93.6 Q74 92.2 77.4 93.6 M82.6 93.6 Q86 92.2 90 93.6" fill="none" stroke="#9a6a4c" stroke-width="1.3" stroke-linecap="round"/>
+        <path d="M80 92.6 C76.5 89.6 70.5 90.2 67 94 C64.6 96.8 61 97.2 59 94.4 C58.6 98.8 63 101.8 68.4 100.2 C72.8 99.2 77 98 80 96.4 C83 98 87.2 99.2 91.6 100.2 C97 101.8 101.4 98.8 101 94.4 C99 97.2 95.4 96.8 93 94 C89.5 90.2 83.5 89.6 80 92.6 Z" fill="__HB__" stroke="${INK}" stroke-width="2"/>
+        <path d="M70 93.6 Q74 92.2 77.4 93.6 M82.6 93.6 Q86 92.2 90 93.6" fill="none" stroke="__HL__" stroke-width="1.3" stroke-linecap="round"/>
       </g>` },
     // Lumberjack: the original long beard, only raised a little; it covers the six-pack.
     barba: {
       front: `<g stroke-linejoin="round" transform="translate(0 -6)">
-        <path d="M33 96 Q39 112 58 115 Q70 117 72 120 Q80 124 88 120 Q90 117 102 115 Q121 112 127 96 Q133 128 113 145 Q104 152 96 151 Q88 158 80 154 Q72 158 64 151 Q56 152 47 145 Q27 128 33 96 Z" fill="#b5653a" stroke="${INK}" stroke-width="2.4"/>
-        <path d="M44 120 Q47 130 54 136 M60 124 Q62 134 66 142 M80 128 V146 M100 124 Q98 134 94 142 M116 120 Q113 130 106 136" fill="none" stroke="#8a4724" stroke-width="2" stroke-linecap="round"/>
-        <path d="M40 108 Q44 116 52 119" fill="none" stroke="#e39a6c" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+        <path d="M33 96 Q39 112 58 115 Q70 117 72 120 Q80 124 88 120 Q90 117 102 115 Q121 112 127 96 Q133 128 113 145 Q104 152 96 151 Q88 158 80 154 Q72 158 64 151 Q56 152 47 145 Q27 128 33 96 Z" fill="__HB__" stroke="${INK}" stroke-width="2.4"/>
+        <path d="M44 120 Q47 130 54 136 M60 124 Q62 134 66 142 M80 128 V146 M100 124 Q98 134 94 142 M116 120 Q113 130 106 136" fill="none" stroke="__HD__" stroke-width="2" stroke-linecap="round"/>
+        <path d="M40 108 Q44 116 52 119" fill="none" stroke="__HL__" stroke-width="2" stroke-linecap="round" opacity=".8"/>
       </g>` },
     // Hipster: short, from the cheeks around the mouth; the six-pack shows under it (ABS_LOW).
     hipster: {
       front: `<g stroke-linejoin="round">
-        <path d="M32 82 C26 96 25 113 32 123 C38 131 49 133 56 128 C60 125 62 120 65 117.5 Q72 115.5 76 117 Q80 119.5 84 117 Q88 115.5 95 117.5 C98 120 100 125 104 128 C111 133 122 131 128 123 C135 113 134 96 128 82 C124 88 121 98 118 104 C115 110 108 113 100 111.5 Q94 110 90 111.5 Q80 115 70 111.5 Q66 110 60 111.5 C52 113 45 110 42 104 C39 98 36 88 32 82 Z" fill="#b5653a" stroke="${INK}" stroke-width="2.4"/>
-        <path d="M35 98 Q34 110 39 120 M46 113 Q48 121 53 126 M125 98 Q126 110 121 120 M114 113 Q112 121 107 126" fill="none" stroke="#8a4724" stroke-width="2" stroke-linecap="round"/>
-        <path d="M30 100 Q30 110 34 117" fill="none" stroke="#e39a6c" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+        <path d="M32 82 C26 96 25 113 32 123 C38 131 49 133 56 128 C60 125 62 120 65 117.5 Q72 115.5 76 117 Q80 119.5 84 117 Q88 115.5 95 117.5 C98 120 100 125 104 128 C111 133 122 131 128 123 C135 113 134 96 128 82 C124 88 121 98 118 104 C115 110 108 113 100 111.5 Q94 110 90 111.5 Q80 115 70 111.5 Q66 110 60 111.5 C52 113 45 110 42 104 C39 98 36 88 32 82 Z" fill="__HB__" stroke="${INK}" stroke-width="2.4"/>
+        <path d="M35 98 Q34 110 39 120 M46 113 Q48 121 53 126 M125 98 Q126 110 121 120 M114 113 Q112 121 107 126" fill="none" stroke="__HD__" stroke-width="2" stroke-linecap="round"/>
+        <path d="M30 100 Q30 110 34 117" fill="none" stroke="__HL__" stroke-width="2" stroke-linecap="round" opacity=".8"/>
       </g>` },
     cejas: {
       front: `<g class="rw-bb"><g class="rw-bb-l">${bushy(62)}</g><g class="rw-bb-r"><g transform="translate(196 0) scale(-1 1)">${bushy(98)}</g></g></g>` },
@@ -475,6 +522,36 @@
     pesa: {
       back: `<g class="rw-arm rw-arm-l">${arm(dumbbell)}</g><g transform="translate(160 0) scale(-1 1)"><g class="rw-arm rw-arm-r">${arm(dumbbell)}</g></g>` },
     cicatriz: { front: '' }, // drawn from SCAR_POS at paint time
+    // Early rewards (tirita / pecas / gorros con hélice): see the helpers above.
+    tirita: {
+      front: plaster('translate(114 104) rotate(-32)', `<rect x="-12.5" y="-5" width="25" height="10" rx="5" fill="#f4cfa3" stroke="${INK}" stroke-width="1.9"/>
+          <rect x="-4.6" y="-3.6" width="9.2" height="7.2" rx="1.6" fill="#fbe7cf" stroke="#c9905e" stroke-width="1"/>
+          ${plasterHoles('#c9905e')}`, '<path d="M-10 -2.6 Q-8.5 -3.6 -6.5 -3.5" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity=".75"/>') },
+    tiritaestrellas: {
+      front: plaster('translate(114 103) rotate(-14)', `<rect x="-12.5" y="-5" width="25" height="10" rx="5" fill="#8fd0f5" stroke="${INK}" stroke-width="1.9"/>
+          <rect x="-4.6" y="-3.6" width="9.2" height="7.2" rx="1.6" fill="#fff6d6" stroke="#5aa3cf" stroke-width="1"/>
+          ${star5(-8.3, 0, 2.7, '#ffd84d')}${star5(8.3, 0, 2.7, '#ffd84d')}${star5(0, 0, 1.9, '#ff9cc0')}`, '<path d="M-10.2 -2.7 Q-8.8 -3.7 -7 -3.6" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity=".8"/>') },
+    pecas: { front: `<g>${freckles}</g>` },
+    helice: {
+      front: `<g stroke-linejoin="round">
+        <clipPath id="rw-dome-a-ID"><path d="M40 56 Q40 19 80 19 Q120 19 120 56 Z"/></clipPath>
+        <g clip-path="url(#rw-dome-a-ID)">${gores(['#ef5b66', '#ffcc4d', '#5aa9f0', '#6cc47f'])}${goreSeams(4)}</g>
+        <path d="M40 56 Q40 19 80 19 Q120 19 120 56 Z" fill="none" stroke="${INK}" stroke-width="2.4"/>
+        <path d="M50 33 Q55 25.5 64 23" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".6"/>
+        <rect x="37" y="51" width="86" height="8" rx="4" fill="#5aa9f0" stroke="${INK}" stroke-width="2.3"/>
+        <path d="M42 54 H118" stroke="#a9d4fb" stroke-width="1.6" stroke-linecap="round"/>
+        ${propeller(blade(0, '#ef5b66') + blade(180, '#5aa9f0'), '#ffcc4d')}
+      </g>` },
+    helicementa: {
+      front: `<g stroke-linejoin="round">
+        <clipPath id="rw-dome-b-ID"><path d="M38 57 Q37 16 80 16 Q123 16 122 57 Z"/></clipPath>
+        <g clip-path="url(#rw-dome-b-ID)">${gores(['#74d6bf', '#c4a8f0', '#74d6bf', '#c4a8f0', '#74d6bf', '#c4a8f0'])}${goreSeams(6)}</g>
+        <path d="M38 57 Q37 16 80 16 Q123 16 122 57 Z" fill="none" stroke="${INK}" stroke-width="2.4"/>
+        <path d="M48 32 Q53 23.5 63 20.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".6"/>
+        <rect x="34" y="50" width="92" height="11" rx="5.5" fill="#fff4e0" stroke="${INK}" stroke-width="2.3"/>
+        <path d="M42 52.8v5.4 M50 52.8v5.4 M58 52.8v5.4 M66 52.8v5.4 M74 52.8v5.4 M82 52.8v5.4 M90 52.8v5.4 M98 52.8v5.4 M106 52.8v5.4 M114 52.8v5.4" stroke="#f0c9a0" stroke-width="1.7" stroke-linecap="round"/>
+        ${propeller(blade(0, '#ffd84d', 14.5, 6.4) + blade(120, '#ff9cc0', 14.5, 6.4) + blade(240, '#8fd0f5', 14.5, 6.4), '#fff4e0')}
+      </g>` },
     // White and gold stage suit: a tall collar behind the body, and trousers with a big buckle clipped to it.
     rockero: {
       back: `<g stroke-linejoin="round"><path d="M36 112 C22 100 10 78 6 50 C16 58 26 64 34 66 Z" fill="#fbf8f1" stroke="${INK}" stroke-width="2.4"/><path d="M30 105 C20 94 12 76 10 58" fill="none" stroke="#f4c542" stroke-width="3" stroke-linecap="round"/><circle cx="17" cy="66" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="21" cy="81" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="27" cy="94" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/><g transform="translate(160 0) scale(-1 1)"><path d="M36 112 C22 100 10 78 6 50 C16 58 26 64 34 66 Z" fill="#fbf8f1" stroke="${INK}" stroke-width="2.4"/><path d="M30 105 C20 94 12 76 10 58" fill="none" stroke="#f4c542" stroke-width="3" stroke-linecap="round"/><circle cx="17" cy="66" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="21" cy="81" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/><circle cx="27" cy="94" r="1.7" fill="#f4c542" stroke="${INK}" stroke-width="1"/></g></g>`,
@@ -537,7 +614,7 @@
   };
   // [level, item id]: one reward per level (0.8.0), so ITEMS/itemsAt/nextReward keep working per level.
   const PACKS = [
-    [4, 'gafassol'], [7, 'lacito'], [10, 'fresa'], [13, 'bigote'], [16, 'flequillo'], [19, 'bufanda'], [21, 'gorra'], [22, 'cejas'], [23, 'gafas'],
+    [2, 'tirita'], [3, 'pecas'], [4, 'gafassol'], [5, 'helice'], [7, 'lacito'], [10, 'fresa'], [12, 'tiritaestrellas'], [13, 'bigote'], [16, 'flequillo'], [17, 'helicementa'], [19, 'bufanda'], [21, 'gorra'], [22, 'cejas'], [23, 'gafas'],
     [24, 'matcha'], [25, 'gamer'], [26, 'tupe'], [27, 'parche'], [28, 'auris'], [29, 'barba'], [30, 'gorrito'], [31, 'ninja'], [32, 'mango'],
     [33, 'melenita'], [34, 'pajarita'], [35, 'pesa'], [36, 'capa'], [37, 'hipster'], [38, 'superheroe'], [39, 'arandano'], [40, 'vikingo'],
     [41, 'chef'], [42, 'musculitos'], [43, 'flores'], [44, 'cicatriz'], [45, 'dino'], [46, 'sesamo'], [47, 'aureola'], [48, 'astronauta'],
@@ -556,17 +633,18 @@
     auris: 'cute', gamer: 'canero', matcha: 'cute', parche: 'broma', gorrito: 'cute', ninja: 'canero', pajarita: 'cute', barba: 'broma', hipster: 'broma',
     mango: 'cute', pesa: 'fuerza', capa: 'cute', superheroe: 'disfraz', rockero: 'broma', chef: 'cute', vikingo: 'canero', arandano: 'cute',
     musculitos: 'fuerza', flores: 'cute', dino: 'disfraz', sesamo: 'cute', cicatriz: 'canero', aureola: 'cute', astronauta: 'disfraz',
+    tirita: 'cute', pecas: 'cute', helice: 'cute', tiritaestrellas: 'cute', helicementa: 'cute',
     dorado: 'cute', clasico: 'cute', cielo: 'cute', menta: 'cute', lila: 'cute', nube: 'cute', vainilla: 'cute', caramelo: 'cute', mecenas: 'cute', flequillo: 'cute', tupe: 'canero', melenita: 'cute',
   };
   // Where Tapomo's head item ends, per style: how far the record crown and the halo rise above it.
   const LIFT_SUBTLE = { lacito: 0, gorrito: 26, chef: 40, flores: 5 };
-  const LIFT_BOLD = { lacito: 0, gorrito: 44, chef: 58, flores: 10, gorra: 8, ninja: 0, vikingo: 40, astronauta: 32, dino: 18 };
+  const LIFT_BOLD = { helice: 40, helicementa: 40, lacito: 0, gorrito: 44, chef: 58, flores: 10, gorra: 8, ninja: 0, vikingo: 40, astronauta: 32, dino: 18 };
   // Hair is not a head item (a bow or flowers can sit on it), so it lifts the crown on its own.
   const LIFT_HAIR = { flequillo: 5, tupe: 20, melenita: 5 };
 
   // Sleeping "z z z": how far they rise so they start above what is worn on the head (measured where
   // the z's are drawn, right of the head). Style-dependent items have a subtle value too.
-  const ZZZ_LIFT = { lacito: 15, gorrito: 32, chef: 50, flores: 9, gorra: 22, vikingo: 27, flequillo: 10, tupe: 41, melenita: 7, auris: 24, gamer: 24, dino: 24, astronauta: 25 };
+  const ZZZ_LIFT = { helice: 24, helicementa: 24, lacito: 15, gorrito: 32, chef: 50, flores: 9, gorra: 22, vikingo: 27, flequillo: 10, tupe: 41, melenita: 7, auris: 24, gamer: 24, dino: 24, astronauta: 25 };
   const ZZZ_LIFT_SUBTLE = { lacito: 7, gorrito: 23, flores: 4 };
   // ------------------------------------------------------------------ style rule
   // Only these change between "subtle" and "bold"; every other item always uses the bold drawing.
@@ -581,8 +659,8 @@
   // the hair off and the hair takes the hat off. The ninja band goes over any hairstyle (the fringe
   // switches to FRINGE_BAND, its locks peeking out under the band).
   // Bow, flowers, headphones and halo sit on top of the hair.
-  const SLOT_NAMES = ['cabeza', 'pelo', 'frente', 'orejas', 'ojos', 'cejas', 'bigote', 'barba', 'marca', 'cuello', 'espalda', 'brazos', 'torso', 'aura', 'cuerpo'];
-  const FACE_SLOTS = ['ojos', 'cejas', 'bigote', 'barba', 'marca', 'aura'];
+  const SLOT_NAMES = ['cabeza', 'pelo', 'frente', 'orejas', 'ojos', 'cejas', 'bigote', 'barba', 'marca', 'pecas', 'cuello', 'espalda', 'brazos', 'torso', 'aura', 'cuerpo'];
+  const FACE_SLOTS = ['ojos', 'cejas', 'bigote', 'barba', 'marca', 'pecas', 'aura'];
   const COSTUME_EXCL = SLOT_NAMES.filter((z) => !FACE_SLOTS.includes(z)).map((z) => `slot:${z}`);
   const RULES = {
     lacito: { slots: ['cabeza'], excluye: ['slot:frente'] },
@@ -608,6 +686,12 @@
     musculitos: { slots: ['brazos', 'torso'] },
     pesa: { slots: ['brazos'] },
     cicatriz: { slots: ['marca'] },
+    // Plasters share the scar's slot (one mark at a time); freckles have their own so they go with a plaster. Caps = gorrito.
+    tirita: { slots: ['marca'] },
+    tiritaestrellas: { slots: ['marca'] },
+    pecas: { slots: ['pecas'] },
+    helice: { slots: ['cabeza'], excluye: ['slot:frente', 'slot:pelo'] },
+    helicementa: { slots: ['cabeza'], excluye: ['slot:frente', 'slot:pelo'] },
     astronauta: { slots: ['cuerpo', 'cabeza'], disfraz: true, permite: ['flequillo', 'tupe', 'melenita'] },
     rockero: { slots: ['cuello', 'torso'], excluye: ['slot:espalda', 'slot:cuerpo'] },
     dino: { slots: ['cuerpo', 'cabeza'], disfraz: true },
@@ -661,6 +745,14 @@
     }
     legacy = new Set(saved.filter((id) => BY_ID[id]));
   }
+  // One-off «premios nuevos» notice (1.1.0): the early rewards added to levels that existing users have already passed.
+  // They are unlocked by level automatically; the app only tells those users once. UI lives in xp.js.
+  const NEW_IN_1_1 = ['tirita', 'pecas', 'helice', 'tiritaestrellas', 'helicementa'];
+  const NEW_SEEN_KEY = 'tapomo.seen_new_rewards_1_1';
+  /** The 1.1.0 rewards a user of this level already owns (empty for level 1: nothing to announce). */
+  const newRewardsFor = (level) => NEW_IN_1_1.filter((id) => BY_ID[id] && BY_ID[id].level <= level);
+  const newRewardsSeen = () => { try { return localStorage.getItem(NEW_SEEN_KEY) === '1'; } catch (_) { return true; } }; // no storage: never nag
+  const markNewRewardsSeen = () => { try { localStorage.setItem(NEW_SEEN_KEY, '1'); } catch (_) { /* then it is simply not shown */ } };
   const itemsAt = (level) => ITEMS.filter((i) => i.level === level && !i.base && !i.supporter && !legacy.has(i.id)).map((i) => i.id);
   const unlocked = (level) => ITEMS.filter((i) => (i.supporter ? supporter : i.level <= level || legacy.has(i.id))).map((i) => i.id);
   function nextReward(level) {
@@ -757,12 +849,12 @@
     const realMount = Mascot.mount;
     Mascot.mount = (svg) => { const r = realMount(svg); decorate(svg); return r; };
     const realZone = Mascot.setZone;
-    Mascot.setZone = (svg, ...rest) => { const r = realZone(svg, ...rest); if (svg && svg.__rw) hairZone(svg); return r; };
+    Mascot.setZone = (svg, ...rest) => { const r = realZone(svg, ...rest); if (svg && svg.__rw) { hairZone(svg); propSpin(svg); } return r; };
   }
 
   // Drawing order, back to front: neck, face, hair (over the glasses' arms), hats, brows (over brims), ears, helmet, halo.
-  const FRONT_ORDER = ['capa', 'superheroe', 'rockero', 'musculitos', 'pesa', 'cicatriz', 'barba', 'hipster', 'bufanda', 'pajarita', 'bigote', 'gafas', 'gafassol', 'parche',
-    ...HAIR_IDS, 'lacito', 'gorrito', 'chef', 'flores', 'gorra', 'ninja', 'vikingo', 'dino', 'cejas', 'auris', 'gamer', 'astronauta', 'aureola'];
+  const FRONT_ORDER = ['capa', 'superheroe', 'rockero', 'musculitos', 'pesa', 'pecas', 'tirita', 'tiritaestrellas', 'cicatriz', 'barba', 'hipster', 'bufanda', 'pajarita', 'bigote', 'gafas', 'gafassol', 'parche',
+    ...HAIR_IDS, 'lacito', 'gorrito', 'helice', 'helicementa', 'chef', 'flores', 'gorra', 'ninja', 'vikingo', 'dino', 'cejas', 'auris', 'gamer', 'astronauta', 'aureola'];
 
   function paint(svg, look, animateNew = true, fresh = null) {
     const rw = svg.__rw;
@@ -797,7 +889,7 @@
     svg.classList.toggle('rw-has-bb', worn.has('cejas'));
     svg.querySelectorAll('.cheek').forEach((c) => c.setAttribute('fill', costume ? '#ffb3c4' : '#ff6f61'));
     const pop = (k) => (animateNew && fresh === k ? ' class="rw-pop"' : '');
-    const fix = (html) => tintHair(html, look.hair).replaceAll('__BODY__', bodyFill).replaceAll('-ID)', `-${rw.id})`);
+    const fix = (html) => tintHair(html, look.hair).replaceAll('__BODY__', bodyFill).replaceAll('-ID)', `-${rw.id})`).replaceAll('-ID"', `-${rw.id}"`);
     const backOf = (k) => (PROP_ART[k] ? PROP_ART[k].back || '' : k === 'capa' ? A[k] : '');
     const frontOf = (k) => (k === 'astronauta' && worn.has('tupe') ? `<g transform="translate(80 132) scale(1.16) translate(-80 -132)">${PROP_ART.astronauta.front}</g>` : k === 'cicatriz' ? scar(SCAR_XY[SCAR_POS]) : k === 'musculitos' && worn.has('hipster') ? ABS_LOW: k === 'flequillo' && worn.has('ninja') ? FRINGE_BAND : PROP_ART[k] ? PROP_ART[k].front || '' : k === 'capa' ? A.capaFront : A[k]);
     const wrap = (k, html) => (html ? `<g data-acc="${k}"${pop(k)}>${html}</g>` : '');
@@ -814,6 +906,7 @@
     const halo = rw.front.querySelector('.rw-halo-move');
     if (halo) halo.style.transform = `translateY(${-up}px)`;
     hairZone(svg);
+    propSpin(svg);
   }
 
   // In Supermochi the flame-hair replaces the worn hairstyle. wardrobe.css fades it; the opacity
@@ -821,6 +914,17 @@
   function hairZone(svg) {
     const sup = svg.dataset.zone === 'super';
     svg.querySelectorAll('.rw-hair').forEach((el) => (sup ? el.setAttribute('opacity', '0') : el.removeAttribute('opacity')));
+  }
+
+  // Propeller caps always spin (wardrobe.css; only reduced motion stops them). The speed follows the zone, as in
+  // the lab: slow at rest and asleep, quicker while typing, fastest from «¡En racha!» up (plus a blurred disc, CSS).
+  // updatePlaybackRate keeps the turn smooth when the zone changes; it is re-applied after every repaint.
+  const PROP_RATE = { idle: 0.3, warming: 0.9, rhythm: 0.9, good: 1.5, fire: 3.4, beating: 4, super: 4.6 };
+  function propSpin(svg) {
+    const rot = svg.querySelector('.rw-prop-rot');
+    if (!rot || !rot.getAnimations) return;
+    const rate = PROP_RATE[svg.dataset.zone || 'idle'] ?? 1;
+    rot.getAnimations().forEach((a) => a.updatePlaybackRate(rate));
   }
 
   function paintAll(fresh) {
@@ -887,5 +991,5 @@
   /** A small CSS colour for a hair-colour swatch in the UI (the palette's base fill). */
   const hairSwatch = (c) => hairPal(c).base;
 
-  window.Wardrobe = { HAIR_COLORS, hairSwatch, ITEMS, REWARD_LEVELS, itemsAt, unlocked, nextReward, clashes, wear, set, get, decorate, preview, setSupporter, grandfather };
+  window.Wardrobe = { HAIR_COLORS, hairSwatch, ITEMS, REWARD_LEVELS, itemsAt, unlocked, nextReward, clashes, wear, set, get, decorate, preview, setSupporter, grandfather, newRewardsFor, newRewardsSeen, markNewRewardsSeen };
 })();

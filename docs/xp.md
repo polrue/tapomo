@@ -119,7 +119,7 @@ XP **acumulada** para llegar al nivel *n*: `47 × (n − 1)^1.8`.
   - Un usuario normal llega al nivel 50 en un año.
   - No hay tope: se puede seguir subiendo después del 50.
 - **Premios:**
-  - Hay un premio en los niveles 4, 7, 10, 13, 16 y 19, y luego en cada nivel del 21 al 50; el último es el skin dorado del 50.
+  - Hay un premio en los niveles 2, 3, 4, 5, 7, 10, 12, 13, 16, 17 y 19, y luego en cada nivel del 21 al 50; el último es el skin dorado del 50.
   - En la primera semana, un usuario normal recibe como mucho un premio, y uno intenso, dos.
 
 Cada nivel con premio desbloquea **un solo premio** (antes eran packs de dos o tres cada 3 niveles): tierno, cañero, de broma, de fuerza o un disfraz. Se elige estilo, no se etiqueta para chicos o chicas.
@@ -128,11 +128,16 @@ Cada nivel con premio desbloquea **un solo premio** (antes eran packs de dos o t
 
 | Nivel | XP | Premio |
 |---|---|---|
+| 2 | 47 | Tirita |
+| 3 | 164 | Pecas |
 | 4 | 340 | Gafas de sol de chulito |
+| 5 | 570 | Gorro con hélice |
 | 7 | 1.182 | Lacito |
 | 10 | 2.453 | Skin fresa |
+| 12 | 3.521 | Tirita de estrellas |
 | 13 | 4.117 | Bigote postizo |
 | 16 | 6.153 | Flequillo |
+| 17 | 6.911 | Gorro con hélice menta |
 | 19 | 8.543 | Bufanda |
 | 21 | 10.326 | Gorra al revés |
 | 22 | 11.274 | Cejas pobladas |
