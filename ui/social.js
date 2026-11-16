@@ -134,11 +134,19 @@ const Social = (() => {
     $('lf-error').hidden = false;
   }
 
+  /** An empty field used to make the button do nothing at all: say which one is missing and focus it. */
+  function missing(id, key) {
+    $('lf-error').textContent = t(key);
+    $('lf-error').hidden = false;
+    $(id).focus();
+  }
+
   async function create() {
     $('lf-error').hidden = true;
     const name = $('lf-name').value.trim();
     const nickname = $('lf-nick').value.trim();
-    if (!name || !nickname) return;
+    if (!nickname) return missing('lf-nick', 'social.need.nickname');
+    if (!name) return missing('lf-name', 'social.need.name');
     try {
       const r = await api('POST', '/leagues', { name, nickname });
       await saveLeague({ code: r.code, name, member_id: r.member_id, member_secret: r.member_secret, nickname });
@@ -151,7 +159,8 @@ const Social = (() => {
     $('lf-error').hidden = true;
     const code = $('lf-code').value.trim().toUpperCase();
     const nickname = $('lf-nick').value.trim();
-    if (!code || !nickname) return;
+    if (!code) return missing('lf-code', 'social.need.code');
+    if (!nickname) return missing('lf-nick', 'social.need.nickname');
     try {
       const r = await api('POST', `/leagues/${encodeURIComponent(code)}/join`, { nickname });
       await saveLeague({ code, name: '', member_id: r.member_id, member_secret: r.member_secret, nickname });
