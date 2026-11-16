@@ -11,7 +11,7 @@ const SectionNav = (() => {
     ['live', 'nav.live'], ['goal', 'goal.title'], ['level', 'nav.level'], ['league', 'nav.league'], ['challenges', 'ch.title'],
     ['shortcuts', 'nav.shortcuts'], ['data', 'nav.stats'], ['records', 'records.title'], ['badges', 'badges.title'],
     ['lessons', 'lessons.button'], ['corrections', 'corrections.title'], ['album', 'album.title'],
-    ['friends', 'social.leagues'], ['wardrobe', 'wd.title'], ['support', 'support.title'],
+    ['wardrobe', 'wd.title'], ['support', 'support.title'],
     ['settings', 'settings.title'], ['glossary', 'gloss.title'], ['about', 'about.title'],
   ];
   const PAGES = ['hoy', 'progreso', 'aprender', 'tapomo', 'ajustes', 'apoya'];

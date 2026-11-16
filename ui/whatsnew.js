@@ -15,7 +15,7 @@ const WhatsNew = (() => {
         { ic: '🎯', key: 'goal' },
         { ic: '🎁', key: 'rewards', rewards: true },
         { ic: '🔔', key: 'notify' },
-        { ic: '🧔', key: 'hair' },
+        { ic: '🏆', key: 'leagues' },
       ],
     },
   };

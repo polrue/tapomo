@@ -1,5 +1,7 @@
 /* League with yourself (0.3.4). */
-.league { display: flex; align-items: center; gap: 16px; padding: 14px 20px; }
+.league { padding: 14px 20px; }
+.lg-own { display: flex; align-items: center; gap: 16px; }
+.lg-own[hidden] { display: none; }
 .lg-emblem, .lgup-emblem { flex: none; width: 64px; height: 64px; }
 .lg-emblem svg, .lgup-emblem svg { width: 100%; height: 100%; display: block; overflow: visible; }
 .lg-body { flex: 1; min-width: 0; }
@@ -18,4 +20,44 @@
 .wk-icon { flex: none; width: 1.4em; text-align: center; }
 .lg-letter { margin-top: 6px; padding: 0; background: none; border: none; color: var(--accent-strong); font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 .lg-letter:hover { background: none; color: var(--ink); }
-@media (prefers-reduced-motion: reduce) { .lg-bar i { transition: none; } }
+
+/* Leagues with friends (1.1.0): inside the «Hoy» league card, below the league with yourself. */
+.lg-friends { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+.lg-lines, .lg-league, .lg-more, .lg-forms { display: grid; gap: 8px; }
+.lg-forms:empty { display: none; }
+.lg-friends button { font: inherit; }
+.lg-btn { padding: 7px 14px; border-radius: 999px; font-weight: 800; font-size: 0.9rem; min-height: 34px; }
+.lg-btn.ghost { background: transparent; color: var(--ink); box-shadow: 0 0 0 1.5px var(--line) inset; font-weight: 700; }
+.lg-btn.ghost:hover { background: var(--cell-empty); }
+.lg-btn.pill { padding: 2px 10px; min-height: 26px; font-size: 0.8rem; }
+.lg-btn.leave { justify-self: start; }
+.lg-link { background: none; border: 0; padding: 0; border-radius: 0; color: var(--accent-strong); font-weight: 700; font-size: 0.85rem; text-decoration: underline; text-underline-offset: 2px; text-align: left; justify-self: start; }
+.lg-link:hover { background: none; color: var(--ink); }
+.lg-link:disabled { color: var(--muted); opacity: 1; text-decoration: none; cursor: default; }
+.lg-link:disabled:hover { color: var(--muted); }
+.lg-invite { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lg-invite strong { margin-right: auto; }
+.lg-invite[hidden] { display: none; }
+.lg-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+.lg-form label { display: grid; gap: 2px; font-size: 0.8rem; color: var(--muted); font-weight: 700; flex: 1 1 110px; }
+.lg-form input { font: inherit; font-weight: 400; padding: 6px 9px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); min-height: 34px; width: 100%; }
+.lg-error { margin: 0; flex-basis: 100%; color: var(--accent-strong); font-weight: 700; font-size: 0.85rem; }
+.lg-lname { margin: 0; font-size: 1rem; }
+.lg-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.lg-list li { display: flex; gap: 10px; align-items: baseline; padding: 5px 10px; border-radius: 10px; background: var(--bg); }
+.lg-list li.me { background: #ffe3d8; font-weight: 800; color: #23202b; }
+@media (prefers-color-scheme: dark) { .lg-list li.me { background: #4a3330; color: #f5eefb; } }
+.lg-pos { flex: none; width: 2.4em; color: var(--muted); font-weight: 800; }
+.lg-who { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lg-xp { color: var(--muted); font-size: 0.85rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.lg-up { color: #2d8a3a; font-weight: 800; }
+@media (prefers-color-scheme: dark) { .lg-up { color: #6fcf7d; } }
+.lg-hint { margin: 0; color: var(--muted); font-size: 0.85rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lg-code { font-family: ui-monospace, Consolas, monospace; letter-spacing: 0.08em; color: var(--ink); }
+.lg-row { width: 100%; display: flex; align-items: center; gap: 8px; text-align: left; padding: 7px 10px; border-radius: 10px; background: var(--bg); color: var(--ink); font-weight: 400; }
+.lg-row:hover { background: var(--cell-empty); color: var(--ink); }
+.lg-row .lg-chev { margin-left: auto; color: var(--muted); transition: transform 0.15s; }
+.lg-row[aria-expanded="true"] .lg-chev { transform: rotate(90deg); }
+.lg-panel { padding: 6px 4px 8px 10px; display: grid; gap: 8px; border-left: 3px solid var(--line); margin-left: 6px; }
+.lg-note { margin: 0; color: var(--muted); font-size: 0.8rem; }
+@media (prefers-reduced-motion: reduce) { .lg-bar i, .lg-row .lg-chev { transition: none; } }

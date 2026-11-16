@@ -881,6 +881,8 @@ async function bindEvents() {
   await listen('tapomo://xp', (e) => Progress.onXp(e.payload).catch(showError));
   await listen('tapomo://shortcut', () => Shortcuts.bump());
   await listen('tapomo://shortcut-learnt', () => Album.onUsed());
+  // The pet's menu asks the window to scroll to a card (e.g. «Ligas con amigos» -> the league card on «Hoy»).
+  await listen('tapomo://goto', (e) => { if (typeof e.payload === 'string' && document.getElementById(e.payload)) SectionNav.jump(e.payload); });
   await listen('tapomo://settings', async () => {
     settings = await invoke('get_settings');
     renderSettings();

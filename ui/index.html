@@ -123,13 +123,20 @@
       </div>
     </div>
 
-    <section data-page="hoy" class="card league" id="league" aria-labelledby="lg-name" hidden>
-      <div class="lg-emblem" id="lg-emblem"></div>
-      <div class="lg-body">
-        <div class="lg-head"><h2 class="lg-name" id="lg-name"></h2><span class="lg-days" id="lg-days"></span></div>
-        <p class="lg-text" id="lg-text"></p>
-        <div class="lg-bar" id="lg-bar" role="progressbar" aria-valuemin="0" data-i18n-aria="league.bar" hidden><i id="lg-fill"></i></div>
-        <button type="button" class="link lg-letter" id="lg-letter" data-i18n="weekly.open"></button>
+    <section data-page="hoy" class="card league" id="league" data-i18n-aria="social.leagues" hidden>
+      <div class="lg-own" id="lg-own">
+        <div class="lg-emblem" id="lg-emblem"></div>
+        <div class="lg-body">
+          <div class="lg-head"><h2 class="lg-name" id="lg-name"></h2><span class="lg-days" id="lg-days"></span></div>
+          <p class="lg-text" id="lg-text"></p>
+          <div class="lg-bar" id="lg-bar" role="progressbar" aria-valuemin="0" data-i18n-aria="league.bar" hidden><i id="lg-fill"></i></div>
+          <button type="button" class="link lg-letter" id="lg-letter" data-i18n="weekly.open"></button>
+        </div>
+      </div>
+      <!-- Leagues with friends (up to 5): built by social.js. -->
+      <div class="lg-friends" id="lg-friends" role="group" data-i18n-aria="social.leagues">
+        <div class="lg-lines" id="lg-lines"></div>
+        <div class="lg-forms" id="lg-forms"></div>
       </div>
     </section>
 
@@ -359,30 +366,6 @@
       <h3 data-i18n="wd.accessories"></h3>
       <p class="wd-removed" id="wd-removed" aria-live="polite" hidden></p>
       <div class="wd-grid" id="wd-accs"></div>
-    </details>
-
-    <details data-page="tapomo" class="card friends" id="friends">
-      <summary><h2 data-i18n="social.leagues"></h2></summary>
-      <p class="hint" data-i18n="social.leagues.hint"></p>
-      <div id="lf-join">
-        <div class="lf-form">
-          <label><span data-i18n="social.nickname"></span><input id="lf-nick" maxlength="24" autocomplete="off"></label>
-          <label><span data-i18n="social.league_name"></span><input id="lf-name" maxlength="40" autocomplete="off"></label>
-          <button type="button" id="lf-create" data-i18n="social.create"></button>
-        </div>
-        <div class="lf-form">
-          <label><span data-i18n="social.code"></span><input id="lf-code" maxlength="8" autocomplete="off" spellcheck="false"></label>
-          <button type="button" class="ghost" id="lf-join-btn" data-i18n="social.join"></button>
-        </div>
-        <p class="lf-error" id="lf-error" role="alert" hidden></p>
-      </div>
-      <div id="lf-board" hidden>
-        <h3 id="lf-title"></h3>
-        <p class="hint"><span data-i18n="social.share_code"></span> <strong class="lf-code" id="lf-code-show"></strong> <button type="button" class="pill" id="lf-copy" data-i18n="social.copy"></button></p>
-        <ol class="lf-list" id="lf-list"></ol>
-        <p class="hint" id="lf-offline" data-i18n="social.offline" hidden></p>
-        <button type="button" class="ghost" id="lf-leave" data-i18n="social.leave"></button>
-      </div>
     </details>
 
     <section data-page="ajustes" class="card" id="settings">
