@@ -5,8 +5,6 @@ const Social = (() => {
   const API = 'https://api.tapomo.app/v1';
   const $ = (id) => document.getElementById(id);
   const SCORE_EVERY_MS = 30 * 60 * 1000;
-  let league = null; // { code, name, member_id, member_secret, nickname }
-  let lastScoreAt = 0;
 
   const kv = {
     get: (key) => invoke('social_get', { key }),
@@ -117,138 +115,424 @@ const Social = (() => {
   }
 
   // --------------------------------------------------------------- leagues
+  // Up to MAX_LEAGUES leagues with friends, drawn inside the «Hoy» league card (#lg-friends). Each one has its
+  // own nickname. `leagues` is what is stored; everything else here is only memory for the current session.
 
-  async function loadLeague() {
-    try { league = JSON.parse((await kv.get('social_league')) || 'null'); } catch (_) { league = null; }
+  const MAX_LEAGUES = 5;
+  const BOARD_EVERY_MS = 60 * 1000; // the Today view refreshes often: don't ask the server every time
+  const GONE = ['http_401', 'not_found', 'unauthorized'];
+  const CODE_ALPHABET = /[^23456789ABCDEFGHJKMNPQRSTVWXYZ]/g; // same alphabet as the server
+  let leagues = []; // [{ code, name, member_id, member_secret, nickname }]
+  let lastNick = '';
+  const boards = new Map(); // code -> { b } (the last board) or { offline: true }
+  const scoreAt = new Map(); // code -> when we last sent our XP
+  const fetchedAt = new Map(); // code -> when we last asked for the board
+  const inflight = new Set();
+  const again = new Set(); // codes that asked for a forced refresh while a sync was running
+  let loaded = null; // the one-time load from storage: after it `leagues` (in memory) is the source of truth
+  let creating = false; // a create/join request is running (a double click must not send two)
+  const open = new Set(); // codes whose table is expanded
+  let picking = false; // «+ Crear o unirme» is open
+  let notice = ''; // e.g. «you are no longer in that league»
+
+  async function saveLeagues() {
+    await kv.set('social_leagues', leagues.length ? JSON.stringify(leagues) : null);
   }
 
-  async function saveLeague(l) {
-    league = l;
-    await kv.set('social_league', l ? JSON.stringify(l) : null);
+  async function loadLeagues() {
+    try { leagues = JSON.parse((await kv.get('social_leagues')) || '[]'); } catch (_) { leagues = []; }
+    if (!Array.isArray(leagues)) leagues = [];
+    // 1.0 kept a single league under another key: move it into the list once.
+    const old = await kv.get('social_league');
+    if (old) {
+      try {
+        const o = JSON.parse(old);
+        if (o && o.code && !leagues.some((l) => l.code === o.code)) leagues.push(o);
+      } catch (_) { /* unreadable: drop it */ }
+      await saveLeagues();
+      await kv.set('social_league', null);
+    }
+    leagues = leagues.slice(0, MAX_LEAGUES);
+    lastNick = (await kv.get('social_last_nick')) || (leagues.length ? leagues[leagues.length - 1].nickname : '');
   }
 
-  function leagueError(e) {
-    const known = ['nickname_taken', 'league_full', 'not_found', 'http_429'];
-    const code = String(e && e.message);
-    $('lf-error').textContent = t(known.includes(code) ? `social.err.${code}` : 'social.offline');
-    $('lf-error').hidden = false;
+  const el = (tag, cls, text) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
+  const btn = (text, cls, onClick) => {
+    const b = el('button', cls, text);
+    b.type = 'button';
+    b.addEventListener('click', onClick);
+    return b;
+  };
+
+  const known = ['nickname_taken', 'league_full', 'not_found', 'http_429'];
+  const mine = (l, m) => String(m.nickname).toLowerCase() === String(l.nickname).toLowerCase();
+
+  /** Where you stand: { idx, total } (idx is -1 until the board has loaded). */
+  function standing(l) {
+    const b = (boards.get(l.code) || {}).b;
+    if (!b) return null;
+    return { idx: b.members.findIndex((m) => mine(l, m)), total: b.members.length, members: b.members };
   }
 
-  /** An empty field used to make the button do nothing at all: say which one is missing and focus it. */
-  function missing(id, key) {
-    $('lf-error').textContent = t(key);
-    $('lf-error').hidden = false;
-    $(id).focus();
+  function table(l, members, from, to) {
+    const ol = el('ol', 'lg-list');
+    members.slice(from, to).forEach((m, i) => {
+      const me = mine(l, m);
+      const li = el('li', me ? 'me' : '');
+      li.append(el('span', 'lg-pos', t('social.rank', { n: from + i + 1 })), el('span', 'lg-who', me ? t('social.you') : m.nickname), el('span', 'lg-xp', `${fmt(m.xp)} XP`));
+      if (m.up) {
+        const up = el('span', 'lg-up', '↑');
+        up.setAttribute('aria-label', t('social.improved'));
+        up.title = t('social.improved');
+        li.append(up);
+      }
+      ol.append(li);
+    });
+    return ol;
   }
 
-  async function create() {
-    $('lf-error').hidden = true;
-    const name = $('lf-name').value.trim();
-    const nickname = $('lf-nick').value.trim();
-    if (!nickname) return missing('lf-nick', 'social.need.nickname');
-    if (!name) return missing('lf-name', 'social.need.name');
+  function copyButton(l) {
+    const b = btn(t('social.copy'), 'lg-btn pill ghost', () => {
+      navigator.clipboard.writeText(l.code).then(() => {
+        b.textContent = t('social.copied_btn');
+        setTimeout(() => { b.textContent = t('social.copy'); }, 1400);
+      }).catch(() => {});
+    });
+    return b;
+  }
+
+  /** Full table (or an offline line), the invite code and the way out. */
+  function details(l, withTable) {
+    const wrap = el('div', 'lg-more');
+    const st = standing(l);
+    if (withTable && st) wrap.append(table(l, st.members, 0, st.members.length));
+    if ((boards.get(l.code) || {}).offline) wrap.append(el('p', 'lg-note', t('social.offline')));
+    const code = el('p', 'lg-hint');
+    code.append(`${t('social.invite_code')} `, el('strong', 'lg-code', l.code), copyButton(l));
+    wrap.append(code, btn(t('social.leave'), 'lg-btn ghost leave', () => leave(l).catch(showError)));
+    return wrap;
+  }
+
+  /** «🏆 Cole · 3.º de 12»: the name, plus where you stand once the board is known. */
+  function title(l) {
+    const st = standing(l);
+    const name = l.name || l.code;
+    return st && st.idx >= 0 ? `🏆 ${name} · ${t('social.pos', { n: st.idx + 1, total: st.total })}` : `🏆 ${name}`;
+  }
+
+  function toggle(l) {
+    if (open.has(l.code)) open.delete(l.code);
+    else open.add(l.code);
+    renderLines();
+    if (open.has(l.code)) syncOne(l, true).catch(() => {});
+  }
+
+  function singleLeague(l, box) {
+    const st = standing(l);
+    const isOpen = open.has(l.code);
+    const wrap = el('div', 'lg-league');
+    wrap.append(el('h4', 'lg-lname', title(l)));
+    if (st && st.idx >= 0 && !isOpen) wrap.append(table(l, st.members, Math.max(0, st.idx - 1), st.idx + 2));
+    else if (st && st.idx < 0 && !isOpen) wrap.append(table(l, st.members, 0, 3));
+    if (isOpen ? false : (boards.get(l.code) || {}).offline) wrap.append(el('p', 'lg-note', t('social.offline')));
+    const tog = btn(t(isOpen ? 'social.see_less' : 'social.see_all'), 'lg-link', () => toggle(l));
+    tog.setAttribute('aria-expanded', String(isOpen));
+    wrap.append(tog);
+    if (isOpen) wrap.append(details(l, true));
+    box.append(wrap);
+  }
+
+  function manyLeagues(box) {
+    const wrap = el('div', 'lg-league');
+    for (const l of leagues) {
+      const isOpen = open.has(l.code);
+      const row = btn(title(l), 'lg-row', () => toggle(l));
+      row.setAttribute('aria-expanded', String(isOpen));
+      const st = standing(l);
+      if (st && st.idx >= 0 && st.members[st.idx].up) {
+        const up = el('span', 'lg-up', '↑');
+        up.setAttribute('aria-label', t('social.improved'));
+        row.append(up);
+      }
+      row.append(el('span', 'lg-chev', '›'));
+      wrap.append(row);
+      if (isOpen) {
+        const panel = el('div', 'lg-panel');
+        panel.append(details(l, true));
+        wrap.append(panel);
+      }
+    }
+    box.append(wrap);
+  }
+
+  /** «Crear liga» / «Tengo un código»: each opens its own form (with its own nickname field). */
+  function pickButtons() {
+    return [
+      btn(t('social.create'), 'lg-btn', () => showForm('create')),
+      btn(t('social.have_code'), 'lg-btn ghost', () => showForm('join')),
+    ];
+  }
+
+  function renderLines() {
+    const box = $('lg-lines');
+    if (!box) return;
+    box.replaceChildren();
+    if (notice) {
+      const n = el('p', 'lg-note', notice);
+      n.setAttribute('role', 'status');
+      box.append(n);
+    }
+    if (!leagues.length) {
+      const inv = el('div', 'lg-invite');
+      inv.append(el('strong', '', `🏆 ${t('social.invite')}`), ...pickButtons());
+      box.append(inv);
+      return;
+    }
+    if (leagues.length === 1) singleLeague(leagues[0], box);
+    else manyLeagues(box);
+    const full = leagues.length >= MAX_LEAGUES;
+    const add = el('div', 'lg-league');
+    const b = btn(t('social.add', { n: leagues.length, max: MAX_LEAGUES }), 'lg-link', () => {
+      picking = !picking;
+      if (!picking) $('lg-forms').replaceChildren();
+      renderLines();
+    });
+    b.disabled = full;
+    add.append(b);
+    if (full) {
+      const n = el('p', 'lg-note', t('social.max', { max: MAX_LEAGUES }));
+      n.id = 'lg-max';
+      b.setAttribute('aria-describedby', 'lg-max');
+      add.append(n);
+    } else if (picking) {
+      const pick = el('div', 'lg-invite');
+      pick.append(...pickButtons());
+      add.append(pick);
+    }
+    box.append(add);
+  }
+
+  function field(label, input) {
+    const l = el('label');
+    l.append(el('span', '', label), input);
+    return l;
+  }
+  const input = (max, extra) => {
+    const i = el('input');
+    i.type = 'text';
+    i.maxLength = max;
+    i.autocomplete = 'off';
+    if (extra) i.spellcheck = false;
+    return i;
+  };
+
+  /** A pasted «k7m2-qx9p» must not be cut by maxlength before we can clean it: strip first, then cap at 8. */
+  function cleanCode(raw) {
+    return String(raw).toUpperCase().replace(CODE_ALPHABET, '').slice(0, 8);
+  }
+
+  function formError(form, msg) {
+    let p = form.querySelector('.lg-error');
+    if (!p) {
+      p = el('p', 'lg-error');
+      p.setAttribute('role', 'alert');
+      form.append(p);
+    }
+    p.textContent = msg;
+    p.hidden = false;
+  }
+
+  function missing(form, field, key) {
+    formError(form, t(key));
+    field.focus();
+  }
+
+  function showForm(kind) {
+    const box = $('lg-forms');
+    const was = box.dataset.kind;
+    box.replaceChildren();
+    delete box.dataset.kind;
+    if (was === kind) return; // the same button again closes it
+    box.dataset.kind = kind;
+    const form = el('div', 'lg-form');
+    const nick = input(24);
+    nick.value = lastNick;
+    if (kind === 'create') {
+      const name = input(40);
+      const go = btn(t('social.create_go'), 'lg-btn', () => create(form, nick, name, go).catch(showError));
+      form.append(field(t('social.nickname'), nick), field(t('social.league_name'), name), go);
+      for (const i of [nick, name]) i.addEventListener('keydown', (e) => { if (e.key === 'Enter') go.click(); });
+      (lastNick ? name : nick).focus();
+    } else {
+      const code = input(40, true); // roomy on purpose: see cleanCode
+      code.addEventListener('input', () => { const c = cleanCode(code.value); if (c !== code.value) code.value = c; });
+      const go = btn(t('social.join'), 'lg-btn', () => join(form, code, nick, go).catch(showError));
+      form.append(field(t('social.code'), code), field(t('social.nickname'), nick), go);
+      for (const i of [code, nick]) i.addEventListener('keydown', (e) => { if (e.key === 'Enter') go.click(); });
+      code.focus();
+    }
+    form.append(el('p', 'lg-note', t('social.leagues.hint')));
+    box.append(form);
+  }
+
+  function closeForms() {
+    const box = $('lg-forms');
+    box.replaceChildren();
+    delete box.dataset.kind;
+    picking = false;
+  }
+
+  async function added(l) {
+    leagues.push(l);
+    lastNick = l.nickname;
+    notice = '';
+    open.clear(); // only the new league opens: with several, the compact rows stay compact
+    open.add(l.code);
+    await kv.set('social_last_nick', l.nickname);
+    await saveLeagues();
+    closeForms();
+    renderLines();
+    syncOne(l, true).catch(() => {});
+  }
+
+  async function create(form, nickEl, nameEl, go) {
+    if (creating) return; // a double click or Enter+click: one request at a time
+    const nickname = nickEl.value.trim();
+    const name = nameEl.value.trim();
+    if (!nickname) return missing(form, nickEl, 'social.need.nickname');
+    if (!name) return missing(form, nameEl, 'social.need.name');
+    creating = true;
+    go.disabled = true;
     try {
+      if (leagues.length >= MAX_LEAGUES) return formError(form, t('social.max', { max: MAX_LEAGUES }));
       const r = await api('POST', '/leagues', { name, nickname });
-      await saveLeague({ code: r.code, name, member_id: r.member_id, member_secret: r.member_secret, nickname });
-      lastScoreAt = 0;
-      await renderLeague();
-    } catch (e) { leagueError(e); }
+      await added({ code: r.code, name, member_id: r.member_id, member_secret: r.member_secret, nickname });
+    } catch (e) { leagueError(form, e); } finally {
+      creating = false;
+      go.disabled = false;
+    }
   }
 
-  async function join() {
-    $('lf-error').hidden = true;
-    const code = $('lf-code').value.trim().toUpperCase();
-    const nickname = $('lf-nick').value.trim();
-    if (!code) return missing('lf-code', 'social.need.code');
-    if (!nickname) return missing('lf-nick', 'social.need.nickname');
+  async function join(form, codeEl, nickEl, go) {
+    if (creating) return;
+    const code = cleanCode(codeEl.value);
+    const nickname = nickEl.value.trim();
+    if (!code) return missing(form, codeEl, 'social.need.code');
+    if (!nickname) return missing(form, nickEl, 'social.need.nickname');
+    creating = true;
+    go.disabled = true;
     try {
+      if (leagues.some((l) => l.code === code)) return formError(form, t('social.err.already'));
+      if (leagues.length >= MAX_LEAGUES) return formError(form, t('social.max', { max: MAX_LEAGUES }));
       const r = await api('POST', `/leagues/${encodeURIComponent(code)}/join`, { nickname });
-      await saveLeague({ code, name: '', member_id: r.member_id, member_secret: r.member_secret, nickname });
-      lastScoreAt = 0;
-      await renderLeague();
-    } catch (e) { leagueError(e); }
+      await added({ code, name: '', member_id: r.member_id, member_secret: r.member_secret, nickname });
+    } catch (e) { leagueError(form, e); } finally {
+      creating = false;
+      go.disabled = false;
+    }
   }
 
-  async function leave() {
-    if (!league) return;
+  function leagueError(form, e) {
+    const code = String(e && e.message);
+    formError(form, t(known.includes(code) ? `social.err.${code}` : 'social.offline'));
+  }
+
+  async function forget(l) {
+    leagues = leagues.filter((x) => x.code !== l.code);
+    for (const m of [boards, scoreAt, fetchedAt]) m.delete(l.code);
+    open.delete(l.code);
+    await saveLeagues();
+  }
+
+  /** It can't be undone (the nickname and XP are deleted on the server), so ask first. */
+  async function leave(l) {
+    if (!confirm(t('social.leave.confirm', { name: l.name || l.code }))) return;
     try {
-      await api('DELETE', `/leagues/${league.code}/members/me`, null, league);
+      await api('DELETE', `/leagues/${l.code}/members/me`, null, l);
     } catch (e) {
-      // The board is showing: the join form's error line is hidden, so say it on the board.
-      if (!['http_401', 'unauthorized', 'not_found'].includes(String(e.message))) {
-        $('lf-offline').hidden = false;
+      if (!GONE.includes(String(e.message))) {
+        notice = t('social.offline');
+        renderLines();
         return;
       }
     }
-    await saveLeague(null);
-    renderLeague();
+    notice = '';
+    await forget(l);
+    renderLines();
   }
 
-  /** Sends this week's XP (league XP: no history or badge XP) at most every half hour. */
-  async function pushScore() {
-    if (!league || Date.now() - lastScoreAt < SCORE_EVERY_MS) return;
-    const l = await invoke('get_league');
-    await api('POST', `/leagues/${league.code}/score`, { member_id: league.member_id, member_secret: league.member_secret, week: isoWeek(), xp: Math.min(5600, l.week_xp) });
-    lastScoreAt = Date.now();
+  /** Sends this week's XP (league XP: no history or badge XP) at most every half hour per league. */
+  async function pushScore(l) {
+    if (Date.now() - (scoreAt.get(l.code) || 0) < SCORE_EVERY_MS) return;
+    const st = await invoke('get_league');
+    await api('POST', `/leagues/${l.code}/score`, { member_id: l.member_id, member_secret: l.member_secret, week: isoWeek(), xp: Math.min(5600, st.week_xp) });
+    scoreAt.set(l.code, Date.now());
   }
 
-  async function renderLeague() {
-    await loadLeague();
-    $('lf-join').hidden = !!league;
-    $('lf-board').hidden = !league;
-    if (!league) return;
-    $('lf-code-show').textContent = league.code;
-    try {
-      await pushScore();
-      const b = await api('GET', `/leagues/${league.code}`, null, league);
-      if (b.name && b.name !== league.name) await saveLeague({ ...league, name: b.name });
-      $('lf-title').textContent = b.name;
-      const ol = $('lf-list');
-      ol.replaceChildren();
-      for (const m of b.members) {
-        const li = document.createElement('li');
-        li.toggleAttribute('data-me', m.nickname === league.nickname);
-        li.innerHTML = '<span class="lf-nick"></span><span class="lf-up" aria-hidden="true"></span><strong class="lf-xp"></strong>';
-        li.querySelector('.lf-nick').textContent = m.nickname;
-        li.querySelector('.lf-up').textContent = m.up ? '✨' : '';
-        li.querySelector('.lf-xp').textContent = `${fmt(m.xp)} XP`;
-        if (m.up) li.title = t('social.improved');
-        ol.append(li);
-      }
-      $('lf-offline').hidden = true;
-    } catch (e) {
-      // No longer a member (removed, or the league expired): forget it and offer to join again.
-      if (['http_401', 'not_found', 'unauthorized'].includes(String(e && e.message))) {
-        await saveLeague(null);
-        $('lf-join').hidden = false;
-        $('lf-board').hidden = true;
-        $('lf-error').textContent = t('social.gone');
-        $('lf-error').hidden = false;
-        return;
-      }
-      $('lf-offline').hidden = false;
+  /** One league: send our XP if it is due, then (if shown or forced) fetch its board. A failure only marks that league. */
+  async function syncOne(l, force) {
+    if (inflight.has(l.code)) {
+      if (force) again.add(l.code); // run once more when this one ends, so a freshly opened table fills
+      return;
     }
+    inflight.add(l.code);
+    try {
+      try {
+        await pushScore(l);
+      } catch (e) {
+        if (GONE.includes(String(e && e.message))) throw e;
+        // e.g. 429: the board below is still worth fetching
+      }
+      if (!force && (document.hidden || Date.now() - (fetchedAt.get(l.code) || 0) < BOARD_EVERY_MS)) return;
+      const b = await api('GET', `/leagues/${l.code}`, null, l);
+      fetchedAt.set(l.code, Date.now());
+      boards.set(l.code, { b });
+      const cur = leagues.find((x) => x.code === l.code); // the entry now in memory (it may have been replaced)
+      if (cur && b.name && b.name !== cur.name) {
+        cur.name = b.name;
+        await saveLeagues();
+      }
+    } catch (e) {
+      if (GONE.includes(String(e && e.message))) {
+        // No longer a member (removed, or the league expired): forget it and say so.
+        const name = l.name || l.code;
+        await forget(l);
+        notice = t('social.gone', { name });
+      } else {
+        boards.set(l.code, { ...(boards.get(l.code) || {}), offline: true }); // keep the last good board
+      }
+    } finally {
+      inflight.delete(l.code);
+    }
+    renderLines();
+    if (again.delete(l.code)) {
+      const cur = leagues.find((x) => x.code === l.code);
+      if (cur) await syncOne(cur, true);
+    }
+  }
+
+  async function renderLeagues() {
+    if (!loaded) loaded = loadLeagues();
+    await loaded;
+    renderLines();
+    await Promise.all(leagues.map((l) => syncOne(l, false)));
   }
 
   function bind() {
     $('s-social-stats').addEventListener('change', () => setStats($('s-social-stats').checked).catch(showError));
     $('social-delete').addEventListener('click', () => deleteMyData().catch(showError));
-    $('lf-create').addEventListener('click', () => create().catch(showError));
-    $('lf-join-btn').addEventListener('click', () => join().catch(showError));
-    $('lf-leave').addEventListener('click', () => leave().catch(showError));
-    $('lf-copy').addEventListener('click', () => navigator.clipboard.writeText(league ? league.code : '').then(() => note('social.copied')).catch(() => {}));
-    $('friends').addEventListener('toggle', () => $('friends').open && renderLeague().catch(showError));
   }
 
   /** On start and on every refresh of the Today view: cheap when everything is off. */
   async function refresh() {
     await renderSettings();
     syncStats().catch(() => {});
-    if ($('friends').open) renderLeague().catch(() => {});
-    else {
-      await loadLeague();
-      if (league) pushScore().catch(() => {});
-    }
+    renderLeagues().catch(() => {});
   }
 
   return { bind, refresh, isoWeek };

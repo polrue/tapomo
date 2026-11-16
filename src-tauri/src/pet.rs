@@ -482,11 +482,12 @@ pub fn pet_menu(app: AppHandle, state: tauri::State<AppState>) -> Result<(), Str
     let lang = i18n::resolve(&settings.language);
     let tr = |k: &str| i18n::tr(lang, k);
     let open = MenuItem::with_id(&app, "pet_open", tr("pet.menu.open"), true, None::<&str>).map_err(|e| e.to_string())?;
+    let leagues = MenuItem::with_id(&app, "pet_leagues", tr("pet.menu.leagues"), true, None::<&str>).map_err(|e| e.to_string())?;
     let say = MenuItem::with_id(&app, "pet_say", tr("pet.menu.say"), true, None::<&str>).map_err(|e| e.to_string())?;
     let hour = MenuItem::with_id(&app, "pet_hide_hour", tr("pet.menu.hide_hour"), true, None::<&str>).map_err(|e| e.to_string())?;
     let hide = MenuItem::with_id(&app, "pet_hide", tr("pet.menu.hide"), true, None::<&str>).map_err(|e| e.to_string())?;
     let pause = CheckMenuItem::with_id(&app, "pet_pause", tr("pet.menu.pause"), true, settings.paused, None::<&str>).map_err(|e| e.to_string())?;
-    let menu = Menu::with_items(&app, &[&open, &say, &hour, &hide, &pause]).map_err(|e| e.to_string())?;
+    let menu = Menu::with_items(&app, &[&open, &leagues, &say, &hour, &hide, &pause]).map_err(|e| e.to_string())?;
     let window = app.get_webview_window(LABEL).ok_or("pet window missing")?.as_ref().window();
     menu.popup(window).map_err(|e| e.to_string())
 }
@@ -495,6 +496,10 @@ pub fn pet_menu(app: AppHandle, state: tauri::State<AppState>) -> Result<(), Str
 pub fn on_menu_event(app: &AppHandle, id: &str) {
     match id {
         "pet_open" => crate::show_main(app),
+        "pet_leagues" => {
+            crate::show_main(app);
+            let _ = app.emit_to("main", "tapomo://goto", "league");
+        }
         "pet_say" => {
             let _ = app.emit_to(LABEL, "tapomo://pet-say", ());
         }

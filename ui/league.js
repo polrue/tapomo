@@ -22,7 +22,9 @@ const League = (() => {
 
   function render() {
     const card = $('league');
-    card.hidden = !st;
+    // The card also holds the leagues with friends, so it stays even if the league with yourself isn't known yet.
+    card.hidden = false;
+    $('lg-own').hidden = !st;
     if (!st) return;
     $('lg-emblem').innerHTML = emblem(st.league);
     $('lg-name').textContent = t('league.name', { league: t(`league.${st.league}`) });
