@@ -195,6 +195,7 @@ function onKey(cls) {
     return;
   }
   Mascot.keyTick(svg);
+  PetNotice.typing(); // the parcel (if any) is put down while typing
   const isDelete = cls === 'delete' || cls === 'word_delete';
   if (isDelete && state.zone === 'super') {
     Mascot.superAbsorb(svg); // shielded: no "oops", no tilt, the crown stays
@@ -711,6 +712,7 @@ function onPetState(p) {
       if (PetUpdate.waiting) return; // still stone: no greeting, no jump
       say('pet.here', 2500);
       Mascot.jump(svg, { big: false });
+      PetNotice.maybeSay();
     }, up);
   }, 200);
 }
@@ -782,6 +784,8 @@ async function init() {
     listen('tapomo://pet-state', (e) => onPetState(e.payload)),
     listen('tapomo://pet-hover', (e) => setHover(!!e.payload)),
     listen('tapomo://cursor', (e) => Mascot.lookAtPoint(svg, e.payload.x, e.payload.y)),
+    listen('tapomo://update-state', (e) => PetNotice.onState(e.payload)),
+    listen('tapomo://update-progress', (e) => PetNotice.onProgress(e.payload)),
   ]);
   await loadSettings();
   // Know whether we are already on screen, so only a real reappearance gets the greeting.
@@ -792,6 +796,12 @@ async function init() {
     await invoke('get_settings').then(applyLook).catch(console.error);
     playUpdate();
   }
+  PetNotice.init({
+    svg,
+    pet,
+    say: (text, ms) => sayText(text, ms, false, true),
+    canSpeak: () => wasVisible && !state.paused && !state.asleep && !PetUpdate.waiting && !PetUpdate.busy && !updateVersion && $('bubble').hidden,
+  });
   setInterval(() => {
     if (Date.now() - state.lastKeyAt > SLEEP_AFTER_MS) goToSleep();
     if ((window.devicePixelRatio || 1) !== lastDpr) reportHit(); // moved to another monitor

@@ -488,6 +488,13 @@ pub fn pet_menu(app: AppHandle, state: tauri::State<AppState>) -> Result<(), Str
     let hide = MenuItem::with_id(&app, "pet_hide", tr("pet.menu.hide"), true, None::<&str>).map_err(|e| e.to_string())?;
     let pause = CheckMenuItem::with_id(&app, "pet_pause", tr("pet.menu.pause"), true, settings.paused, None::<&str>).map_err(|e| e.to_string())?;
     let menu = Menu::with_items(&app, &[&open, &leagues, &say, &hour, &hide, &pause]).map_err(|e| e.to_string())?;
+    // A newer version is known: «Actualizar a la versión X» (the Store build: opens the Store) goes on top.
+    if let Some(v) = crate::updater::menu_version(&app) {
+        let label = if crate::packaged::is_packaged() { tr("pet.menu.update_store") } else { tr("pet.menu.update").replace("{v}", &v) };
+        let update = MenuItem::with_id(&app, "pet_update", label, true, None::<&str>).map_err(|e| e.to_string())?;
+        let sep = tauri::menu::PredefinedMenuItem::separator(&app).map_err(|e| e.to_string())?;
+        menu.prepend(&update).and_then(|()| menu.insert(&sep, 1)).map_err(|e| e.to_string())?;
+    }
     let window = app.get_webview_window(LABEL).ok_or("pet window missing")?.as_ref().window();
     menu.popup(window).map_err(|e| e.to_string())
 }
@@ -506,6 +513,7 @@ pub fn on_menu_event(app: &AppHandle, id: &str) {
         "pet_hide_hour" => snooze(app, Duration::from_secs(3600)),
         "pet_hide" => commands::set_show_pet(app, false),
         "pet_pause" => commands::toggle_pause(app),
+        "pet_update" => crate::updater::pet_update(app),
         _ => {}
     }
 }
