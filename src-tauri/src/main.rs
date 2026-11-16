@@ -119,6 +119,7 @@ fn main() {
             commands::is_store_build,
             updater::check_update,
             updater::install_update,
+            updater::pet_update_notice,
             pet::pet_set_hit,
             pet::pet_drag_start,
             pet::pet_drag_move,
@@ -192,6 +193,7 @@ fn main() {
             shared.show_pet.store(settings.show_pet, Ordering::Relaxed);
             let pet_pos = db::get_pet_pos(&conn).ok().flatten();
             app.manage(pet::UpdateMoment::default());
+            app.manage(updater::Notice::default());
             pet::check_update(app.handle(), &conn);
             app.manage(AppState { db: Mutex::new(conn), tx, shared: shared.clone() });
             // After `manage`: the pet page asks for the settings as soon as it loads.

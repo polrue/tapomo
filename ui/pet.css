@@ -138,3 +138,29 @@ html, body {
 .bubble.up-hi u { text-decoration-thickness: 1.5px; text-underline-offset: 2px; color: #b04a26; }
 /* The cracks of the stone grow from the centre (pathLength="1"). */
 .rn-crack { stroke-dasharray: 1; stroke-dashoffset: 1; }
+
+/* «Hay una versión nueva» (pet-notice.js): Tapomo holds a parcel; it is put down while typing. */
+.pk-ov { opacity: 0; transform-origin: 80px 138px; transform: translateY(18px) scale(.5);
+  transition: opacity 200ms ease, transform 200ms ease-in; }
+.pk-ov.on { opacity: 1; transform: none; transition: opacity 160ms ease, transform 520ms cubic-bezier(.34, 1.6, .64, 1); }
+.pk-ov.on.away { opacity: 0; transform: translateY(12px) scale(.7); transition: opacity 140ms ease, transform 200ms ease-in; }
+.pk-parcel { transform-origin: 80px 124px; }
+/* While downloading the parcel bobs. */
+.pk-ov.busy .pk-parcel { animation: pk-bob 500ms ease-in-out infinite; }
+@keyframes pk-bob { 50% { transform: translateY(-2px) rotate(-2deg); } }
+/* The download bar sits where the pace bar lives (which steps aside meanwhile). */
+.pk-prog { position: absolute; left: 30px; right: 30px; top: 182px; display: grid; gap: 3px; justify-items: center;
+  padding: 3px 8px 4px; border-radius: 10px; background: rgba(255, 255, 255, .88); color: var(--ink);
+  font-size: 10.5px; font-weight: 800; font-variant-numeric: tabular-nums; text-align: center; line-height: 1.15; }
+.pk-bar { width: 100%; height: 7px; border-radius: 999px; background: rgba(255, 255, 255, .6);
+  box-shadow: 0 0 0 1px rgba(35, 32, 43, .28); overflow: hidden; }
+.pk-bar i { display: block; height: 100%; width: 0; border-radius: inherit; background: #3ddc97; transition: width 120ms linear; }
+.pk-prog.installing .pk-bar i { background: repeating-linear-gradient(-45deg, #3ddc97 0 6px, #8ff0c4 6px 12px);
+  background-size: 200% 100%; animation: pk-stripes 700ms linear infinite; }
+@keyframes pk-stripes { to { background-position: -17px 0; } }
+.pet.upd-busy .livebar { display: none; }
+.pet.under .pk-prog { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .pk-ov, .pk-ov.on, .pk-ov.on.away, .pk-bar i { transition: none; }
+  .pk-ov.busy .pk-parcel, .pk-prog.installing .pk-bar i { animation: none; }
+}
