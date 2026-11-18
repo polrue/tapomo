@@ -550,6 +550,8 @@
   "lessons.result.line": "{wpm} WpM · {acc} % Genauigkeit · +{xp} XP",
   "lessons.tip.acc": "Wiederhole für mehr Sterne: etwas langsamer und mit Fokus auf Genauigkeit.",
   "lessons.tip.pace": "Für den dritten Stern: dieselbe Genauigkeit bei {target} WpM.",
+  "lessons.tip.acc3": "Für den dritten Stern: {acc} % Genauigkeit. Das Tempo hast du schon.",
+  "lessons.tip.both": "Für den dritten Stern: {acc} % Genauigkeit bei {target} WpM.",
   "lessons.tip.new_best": "Dein bestes Ergebnis in dieser Lektion!",
   "lessons.back": "Alle Lektionen",
   "lessons.again": "Wiederholen",

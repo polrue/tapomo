@@ -550,6 +550,8 @@
   "lessons.result.line": "{wpm} mpm · {acc} % de précision · +{xp} XP",
   "lessons.tip.acc": "Recommence pour plus d'étoiles : va un peu moins vite et vise la précision.",
   "lessons.tip.pace": "Pour la troisième étoile : la même précision à {target} mpm.",
+  "lessons.tip.acc3": "Pour la troisième étoile : {acc} % de précision. La vitesse, tu l'as déjà.",
+  "lessons.tip.both": "Pour la troisième étoile : {acc} % de précision à {target} mpm.",
   "lessons.tip.new_best": "Ton meilleur résultat dans cette leçon !",
   "lessons.back": "Toutes les leçons",
   "lessons.again": "Recommencer",
