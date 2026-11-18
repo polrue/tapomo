@@ -838,6 +838,17 @@ const Lessons = (() => {
     return i < 0 ? null : list[i + 1];
   }
 
+  /** Accuracy for three stars (tapomo-core THREE_STARS); two stars only need 95 %. */
+  const THREE_STARS_ACC = 0.98;
+
+  /** Tip under a 1- or 2-star result: names whatever the third star is still missing. */
+  function tipFor(stars, wpm, accuracy, target) {
+    if (stars < 2) return 'lessons.tip.acc';
+    const loose = accuracy < THREE_STARS_ACC;
+    if (loose && wpm < target) return 'lessons.tip.both';
+    return loose ? 'lessons.tip.acc3' : 'lessons.tip.pace';
+  }
+
   function showResult(done, saved, wpm, accuracy, sprint) {
     $('ls-run').hidden = true;
     $('ls-result').hidden = false;
@@ -854,7 +865,7 @@ const Lessons = (() => {
     } else {
       $('ls-res-title').textContent = t(`lessons.result.${saved.stars}`);
       $('ls-res-line').textContent = t('lessons.result.line', { wpm: fmt(wpm), acc: fmt(accuracy * 100), xp: fmt(saved.xp) });
-      $('ls-res-tip').textContent = saved.stars < 3 ? t(saved.stars < 2 ? 'lessons.tip.acc' : 'lessons.tip.pace', { target: fmt(done.target) }) : (saved.stars > saved.best_before ? t('lessons.tip.new_best') : '');
+      $('ls-res-tip').textContent = saved.stars < 3 ? t(tipFor(saved.stars, wpm, accuracy, done.target), { target: fmt(done.target), acc: fmt(THREE_STARS_ACC * 100) }) : (saved.stars > saved.best_before ? t('lessons.tip.new_best') : '');
     }
     const next = nextOf(lesson);
     $('ls-next').hidden = !next;

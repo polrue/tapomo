@@ -550,6 +550,8 @@
   "lessons.result.line": "{wpm} wpm · {acc}% accuracy · +{xp} XP",
   "lessons.tip.acc": "Repeat for more stars: go a bit slower and aim for accuracy.",
   "lessons.tip.pace": "For the third star: the same accuracy at {target} wpm.",
+  "lessons.tip.acc3": "For the third star: {acc}% accuracy. You already have the speed.",
+  "lessons.tip.both": "For the third star: {acc}% accuracy at {target} wpm.",
   "lessons.tip.new_best": "Your best result in this lesson!",
   "lessons.back": "All lessons",
   "lessons.again": "Repeat",

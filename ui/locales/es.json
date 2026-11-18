@@ -550,6 +550,8 @@
   "lessons.result.line": "{wpm} ppm · {acc} % de precisión · +{xp} XP",
   "lessons.tip.acc": "Repite para más estrellas: ve un poco más despacio y apunta a la precisión.",
   "lessons.tip.pace": "Para la tercera estrella: la misma precisión a {target} ppm.",
+  "lessons.tip.acc3": "Para la tercera estrella: un {acc} % de precisión. La velocidad ya la tienes.",
+  "lessons.tip.both": "Para la tercera estrella: un {acc} % de precisión a {target} ppm.",
   "lessons.tip.new_best": "¡Tu mejor resultado en esta lección!",
   "lessons.back": "Todas las lecciones",
   "lessons.again": "Repetir",
