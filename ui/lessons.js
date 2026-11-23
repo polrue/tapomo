@@ -912,6 +912,17 @@ const Lessons = (() => {
       if (e.key === 'Enter' && run && run.text[run.pos] === '\n') { e.preventDefault(); onChar('\n'); }
     });
     $('ls-text').addEventListener('click', () => input.focus());
+    // A click on the keyboard, the hands or empty space takes the focus off the hidden input:
+    // the next key would then go to the page (Space scrolls it on a small screen). Typing mid-
+    // exercise brings the focus back and the key still counts. Controls keep their own keys.
+    document.addEventListener('keydown', (e) => {
+      if (!run || $('ls-run').hidden || e.target === input) return;
+      if (e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
+      if (e.target.closest?.('button, a, input, select, textarea, [contenteditable], [role="radio"]')) return;
+      e.preventDefault();
+      input.focus();
+      onChar(e.key);
+    });
     $('ls-restart').addEventListener('click', restart);
     $('ls-exit').addEventListener('click', () => renderMap());
     const modes = $('ls-modes');
