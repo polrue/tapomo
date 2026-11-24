@@ -10,7 +10,7 @@
 ## Propuesta
 
 1. **Código:** sigue en GPL-3.0-or-later. Sin cambios.
-2. **Arte:** el SVG de Tapomo y sus variantes, en `ui/mascot.js`, `ui/wardrobe.js`, `ui/badges-art.js`, `assets/`, `web/img/` y `lab/`, pasa a **CC BY-NC-ND 4.0**.
+2. **Arte:** el SVG de Tapomo y sus variantes, en `ui/mascot.js`, `ui/wardrobe.js`, `ui/badges-art.js`, `assets/`, `web/img/` y el laboratorio de diseño, pasa a **CC BY-NC-ND 4.0**.
    - Se puede compartir tal cual, citando la fuente.
    - No se permite el uso comercial ni distribuir versiones modificadas.
    - Los forks de la app tendrían que usar su propia mascota, o pedir permiso.
