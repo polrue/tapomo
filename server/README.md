@@ -1,6 +1,6 @@
 # Servidor de Tapomo (0.5): estadísticas anónimas y ligas entre amigos
 
-API mínima para las dos funciones en línea de la 0.5 ([roadmap](../docs/roadmap.md#05--web-estadísticas-anónimas-y-ligas-entre-amigos)). Cloudflare Workers + D1 (SQLite), plan gratuito, sin dependencias npm.
+API mínima para las dos funciones en línea de la 0.5. Cloudflare Workers + D1 (SQLite), plan gratuito, sin dependencias npm.
 
 Las dos funciones son **opcionales y vienen desactivadas** en la app. Antes de activarlas hay que actualizar [PRIVACY.md](../PRIVACY.md), como promete la propia política.
 
