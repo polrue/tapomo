@@ -19,6 +19,8 @@ const WhatsNew = (() => {
       ],
     },
   };
+  // 1.1.1 only fixes lessons: most users arrive from 1.0.2, so it shows the 1.1.0 card (`texts`: whose keys to use).
+  NOTES['1.1.1'] = { ...NOTES['1.1.0'], texts: '1.1.0' };
 
   let pending = null; // version waiting for its card
   let open = false;
@@ -108,7 +110,7 @@ const WhatsNew = (() => {
     Wardrobe.preview(svg, { skin: 'clasico', acc: note.hero });
     Mascot.setFace(svg, { eyes: 'sparkle', mouth: 'big', cheeks: true });
     hero.append(svg);
-    $('wn-list').replaceChildren(...note.lines.map((l) => line(v, l, owned)));
+    $('wn-list').replaceChildren(...note.lines.map((l) => line(note.texts || v, l, owned)));
     $('wn-all').href = RELEASE_PAGE + v;
     $('wn-cap').hidden = !owned.includes('helice');
     Wardrobe.markNewRewardsSeen();
